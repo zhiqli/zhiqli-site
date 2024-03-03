@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>一次mysql锁问题排查 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="一次mysql锁问题排查">
+<meta itemprop="description" content="查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误
+背景 线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。
+服务对表的操作流程如下 收到客户端请求，新建任务，insert数据到db。 内部多个服务处理完update state task where id = &lsquo;xxx&rsquo;，每个任务大概会有2-3次update。 表结构如下 1 2 3 4 5 6 7 8 CREATE TABLE IF NOT EXISTS `task` ( `auto_id` int(11) NOT NULL auto_increment, `id` varchar(60) NOT NULL, `state` int(11) NOT NULL, `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`auto_id`), ) ENGINE=InnoDB DEFAULT CHARSET=utf8; 数据迁移脚本如下 1 2 3 4 movesql=&#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &lt; &#39;${monthago}&#39;; &#34; echo ${movesql} | $mysql deletesql=&#34;delete from task where update_time &lt; &#39;${monthago}&#39;;&#34; echo ${deletesql} | $mysql 迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。"><meta itemprop="datePublished" content="2019-11-15T00:00:00+00:00" />
+<meta itemprop="dateModified" content="2019-11-15T00:00:00+00:00" />
+<meta itemprop="wordCount" content="191">
+<meta itemprop="keywords" content="mysql,笔记," /><meta property="og:title" content="一次mysql锁问题排查" />
+<meta property="og:description" content="查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误
+背景 线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。
+服务对表的操作流程如下 收到客户端请求，新建任务，insert数据到db。 内部多个服务处理完update state task where id = &lsquo;xxx&rsquo;，每个任务大概会有2-3次update。 表结构如下 1 2 3 4 5 6 7 8 CREATE TABLE IF NOT EXISTS `task` ( `auto_id` int(11) NOT NULL auto_increment, `id` varchar(60) NOT NULL, `state` int(11) NOT NULL, `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`auto_id`), ) ENGINE=InnoDB DEFAULT CHARSET=utf8; 数据迁移脚本如下 1 2 3 4 movesql=&#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &lt; &#39;${monthago}&#39;; &#34; echo ${movesql} | $mysql deletesql=&#34;delete from task where update_time &lt; &#39;${monthago}&#39;;&#34; echo ${deletesql} | $mysql 迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://zhiqli.github.io/2019/11/%E4%B8%80%E6%AC%A1mysql%E9%94%81%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2019-11-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2019-11-15T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="一次mysql锁问题排查"/>
+<meta name="twitter:description" content="查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误
+背景 线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。
+服务对表的操作流程如下 收到客户端请求，新建任务，insert数据到db。 内部多个服务处理完update state task where id = &lsquo;xxx&rsquo;，每个任务大概会有2-3次update。 表结构如下 1 2 3 4 5 6 7 8 CREATE TABLE IF NOT EXISTS `task` ( `auto_id` int(11) NOT NULL auto_increment, `id` varchar(60) NOT NULL, `state` int(11) NOT NULL, `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`auto_id`), ) ENGINE=InnoDB DEFAULT CHARSET=utf8; 数据迁移脚本如下 1 2 3 4 movesql=&#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &lt; &#39;${monthago}&#39;; &#34; echo ${movesql} | $mysql deletesql=&#34;delete from task where update_time &lt; &#39;${monthago}&#39;;&#34; echo ${deletesql} | $mysql 迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。"/>
+<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+
+	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	
+		<script src="https://zhiqli.github.io/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+		<div class="avatar">
+			<a href="https://zhiqli.github.io/">
+				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
+			</a>
+		</div>
+	
+	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/weekly">Weekly</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="meta">
+        <div class="date">
+            <span class="day">15</span>
+            <span class="rest">Nov 2019</span>
+        </div>
+    </div>
+    
+    <div class="matter">
+        <h1 class="title">一次mysql锁问题排查</h1>
+    </div>
+</div>
+
+
+    
+    
+    <p>查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误</p>
+<h2 id="背景">背景</h2>
+<p>线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。</p>
+<ul>
+<li>服务对表的操作流程如下</li>
+</ul>
+<ol>
+<li>收到客户端请求，新建任务，insert数据到db。</li>
+<li>内部多个服务处理完update state task where id = &lsquo;xxx&rsquo;，每个任务大概会有2-3次update。</li>
+</ol>
+<ul>
+<li>表结构如下</li>
+</ul>
+<div class="highlight"><div style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-mysql" data-lang="mysql"><span style="display:flex;"><span><span style="color:#069;font-weight:bold">CREATE</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">TABLE</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">IF</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">NOT</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">EXISTS</span><span style="color:#bbb"> </span><span style="color:#555">`</span>task<span style="color:#555">`</span><span style="color:#bbb"> </span>(<span style="color:#bbb">
+</span></span></span><span style="display:flex;"><span><span style="color:#bbb">  </span><span style="color:#555">`</span>auto_id<span style="color:#555">`</span><span style="color:#bbb"> </span><span style="color:#078;font-weight:bold">int</span>(<span style="color:#f60">11</span>)<span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">NOT</span><span style="color:#bbb"> </span><span style="color:#360">NULL</span><span style="color:#bbb"> </span><span style="color:#069">auto_increment</span>,<span style="color:#bbb">
+</span></span></span><span style="display:flex;"><span><span style="color:#bbb">  </span><span style="color:#555">`</span>id<span style="color:#555">`</span><span style="color:#bbb"> </span><span style="color:#078;font-weight:bold">varchar</span>(<span style="color:#f60">60</span>)<span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">NOT</span><span style="color:#bbb"> </span><span style="color:#360">NULL</span>,<span style="color:#bbb">
+</span></span></span><span style="display:flex;"><span><span style="color:#bbb">  </span><span style="color:#555">`</span>state<span style="color:#555">`</span><span style="color:#bbb"> </span><span style="color:#078;font-weight:bold">int</span>(<span style="color:#f60">11</span>)<span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">NOT</span><span style="color:#bbb"> </span><span style="color:#360">NULL</span>,<span style="color:#bbb">
+</span></span></span><span style="display:flex;"><span><span style="color:#bbb">  </span><span style="color:#555">`</span>create_time<span style="color:#555">`</span><span style="color:#bbb"> </span><span style="color:#078;font-weight:bold">timestamp</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">NOT</span><span style="color:#bbb"> </span><span style="color:#360">NULL</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">DEFAULT</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">CURRENT_TIMESTAMP</span>,<span style="color:#bbb">
+</span></span></span><span style="display:flex;"><span><span style="color:#bbb">  </span><span style="color:#555">`</span>update_time<span style="color:#555">`</span><span style="color:#bbb"> </span><span style="color:#078;font-weight:bold">timestamp</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">NOT</span><span style="color:#bbb"> </span><span style="color:#360">NULL</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">DEFAULT</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">CURRENT_TIMESTAMP</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">ON</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">UPDATE</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">CURRENT_TIMESTAMP</span>,<span style="color:#bbb">
+</span></span></span><span style="display:flex;"><span><span style="color:#bbb">  </span><span style="color:#069;font-weight:bold">PRIMARY</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">KEY</span><span style="color:#bbb"> </span>(<span style="color:#555">`</span>auto_id<span style="color:#555">`</span>),<span style="color:#bbb">
+</span></span></span><span style="display:flex;"><span><span style="color:#bbb"></span>)<span style="color:#bbb"> </span><span style="color:#069">ENGINE</span><span style="color:#555">=</span>InnoDB<span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">DEFAULT</span><span style="color:#bbb"> </span><span style="color:#069">CHARSET</span><span style="color:#555">=</span>utf8;<span style="color:#bbb">
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>数据迁移脚本如下</li>
+</ul>
+<div class="highlight"><div style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>movesql=&#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &lt; &#39;${monthago}&#39;; &#34;
+</span></span><span style="display:flex;"><span>echo ${movesql} | $mysql
+</span></span><span style="display:flex;"><span>deletesql=&#34;delete from task where update_time &lt; &#39;${monthago}&#39;;&#34;
+</span></span><span style="display:flex;"><span>echo ${deletesql} | $mysql
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。</p>
+<h2 id="问题">问题</h2>
+<p>具体问题是客户端反馈调用失败率很高，于是在服务端查看问题</p>
+<ol>
+<li>查服务端日志发现很多insert，update失败；</li>
+<li>查task表中数据一个月前的数据还在，即数据迁移失败。</li>
+<li>手动运行数据迁移脚本，运行一段时间后输出日志<code>Lock wait timeout exceeded; try restarting transaction</code>。</li>
+<li>通过<code>show engine innodb status;</code>查看发现以下日志</li>
+</ol>
+<div class="highlight"><div style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-mysql" data-lang="mysql"><span style="display:flex;"><span><span style="color:#069;font-weight:bold">LOCK</span><span style="color:#bbb"> </span>WAIT<span style="color:#bbb"> </span><span style="color:#f60">3</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">lock</span><span style="color:#bbb"> </span><span style="color:#c0f">struct</span>(s),<span style="color:#bbb"> </span>heap<span style="color:#bbb"> </span>size<span style="color:#bbb"> </span><span style="color:#f60">1136</span>,<span style="color:#bbb"> </span><span style="color:#f60">2</span><span style="color:#bbb"> </span>row<span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">lock</span>(s)<span style="color:#bbb">
+</span></span></span><span style="display:flex;"><span><span style="color:#bbb"></span>MySQL<span style="color:#bbb"> </span>thread<span style="color:#bbb"> </span>id<span style="color:#bbb"> </span><span style="color:#f60">12377101</span>,<span style="color:#bbb"> </span>OS<span style="color:#bbb"> </span>thread<span style="color:#bbb"> </span>handle<span style="color:#bbb"> </span><span style="color:#f60">139630459942656</span>,<span style="color:#bbb"> </span>query<span style="color:#bbb"> </span>id<span style="color:#bbb"> </span><span style="color:#f60">253584314</span><span style="color:#bbb"> </span><span style="color:#f60">127</span>.<span style="color:#f60">0</span>.<span style="color:#f60">0</span>.<span style="color:#f60">1</span><span style="color:#bbb"> </span>root<span style="color:#bbb"> </span>updating<span style="color:#bbb">
+</span></span></span><span style="display:flex;"><span><span style="color:#bbb"></span><span style="color:#069;font-weight:bold">UPDATE</span><span style="color:#bbb"> </span>task<span style="color:#bbb"> </span><span style="color:#078;font-weight:bold">SET</span><span style="color:#bbb"> </span>state<span style="color:#555">=</span><span style="color:#f60">1</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">WHERE</span><span style="color:#bbb"> </span>id<span style="color:#555">=</span><span style="color:#c30">&#39;2234234&#39;</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">and</span><span style="color:#bbb"> </span>state<span style="color:#555">=</span><span style="color:#f60">0</span><span style="color:#bbb">
+</span></span></span><span style="display:flex;"><span><span style="color:#bbb"></span><span style="color:#555">-----</span><span style="color:#09f;font-style:italic">-- TRX HAS BEEN WAITING 6 SEC FOR THIS LOCK TO BE GRANTED:
+</span></span></span><span style="display:flex;"><span><span style="color:#09f;font-style:italic"></span>RECORD<span style="color:#bbb"> </span>LOCKS<span style="color:#bbb"> </span>space<span style="color:#bbb"> </span>id<span style="color:#bbb"> </span><span style="color:#f60">2</span><span style="color:#bbb"> </span>page<span style="color:#bbb"> </span>no<span style="color:#bbb"> </span><span style="color:#f60">206509</span><span style="color:#bbb"> </span>n<span style="color:#bbb"> </span>bits<span style="color:#bbb"> </span><span style="color:#f60">600</span><span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">index</span><span style="color:#bbb"> </span>idx_gcid<span style="color:#bbb"> </span>of<span style="color:#bbb"> </span><span style="color:#069;font-weight:bold">table</span><span style="color:#bbb"> </span><span style="color:#555">``</span>.<span style="color:#555">`</span>task<span style="color:#555">`</span><span style="color:#bbb"> </span>trx<span style="color:#bbb"> </span>id<span style="color:#bbb"> </span><span style="color:#f60">536762947</span><span style="color:#bbb"> </span>lock_mode<span style="color:#bbb"> </span>X<span style="color:#bbb"> </span>waiting<span style="color:#bbb">
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>查看了一下上面那个id，发现这个id居然有十几万记录。于是问题一下子就水落石出。</p>
+<h2 id="真相">真相</h2>
+<p>从上面的建表语句可以看出auto_id是主键，业务id没有唯一索引。之前跑了这么久没有也确实没问题，因为之前客户端不会对同一个id重复请求。而上个月业务逻辑修改，同一个id会有重复请求。
+innodb中默认隔离级别是可重复读，在RR中，对非索引字段的delete和update都会加nextkey lock，由于delete和update数据量都不小，都是长事务，所以会进入锁等待，从而导致超时。</p>
+<p>解决也很简单，对id建个唯一索引，update_time建一个普通索引。</p>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/mysql">mysql</a>
+        </li>
+        
+        
+        <li class="tag-li"><a href="/tags/%E7%AC%94%E8%AE%B0">笔记</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2019-11-15-mysql-deadlock.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>2019  © Copyright zhiqli </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

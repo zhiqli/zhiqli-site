@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>grpc established问题 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="grpc established问题">
+<meta itemprop="description" content="p 问题起因 QA同事问我为什么服务建立连接以后，关闭防火墙过了一天netstat查看端口还是established状态。当时我也回答不出，但我觉得这是个好问题，于是花了点时间goole。
+定位 首先找到一句话The default value for the “TCP Established timeout” on a Linux server is 5 days. 当时觉得不对啊，难道grpc没有heatch check的吗？ 于是查看grpc的代码
+// ClientParameters is used to set keepalive parameters on the client-side. // These configure how the client will actively probe to notice when a connection is broken // and send pings so intermediaries will be aware of the liveness of the connection. // Make sure these parameters are set in coordination with the keepalive policy on the server, // as incompatible settings can result in closing of connection.">
+
+<meta itemprop="wordCount" content="190">
+<meta itemprop="keywords" content="tcp," /><meta property="og:title" content="grpc established问题" />
+<meta property="og:description" content="p 问题起因 QA同事问我为什么服务建立连接以后，关闭防火墙过了一天netstat查看端口还是established状态。当时我也回答不出，但我觉得这是个好问题，于是花了点时间goole。
+定位 首先找到一句话The default value for the “TCP Established timeout” on a Linux server is 5 days. 当时觉得不对啊，难道grpc没有heatch check的吗？ 于是查看grpc的代码
+// ClientParameters is used to set keepalive parameters on the client-side. // These configure how the client will actively probe to notice when a connection is broken // and send pings so intermediaries will be aware of the liveness of the connection. // Make sure these parameters are set in coordination with the keepalive policy on the server, // as incompatible settings can result in closing of connection." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/1/01/grpc-established%E9%97%AE%E9%A2%98/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="grpc established问题"/>
+<meta name="twitter:description" content="p 问题起因 QA同事问我为什么服务建立连接以后，关闭防火墙过了一天netstat查看端口还是established状态。当时我也回答不出，但我觉得这是个好问题，于是花了点时间goole。
+定位 首先找到一句话The default value for the “TCP Established timeout” on a Linux server is 5 days. 当时觉得不对啊，难道grpc没有heatch check的吗？ 于是查看grpc的代码
+// ClientParameters is used to set keepalive parameters on the client-side. // These configure how the client will actively probe to notice when a connection is broken // and send pings so intermediaries will be aware of the liveness of the connection. // Make sure these parameters are set in coordination with the keepalive policy on the server, // as incompatible settings can result in closing of connection."/>
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
+
+	<script src="http://localhost:1313/js/feather.min.js"></script>
+	
+		<script src="http://localhost:1313/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="matter">
+        <h1 class="title">grpc established问题</h1>
+    </div>
+</div>
+
+
+    
+    
+    <h2 id="p">p</h2>
+<h3 id="问题起因">问题起因</h3>
+<p>QA同事问我为什么服务建立连接以后，关闭防火墙过了一天netstat查看端口还是established状态。当时我也回答不出，但我觉得这是个好问题，于是花了点时间goole。</p>
+<h3 id="定位">定位</h3>
+<p>首先找到一句话<code>The default value for the “TCP Established timeout” on a Linux server is 5 days. </code>
+当时觉得不对啊，难道grpc没有heatch check的吗？
+于是查看grpc的代码</p>
+<pre tabindex="0"><code>// ClientParameters is used to set keepalive parameters on the client-side.
+// These configure how the client will actively probe to notice when a connection is broken
+// and send pings so intermediaries will be aware of the liveness of the connection.
+// Make sure these parameters are set in coordination with the keepalive policy on the server,
+// as incompatible settings can result in closing of connection.
+type ClientParameters struct {
+	// After a duration of this time if the client doesn&#39;t see any activity it pings the server to see if the transport is still alive.
+	Time time.Duration // The current default value is infinity.
+	// After having pinged for keepalive check, the client waits for a duration of Timeout and if no activity is seen even after that
+	// the connection is closed.
+	Timeout time.Duration // The current default value is 20 seconds.
+	// If true, client runs keepalive checks even with no active RPCs.
+	PermitWithoutStream bool // false by default.
+}
+</code></pre><p>从代码可以看出，grpc默认是不开启keepalive。和大牛讨论了一下。keepalive会加重系统负担，相当于kernel里面自己要做计时器管理，如果不设置则能释放kernel的资源。
+一般上层应用也都会设置应用层的超时，tcp层的超时控制基本等于摆设，只有握手完成之前和应用发起关闭之后的状态，kernel里的控制才是必需的。
+同时也参考了[这篇文章](<a href="http://blog.csdn.net/dog250/article/details/72">http://blog.csdn.net/dog250/article/details/72</a></p>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/tcp">tcp</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2018-07-30-grpc-established.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+    
+    Next time, we'll talk about <i>"10 Reasons why gcc SHOULD be re-written in JavaScript - You won&#39;t believe #8!"</i>
+    
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>1  © Copyright notice </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

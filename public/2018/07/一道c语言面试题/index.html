@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>一道C语言面试题 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="一道C语言面试题">
+<meta itemprop="description" content="今天在群里的兄弟分享了一道考察sizeof和strlen的面试题，看似很简单，其实却不然，分析过后，还是有一些不解之处。
+题目，写出下面代码打印结果 1 2 3 4 5 6 7 8 9 10 char str1[] = &#34;hello&#34;; char str2[5] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;}; char str3[6] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;,&#39;\0&#39;}; printf(&#34;sizeof(str1) %d\n&#34;, (int)sizeof(str1)); printf(&#34;strlen(str1) %d\n&#34;, (int)strlen(str1)); printf(&#34;sizeof(str2) %d\n&#34;, (int)sizeof(str2)); printf(&#34;strlen(str2) %d\n&#34;, (int)strlen(str2)); printf(&#34;sizeof(str3) %d\n&#34;, (int)sizeof(str3)); printf(&#34;strlen(str3) %d\n&#34;, (int)strlen(str3)); 第一眼看，不就是考察sizeof和strlen吗？简单，答案应该是6，5，5，？，6，5。strlen(str2)，what the fuck？ 赶紧打开电脑验证一下，结果输出是6，5，5，10，6，5，呐尼？怎么会是10呢？ 好吧，既然长度是10，那我就加上一行代码，看看到底是10个什么鬼。
+1 2 for(int i = 0; i &lt; 10; i&#43;&#43;) printf(&#34; %c&#34;, str2[i]); 这回打印的结果是h e l l o h e l l o，于是猜想是不是越界到其它变量去了，于是将str1改成&quot;abcde&quot;，再次运行结果是h e l l o a b c d e。 再把str1 str2 str3的内存地址打印出来，依次是504f28a5 504f28a0 504f289a 这回明白了，因为c语言的压栈顺序先定义的变量存在高地址，后定义的在低地址。所以strlen(str2)的时候，实际上是从504f28a0－504f28aa，所以长度为10。 你因为这个问题到这里就结束了吗？其实并没有。刚才是在mac上验证的，gcc的版本是4."><meta itemprop="datePublished" content="2018-07-30T00:00:00+00:00" />
+<meta itemprop="dateModified" content="2018-07-30T00:00:00+00:00" />
+<meta itemprop="wordCount" content="88">
+<meta itemprop="keywords" content="c,面试," /><meta property="og:title" content="一道C语言面试题" />
+<meta property="og:description" content="今天在群里的兄弟分享了一道考察sizeof和strlen的面试题，看似很简单，其实却不然，分析过后，还是有一些不解之处。
+题目，写出下面代码打印结果 1 2 3 4 5 6 7 8 9 10 char str1[] = &#34;hello&#34;; char str2[5] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;}; char str3[6] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;,&#39;\0&#39;}; printf(&#34;sizeof(str1) %d\n&#34;, (int)sizeof(str1)); printf(&#34;strlen(str1) %d\n&#34;, (int)strlen(str1)); printf(&#34;sizeof(str2) %d\n&#34;, (int)sizeof(str2)); printf(&#34;strlen(str2) %d\n&#34;, (int)strlen(str2)); printf(&#34;sizeof(str3) %d\n&#34;, (int)sizeof(str3)); printf(&#34;strlen(str3) %d\n&#34;, (int)strlen(str3)); 第一眼看，不就是考察sizeof和strlen吗？简单，答案应该是6，5，5，？，6，5。strlen(str2)，what the fuck？ 赶紧打开电脑验证一下，结果输出是6，5，5，10，6，5，呐尼？怎么会是10呢？ 好吧，既然长度是10，那我就加上一行代码，看看到底是10个什么鬼。
+1 2 for(int i = 0; i &lt; 10; i&#43;&#43;) printf(&#34; %c&#34;, str2[i]); 这回打印的结果是h e l l o h e l l o，于是猜想是不是越界到其它变量去了，于是将str1改成&quot;abcde&quot;，再次运行结果是h e l l o a b c d e。 再把str1 str2 str3的内存地址打印出来，依次是504f28a5 504f28a0 504f289a 这回明白了，因为c语言的压栈顺序先定义的变量存在高地址，后定义的在低地址。所以strlen(str2)的时候，实际上是从504f28a0－504f28aa，所以长度为10。 你因为这个问题到这里就结束了吗？其实并没有。刚才是在mac上验证的，gcc的版本是4." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://zhiqli.github.io/2018/07/%E4%B8%80%E9%81%93c%E8%AF%AD%E8%A8%80%E9%9D%A2%E8%AF%95%E9%A2%98/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2018-07-30T00:00:00+00:00" />
+<meta property="article:modified_time" content="2018-07-30T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="一道C语言面试题"/>
+<meta name="twitter:description" content="今天在群里的兄弟分享了一道考察sizeof和strlen的面试题，看似很简单，其实却不然，分析过后，还是有一些不解之处。
+题目，写出下面代码打印结果 1 2 3 4 5 6 7 8 9 10 char str1[] = &#34;hello&#34;; char str2[5] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;}; char str3[6] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;,&#39;\0&#39;}; printf(&#34;sizeof(str1) %d\n&#34;, (int)sizeof(str1)); printf(&#34;strlen(str1) %d\n&#34;, (int)strlen(str1)); printf(&#34;sizeof(str2) %d\n&#34;, (int)sizeof(str2)); printf(&#34;strlen(str2) %d\n&#34;, (int)strlen(str2)); printf(&#34;sizeof(str3) %d\n&#34;, (int)sizeof(str3)); printf(&#34;strlen(str3) %d\n&#34;, (int)strlen(str3)); 第一眼看，不就是考察sizeof和strlen吗？简单，答案应该是6，5，5，？，6，5。strlen(str2)，what the fuck？ 赶紧打开电脑验证一下，结果输出是6，5，5，10，6，5，呐尼？怎么会是10呢？ 好吧，既然长度是10，那我就加上一行代码，看看到底是10个什么鬼。
+1 2 for(int i = 0; i &lt; 10; i&#43;&#43;) printf(&#34; %c&#34;, str2[i]); 这回打印的结果是h e l l o h e l l o，于是猜想是不是越界到其它变量去了，于是将str1改成&quot;abcde&quot;，再次运行结果是h e l l o a b c d e。 再把str1 str2 str3的内存地址打印出来，依次是504f28a5 504f28a0 504f289a 这回明白了，因为c语言的压栈顺序先定义的变量存在高地址，后定义的在低地址。所以strlen(str2)的时候，实际上是从504f28a0－504f28aa，所以长度为10。 你因为这个问题到这里就结束了吗？其实并没有。刚才是在mac上验证的，gcc的版本是4."/>
+<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+
+	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	
+		<script src="https://zhiqli.github.io/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+		<div class="avatar">
+			<a href="https://zhiqli.github.io/">
+				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
+			</a>
+		</div>
+	
+	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/weekly">Weekly</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="meta">
+        <div class="date">
+            <span class="day">30</span>
+            <span class="rest">Jul 2018</span>
+        </div>
+    </div>
+    
+    <div class="matter">
+        <h1 class="title">一道C语言面试题</h1>
+    </div>
+</div>
+
+
+    
+    
+    <p>今天在群里的兄弟分享了一道考察sizeof和strlen的面试题，看似很简单，其实却不然，分析过后，还是有一些不解之处。</p>
+<ul>
+<li>题目，写出下面代码打印结果</li>
+</ul>
+<div class="highlight"><div style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>char str1[] = &#34;hello&#34;;
+</span></span><span style="display:flex;"><span>char str2[5] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;};
+</span></span><span style="display:flex;"><span>char str3[6] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;,&#39;\0&#39;};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>printf(&#34;sizeof(str1) %d\n&#34;, (int)sizeof(str1));
+</span></span><span style="display:flex;"><span>printf(&#34;strlen(str1) %d\n&#34;, (int)strlen(str1));
+</span></span><span style="display:flex;"><span>printf(&#34;sizeof(str2) %d\n&#34;, (int)sizeof(str2));
+</span></span><span style="display:flex;"><span>printf(&#34;strlen(str2) %d\n&#34;, (int)strlen(str2));
+</span></span><span style="display:flex;"><span>printf(&#34;sizeof(str3) %d\n&#34;, (int)sizeof(str3));
+</span></span><span style="display:flex;"><span>printf(&#34;strlen(str3) %d\n&#34;, (int)strlen(str3));
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>第一眼看，不就是考察sizeof和strlen吗？简单，答案应该是6，5，5，？，6，5。strlen(str2)，what the fuck？
+赶紧打开电脑验证一下，结果输出是6，5，5，10，6，5，呐尼？怎么会是10呢？
+好吧，既然长度是10，那我就加上一行代码，看看到底是10个什么鬼。</p>
+<div class="highlight"><div style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>for(int i = 0; i &lt; 10; i++)
+</span></span><span style="display:flex;"><span>    printf(&#34; %c&#34;, str2[i]);
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这回打印的结果是h e l l o h e l l o，于是猜想是不是越界到其它变量去了，于是将str1改成&quot;abcde&quot;，再次运行结果是h e l l o a b c d e。
+再把str1 str2 str3的内存地址打印出来，依次是504f28a5 504f28a0 504f289a
+这回明白了，因为c语言的压栈顺序先定义的变量存在高地址，后定义的在低地址。所以strlen(str2)的时候，实际上是从504f28a0－504f28aa，所以长度为10。
+你因为这个问题到这里就结束了吗？其实并没有。刚才是在mac上验证的，gcc的版本是4.2.1。现在我在ubuntu gcc版本为4.3.1验证，打印出来的结果是6，5，5，5，6，5。也就是说strlen(str2)等于5。这又是为什么呢？再次把地址三个变量的地址打印出来，发现每个变量都给分配了16个字节空间，这就说得通了，str2自己后面还有空间，所以就不会越界到其它变量的空间去了。这应该是和编译器内存对齐规则有关了。
+所以总结下来正确答案就是6，5，5，不确定，6，5。</p>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/c">c</a>
+        </li>
+        
+        
+        <li class="tag-li"><a href="/tags/%E9%9D%A2%E8%AF%95">面试</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2018-07-30-c-interview-strlen-sizeof.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>2018  © Copyright zhiqli </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>一些TCP基础笔记 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="一些TCP基础笔记">
+<meta itemprop="description" content="本文主要是看书看文章时做的笔记，记录一些TCP相关的基本概念。引用文章来自补充阅读，点击可到原文链接。
+概念 MTU：maximum transmission unit最大传输单元 每种网络都不一样，以太网是1500。最小46字节。当数据块大于MTU时，将在发送端IP层进行分片，接收端IP层进行重组。IP分组在网络中传输中出现丢包时，由于IP层没有重传机制，TCP将重传整个报文段而不是丢失的IP分组
+PS: 以太网最小数据帧长度为，最小64字节，其中6字节目的地址 、字节6源地址、2字节类型、46字节数据、4字节校验和.
+MSS：maximum segment size最大分段大小 MSS是TCP数据包每次能够传输的最大数据分段。为了达到最佳的传输效能TCP协议在建立连接的时候通常要协商双方的MSS值，这个值TCP协议在实现的时候往往用MTU值代替（需要减去IP数据包包头的大小20Bytes和TCP数据段的包头20Bytes）所以往往MSS为1460。通讯双方会根据双方提供的MSS值得最小值确定为这次连接的最大MSS值。
+MSL：Maximum Segment Lifetime报文最大生存时间 报文在网络上存在的最长时间，超过这个时间报文将被丢弃。在RFC793指出MSL为2分钟，实际应用中常用的是30秒（linux），1分钟和2分钟等。
+TTL：Time To Live生存时间 生存时间是由源主机设置初始值但不是存的具体时间，而是存储了一个ip数据报可以经过的最大路由数，每经过一个处理他的路由器此值就减1，当此值为0则数据报将被丢弃，同时发送ICMP报文通知源主机。
+RTT：round-trip time客户到服务器往返所花时间 RTT由三部分组成：链路的传播时间（propagation delay）、末端系统的处理时间、 路由器缓存中的排队和处理时间（queuing delay）。 其中，前两个部分的值对于一个TCP连接相对固定，路由器缓存中的排队和处理时间会随着整个网络拥塞程度 的变化而变化。所以RTT的变化在一定程度上反应了网络的拥塞程度。
+RTO：Retransmission TimeOut重传超时时间 重传机制依赖于RTT（Round Trip Time）的测量，从而计算RTO（Retransmission Timeout）。
+TSO：TCP Segment Offload 是一种利用网卡的处理能力，降低CPU发送数据包负载的技术。对于支持TSO的网卡，TCP协议栈在封包的时候会逐渐尝试增大MSS，网卡接收到TCP向下递交的数据后，按照MTU进行分片、复制TCP头且重新计算校验和，这样在网卡上完成了对大块数据的TCP分段，缓解了CPU的计算压力。
+查看是否开启TSO
+sudo ethtool -k eth0 关闭和打开TSO
+$ sudo ethtool -K eth0 tso off // 关闭tso
+$ sudo ethtool -K eth0 tso on // 开启tso
+TCP协议结构 source port destination port:源端口和目标端口，注意不包括IP是因为这是上一层IP层的事情，这一层（传输层）只负责找到对应的端口，即应用程序。 sequence number：用来标记包的顺序。一个TCP包最多能传1460字节，对于超出的包，需要分片，为了保证对端收到的包是顺序完整的，需要通过seq num来重新组装数据包。值是本报文段所发送的数据的第一个字节的序号。 acknowledgment number：由于tcp是可靠的传输，发送端需要确认对端是否收到包，所以需要ack num来确认，如果没有收到，则会启动重传机制。ack num是期望收到对方的下一个报文段的数据的第一个字节的序号 header：由于tcp header有可选字段，所以长度不定。所以需要这个值作为offset来表示tcp头有多大。 reserved：保留字段，应填为0."><meta itemprop="datePublished" content="2018-03-24T00:00:00+00:00" />
+<meta itemprop="dateModified" content="2018-03-24T00:00:00+00:00" />
+<meta itemprop="wordCount" content="200">
+<meta itemprop="keywords" content="tcp,笔记," /><meta property="og:title" content="一些TCP基础笔记" />
+<meta property="og:description" content="本文主要是看书看文章时做的笔记，记录一些TCP相关的基本概念。引用文章来自补充阅读，点击可到原文链接。
+概念 MTU：maximum transmission unit最大传输单元 每种网络都不一样，以太网是1500。最小46字节。当数据块大于MTU时，将在发送端IP层进行分片，接收端IP层进行重组。IP分组在网络中传输中出现丢包时，由于IP层没有重传机制，TCP将重传整个报文段而不是丢失的IP分组
+PS: 以太网最小数据帧长度为，最小64字节，其中6字节目的地址 、字节6源地址、2字节类型、46字节数据、4字节校验和.
+MSS：maximum segment size最大分段大小 MSS是TCP数据包每次能够传输的最大数据分段。为了达到最佳的传输效能TCP协议在建立连接的时候通常要协商双方的MSS值，这个值TCP协议在实现的时候往往用MTU值代替（需要减去IP数据包包头的大小20Bytes和TCP数据段的包头20Bytes）所以往往MSS为1460。通讯双方会根据双方提供的MSS值得最小值确定为这次连接的最大MSS值。
+MSL：Maximum Segment Lifetime报文最大生存时间 报文在网络上存在的最长时间，超过这个时间报文将被丢弃。在RFC793指出MSL为2分钟，实际应用中常用的是30秒（linux），1分钟和2分钟等。
+TTL：Time To Live生存时间 生存时间是由源主机设置初始值但不是存的具体时间，而是存储了一个ip数据报可以经过的最大路由数，每经过一个处理他的路由器此值就减1，当此值为0则数据报将被丢弃，同时发送ICMP报文通知源主机。
+RTT：round-trip time客户到服务器往返所花时间 RTT由三部分组成：链路的传播时间（propagation delay）、末端系统的处理时间、 路由器缓存中的排队和处理时间（queuing delay）。 其中，前两个部分的值对于一个TCP连接相对固定，路由器缓存中的排队和处理时间会随着整个网络拥塞程度 的变化而变化。所以RTT的变化在一定程度上反应了网络的拥塞程度。
+RTO：Retransmission TimeOut重传超时时间 重传机制依赖于RTT（Round Trip Time）的测量，从而计算RTO（Retransmission Timeout）。
+TSO：TCP Segment Offload 是一种利用网卡的处理能力，降低CPU发送数据包负载的技术。对于支持TSO的网卡，TCP协议栈在封包的时候会逐渐尝试增大MSS，网卡接收到TCP向下递交的数据后，按照MTU进行分片、复制TCP头且重新计算校验和，这样在网卡上完成了对大块数据的TCP分段，缓解了CPU的计算压力。
+查看是否开启TSO
+sudo ethtool -k eth0 关闭和打开TSO
+$ sudo ethtool -K eth0 tso off // 关闭tso
+$ sudo ethtool -K eth0 tso on // 开启tso
+TCP协议结构 source port destination port:源端口和目标端口，注意不包括IP是因为这是上一层IP层的事情，这一层（传输层）只负责找到对应的端口，即应用程序。 sequence number：用来标记包的顺序。一个TCP包最多能传1460字节，对于超出的包，需要分片，为了保证对端收到的包是顺序完整的，需要通过seq num来重新组装数据包。值是本报文段所发送的数据的第一个字节的序号。 acknowledgment number：由于tcp是可靠的传输，发送端需要确认对端是否收到包，所以需要ack num来确认，如果没有收到，则会启动重传机制。ack num是期望收到对方的下一个报文段的数据的第一个字节的序号 header：由于tcp header有可选字段，所以长度不定。所以需要这个值作为offset来表示tcp头有多大。 reserved：保留字段，应填为0." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://zhiqli.github.io/2018/03/%E4%B8%80%E4%BA%9Btcp%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2018-03-24T00:00:00+00:00" />
+<meta property="article:modified_time" content="2018-03-24T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="一些TCP基础笔记"/>
+<meta name="twitter:description" content="本文主要是看书看文章时做的笔记，记录一些TCP相关的基本概念。引用文章来自补充阅读，点击可到原文链接。
+概念 MTU：maximum transmission unit最大传输单元 每种网络都不一样，以太网是1500。最小46字节。当数据块大于MTU时，将在发送端IP层进行分片，接收端IP层进行重组。IP分组在网络中传输中出现丢包时，由于IP层没有重传机制，TCP将重传整个报文段而不是丢失的IP分组
+PS: 以太网最小数据帧长度为，最小64字节，其中6字节目的地址 、字节6源地址、2字节类型、46字节数据、4字节校验和.
+MSS：maximum segment size最大分段大小 MSS是TCP数据包每次能够传输的最大数据分段。为了达到最佳的传输效能TCP协议在建立连接的时候通常要协商双方的MSS值，这个值TCP协议在实现的时候往往用MTU值代替（需要减去IP数据包包头的大小20Bytes和TCP数据段的包头20Bytes）所以往往MSS为1460。通讯双方会根据双方提供的MSS值得最小值确定为这次连接的最大MSS值。
+MSL：Maximum Segment Lifetime报文最大生存时间 报文在网络上存在的最长时间，超过这个时间报文将被丢弃。在RFC793指出MSL为2分钟，实际应用中常用的是30秒（linux），1分钟和2分钟等。
+TTL：Time To Live生存时间 生存时间是由源主机设置初始值但不是存的具体时间，而是存储了一个ip数据报可以经过的最大路由数，每经过一个处理他的路由器此值就减1，当此值为0则数据报将被丢弃，同时发送ICMP报文通知源主机。
+RTT：round-trip time客户到服务器往返所花时间 RTT由三部分组成：链路的传播时间（propagation delay）、末端系统的处理时间、 路由器缓存中的排队和处理时间（queuing delay）。 其中，前两个部分的值对于一个TCP连接相对固定，路由器缓存中的排队和处理时间会随着整个网络拥塞程度 的变化而变化。所以RTT的变化在一定程度上反应了网络的拥塞程度。
+RTO：Retransmission TimeOut重传超时时间 重传机制依赖于RTT（Round Trip Time）的测量，从而计算RTO（Retransmission Timeout）。
+TSO：TCP Segment Offload 是一种利用网卡的处理能力，降低CPU发送数据包负载的技术。对于支持TSO的网卡，TCP协议栈在封包的时候会逐渐尝试增大MSS，网卡接收到TCP向下递交的数据后，按照MTU进行分片、复制TCP头且重新计算校验和，这样在网卡上完成了对大块数据的TCP分段，缓解了CPU的计算压力。
+查看是否开启TSO
+sudo ethtool -k eth0 关闭和打开TSO
+$ sudo ethtool -K eth0 tso off // 关闭tso
+$ sudo ethtool -K eth0 tso on // 开启tso
+TCP协议结构 source port destination port:源端口和目标端口，注意不包括IP是因为这是上一层IP层的事情，这一层（传输层）只负责找到对应的端口，即应用程序。 sequence number：用来标记包的顺序。一个TCP包最多能传1460字节，对于超出的包，需要分片，为了保证对端收到的包是顺序完整的，需要通过seq num来重新组装数据包。值是本报文段所发送的数据的第一个字节的序号。 acknowledgment number：由于tcp是可靠的传输，发送端需要确认对端是否收到包，所以需要ack num来确认，如果没有收到，则会启动重传机制。ack num是期望收到对方的下一个报文段的数据的第一个字节的序号 header：由于tcp header有可选字段，所以长度不定。所以需要这个值作为offset来表示tcp头有多大。 reserved：保留字段，应填为0."/>
+<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+
+	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	
+		<script src="https://zhiqli.github.io/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+		<div class="avatar">
+			<a href="https://zhiqli.github.io/">
+				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
+			</a>
+		</div>
+	
+	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/weekly">Weekly</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="meta">
+        <div class="date">
+            <span class="day">24</span>
+            <span class="rest">Mar 2018</span>
+        </div>
+    </div>
+    
+    <div class="matter">
+        <h1 class="title">一些TCP基础笔记</h1>
+    </div>
+</div>
+
+
+    
+    
+    <blockquote>
+<p>本文主要是看书看文章时做的笔记，记录一些TCP相关的基本概念。引用文章来自补充阅读，点击可到原文链接。</p>
+</blockquote>
+<h2 id="概念">概念</h2>
+<h3 id="mtumaximum-transmission-unit最大传输单元">MTU：maximum transmission unit最大传输单元</h3>
+<blockquote>
+<p>每种网络都不一样，以太网是1500。最小46字节。当数据块大于MTU时，将在发送端IP层进行分片，接收端IP层进行重组。IP分组在网络中传输中出现丢包时，由于IP层没有重传机制，TCP将重传整个报文段而不是丢失的IP分组</p>
+<p>PS: 以太网最小数据帧长度为，最小64字节，其中6字节目的地址 、字节6源地址、2字节类型、46字节数据、4字节校验和.</p>
+</blockquote>
+<h3 id="mssmaximum-segment-size最大分段大小">MSS：maximum segment size最大分段大小</h3>
+<blockquote>
+<p>MSS是TCP数据包每次能够传输的最大数据分段。为了达到最佳的传输效能TCP协议在建立连接的时候通常要协商双方的MSS值，这个值TCP协议在实现的时候往往用MTU值代替（需要减去IP数据包包头的大小20Bytes和TCP数据段的包头20Bytes）所以往往MSS为1460。通讯双方会根据双方提供的MSS值得最小值确定为这次连接的最大MSS值。</p>
+</blockquote>
+<h3 id="mslmaximum-segment-lifetime报文最大生存时间">MSL：Maximum Segment Lifetime报文最大生存时间</h3>
+<blockquote>
+<p>报文在网络上存在的最长时间，超过这个时间报文将被丢弃。在RFC793指出MSL为2分钟，实际应用中常用的是30秒（linux），1分钟和2分钟等。</p>
+</blockquote>
+<h3 id="ttltime-to-live生存时间">TTL：Time To Live生存时间</h3>
+<blockquote>
+<p>生存时间是由源主机设置初始值但不是存的具体时间，而是存储了一个ip数据报可以经过的最大路由数，每经过一个处理他的路由器此值就减1，当此值为0则数据报将被丢弃，同时发送ICMP报文通知源主机。</p>
+</blockquote>
+<h3 id="rttround-trip-time客户到服务器往返所花时间">RTT：round-trip time客户到服务器往返所花时间</h3>
+<blockquote>
+<p>RTT由三部分组成：链路的传播时间（propagation delay）、末端系统的处理时间、
+路由器缓存中的排队和处理时间（queuing delay）。
+其中，前两个部分的值对于一个TCP连接相对固定，路由器缓存中的排队和处理时间会随着整个网络拥塞程度
+的变化而变化。所以RTT的变化在一定程度上反应了网络的拥塞程度。</p>
+</blockquote>
+<h3 id="rtoretransmission-timeout重传超时时间">RTO：Retransmission TimeOut重传超时时间</h3>
+<blockquote>
+<p>重传机制依赖于RTT（Round Trip Time）的测量，从而计算RTO（Retransmission Timeout）。</p>
+</blockquote>
+<h3 id="tsotcp-segment-offload">TSO：TCP Segment Offload</h3>
+<blockquote>
+<p>是一种利用网卡的处理能力，降低CPU发送数据包负载的技术。对于支持TSO的网卡，TCP协议栈在封包的时候会逐渐尝试增大MSS，网卡接收到TCP向下递交的数据后，按照MTU进行分片、复制TCP头且重新计算校验和，这样在网卡上完成了对大块数据的TCP分段，缓解了CPU的计算压力。</p>
+<p>查看是否开启TSO</p>
+<ul>
+<li>sudo ethtool -k eth0</li>
+</ul>
+<p>关闭和打开TSO</p>
+<ul>
+<li>
+<p>$ sudo ethtool -K eth0 tso off  // 关闭tso</p>
+</li>
+<li>
+<p>$ sudo ethtool -K eth0 tso on  // 开启tso</p>
+</li>
+</ul>
+</blockquote>
+<h2 id="tcp协议结构">TCP协议结构</h2>
+<p>
+  <img src="http://oe47lzt6v.bkt.clouddn.com/E9D00D24-A026-4C1D-BAF8-7A31D1CADF60.png" alt="Alt text">
+
+</p>
+<ul>
+<li>source port destination port:源端口和目标端口，注意不包括IP是因为这是上一层IP层的事情，这一层（传输层）只负责找到对应的端口，即应用程序。</li>
+<li>sequence number：用来标记包的顺序。一个TCP包最多能传1460字节，对于超出的包，需要分片，为了保证对端收到的包是顺序完整的，需要通过seq num来重新组装数据包。值是本报文段所发送的数据的第一个字节的序号。</li>
+<li>acknowledgment number：由于tcp是可靠的传输，发送端需要确认对端是否收到包，所以需要ack num来确认，如果没有收到，则会启动重传机制。ack num是期望收到对方的下一个报文段的数据的第一个字节的序号</li>
+<li>header：由于tcp header有可选字段，所以长度不定。所以需要这个值作为offset来表示tcp头有多大。</li>
+<li>reserved：保留字段，应填为0.</li>
+<li>Tag位：</li>
+<li>URG：为1表示有应急指针</li>
+<li>ACK：除SYN包外都为1，确认应答字段有效</li>
+<li>PSH：为1表明将接受的数据立即传给上层协议，0则先进行缓存</li>
+<li>RST：为1表示强制断开连接要求对方重置连接</li>
+<li>SYN：为1表示建立连接，发送方向对方发送建立连接的请求</li>
+<li>FIN：为1表示结束连接，告知对方要中断连接</li>
+<li>Window：滑动窗口值，告知对端，当前能接收的最大字节数，进行流量控制</li>
+<li>CheckSum：校验和，由发送端填充，接收端对TCP报文段执行CRC算法以检验TCP报文段在传输过程中是否被篡改。注意，这个校验不仅包括TCP头部，也包括数据部分。</li>
+<li>Urgent Pointer：紧急数据指针，紧急数据指的是发送端告诉接收端，这个数据是非常紧急的，请优先读取，多用于中断。</li>
+<li>Options：扩展使用，不定长，但最长不超过40字节</li>
+</ul>
+<h3 id="可靠性">可靠性</h3>
+<blockquote>
+<p>TCP被称为可靠的传输协议，所谓的可靠其实是相对UDP的不可靠而言。不是保证数据一定被对方接收。而是提供数据的可靠传递以及故障的可靠通知。</p>
+<p>从TCP头中的几个字段来解释为什么TCP是可靠的。</p>
+</blockquote>
+<ol>
+<li>seq num:确保接收端收到的报文有序，并检测丢失分组和冗余分组</li>
+<li>ack num:确保接收端正确收到分组，以及期望下一个分组</li>
+<li>checksum:校验数据是否篡改</li>
+<li>window:流量控制解决接收端处理数据不及时导致接收缓冲区被填满后丢失数据</li>
+</ol>
+<h3 id="数据在各网络层的封装">数据在各网络层的封装</h3>
+<p>
+  <img src="http://ww2.sinaimg.cn/large/801b780agw1f8802jqi3ej20da0ap0tk.jpg" alt="Alt text">
+
+</p>
+<p>补充阅读</p>
+<blockquote>
+<p><a href="http://www.tuicool.com/articles/Fr6BVb">理解sequence number acknowledgment nuber</a></p>
+</blockquote>
+<p><a href="http://www.cnblogs.com/yjf512/p/5909031.html">漫谈TCP</a></p>
+<h2 id="三次握手四次挥手">三次握手、四次挥手</h2>
+<p>
+  <img src="http://ww3.sinaimg.cn/large/801b780agw1f886036ghbj214i194ahm.jpg" alt="Alt text">
+
+
+
+  <img src="http://ww4.sinaimg.cn/large/801b780agw1f885y0lehnj20ae0enwfm.jpg" alt="Alt text">
+
+</p>
+<p>上面两个图来从不同的角度来看TCP的状态转换。上图来自经典的unp，比较完整的表述了状态转换，下图来自网上，则通过三次握手四次挥手客户端与服务端状态的变化来表述。</p>
+<h3 id="三次握手">三次握手</h3>
+<ul>
+<li>LISTEN:服务端bind端口以后对端口进行listen，进入accept等待连接的到来，服务端的状态进入LISTEN。</li>
+<li><code>SYN_SENT</code>:客户端调用connect发起TCP请求，等待对端返回ACK，进入<code>SYN_SENT</code>。</li>
+<li><code>SYN_RECV</code>:服务端收到SYN，返回SYN+ACK，等待对端返回ACK，进入<code>SYN_RECV</code>。</li>
+<li>ESTABLISHED：客户端发送完ACK，认为连接建立进入此状态，这时候其实并不确定服务端是收到ACK的，如果服务端没收到ACK，会重传SYN+ACK，客户端收到以后重传ACK。服务端接收到ACK以后，进入ESTABLISHED状态。</li>
+</ul>
+<h3 id="四次挥手">四次挥手</h3>
+<p>与TCP连接不一样的，断开的时候需要四次挥手。
+从上面的状态转移图可以看出，四次挥手要比三次握手复杂。</p>
+<ul>
+<li><code>FIN_WAIT_1</code>:主动断开端（图中画的是客户端，也可以是服务端）发送FIN，并等待对端ACK。实际中此状态很难观察到，因为对端会非常快回复ACK，所以肉眼很难观察到。但是看网上也有一些情况下会有大量<code>FIN_WAIT_1</code>。</li>
+<li><code>CLOSE_WAIT</code>:被动断开端收到FIN，回复ACK，等待本机应用断开连接。如果本机在忙于读或写，或者代码处理有误，没有关闭连接。就会出现大量的<code>CLOSE_WAIT</code>。</li>
+<li><code>FIN_WAIT_2</code>:主动断开端收到ACK，等待对方发送FIN。FIN_WAIT_2状态下的SOCKET，表示半连接，也即有一方要求close连接，但另外还告诉对方，我暂时还有点数据需要传送给你，稍后再关闭连接。如果对方一直不发送FIN，则会一直停留在<code>FIN_WAIT_2</code>。</li>
+<li><code>LAST_ACK</code>:被动断开端发送FIN，等待对方ACK。</li>
+<li><code>TIME_WAIT</code>:主动断开端收到FIN，响应ACK，等待2MSL。这是为了防止最后一个ACK可能被丢失了，那么在2MSL中如果收到对方重复发送的FIN包，就需要重新发送ACK来关闭连接。TCP的这种行为，我们可以看作是一种负责任的行为，主动请求关闭的一方在很大程度上确保了对方收到断开确认请求之后才关闭这个连接的。如果在大并发的短链接下，TIME_WAIT就会太多，这也会消耗很多系统资源。解决办法，可以对系统参数调优解决，另外服务端不主动断开是个好主意，如果是HTTP服务器，设置connection:keep-alive，让客户端去主动断开。参考
+<a href="http://coolshell.cn/articles/11564.html">TCP的那些事儿</a>，</li>
+<li>CLOSING:这是比较特殊的状态，在两端同时关闭的时候出现，当连接双方的应用同时执行close操作时，将导致双方进入<code>FIN_WAIT_1</code>状态，当双方各自收到对段发送的FIN后，状态变迁为CLOSING，且发送最后的ACK。当收到最后的ACK后，状态变化为<code>TIME_WAIT</code>。分别等待2MSL，关闭到CLOSED</li>
+</ul>
+<h3 id="2msl">2MSL</h3>
+<blockquote>
+<p>2MSL是为了确保有足够的时间让对端收到了ACK，如果被动关闭的那方没有收到Ack，就会触发被动端重发Fin，一来一去正好2个MSL。</p>
+<p>由于2MSL的存在，在TIME_WAIT状态下该连接涉及的客户端和服务端端口不能被使用，为了绕过此限制的方法：SO_REUSEADDR（详细介绍见后续章节）。通过设置此值，TCP服务器能够快速成功重启；对于多网卡客户端，在对长连接服务器压力测试时，通过设置此值绑定相同端口到多个网卡提高单机QPS。</p>
+</blockquote>
+<h3 id="为什么是三次握手">为什么是三次握手</h3>
+<blockquote>
+<p>三次握手为了防止已失效的连接请求报文段突然又传送到了服务端，因而产生错误。比如client发送了一个请求，但是在网络上超时了，因此又发送了一个同样的请求，server收到以后给予回复。但是此时刚才无效的请求又过来了，服务端再次回复了，这就造成了错误。</p>
+</blockquote>
+<h3 id="为什么是四次挥手">为什么是四次挥手</h3>
+<blockquote>
+<p>为了确保数据能完整的传输。关闭连接时，收到对方FIN报文，表示对方数据发送完了，并不表示接收端所有的数据都发送完了，所以未必会立马关闭SOCKET，可以在发送完数据后，再发送FIN报文给对方表示现在可以关闭连接了。所以在这里ACK和FIN是分开发送的。</p>
+<p>另一种解释：这是因为TCP的半关闭特性导致的。所谓的半关闭，是指TCP提供了连接的一端在结束它的数据发送后仍能接收来自对端数据的能力。半关闭也可以理解为主动关闭方完成了写数据操作，但仍可以进行读操作。这也是TCP被称为全双工协议的原因。为了实现此特性，TCP实现中提供了一个shutdown函数。虽然存在半关闭特性，但实际的应用中却很少使用，基本上都是简单粗暴的通过调用close函数来结束两个方向上的连接，而不是shutdown。</p>
+</blockquote>
+<p>补充阅读</p>
+<blockquote>
+<p><a href="http://www.cnblogs.com/sunxucool/p/3449068.html">TIME_WAIT和CLOSE_WAIT</a></p>
+<p><a href="http://www.cnblogs.com/yjf512/p/5909031.html">漫谈TCP</a></p>
+<p><a href="http://coolshell.cn/articles/11564.html">TCP的那些事儿</a></p>
+</blockquote>
+<h2 id="重传与拥塞">重传与拥塞</h2>
+<h3 id="重传机制">重传机制</h3>
+<p>重传是可靠性的保证，是发送端感知到网络出现丢包，主动发起重传。发送端是如何感知的呢？用户主动确认＋超时机制，接收端通过ack来告知发送端前面的ack-1个字节已经被接收，未被确认的报文在超时后进行重传。</p>
+<p>重传机制依赖于RTT（Round Trip Time）的测量，从而计算RTO（Retransmission Timeout）。</p>
+<p>先假设一个场景，发送端发了1,2,3,4,5一共五份数据，接收端收到了1，2，于是回ack 3，然后收到了4（注意此时3没收到），此时的TCP会怎么办？我们要知道，因为<strong>SeqNum和Ack是以字节数为单位，所以ack的时候，不能跳着确认</strong>，只能确认最大的连续收到的包，不然，发送端就以为之前的都收到了。</p>
+<h4 id="超时重传">超时重传</h4>
+<blockquote>
+<p>请求包发出去的时候，开启一个计时器，当计时器达到时间(RTO)之后，没有收到ACK,则就进行重发请求的操作，一直重发直到达到重发上限次数或者收到ACK。</p>
+<p>超时重传也有两种选择</p>
+</blockquote>
+<ul>
+<li>一种是仅重传timeout的包。</li>
+<li>重传timeout后所有的数据</li>
+</ul>
+<h4 id="快速重传机制">快速重传机制</h4>
+<blockquote>
+<p>当接收方收到的数据包是不正常的序列号，那么接收方会重复把应该收到的那一条ACK重复发送，这个时候，如果发送方收到连续3条的同一个序列号的ACK，那么就会启动快速重传机制，不需要等到timeout，把这个ACK对应的发送包重新发送一次。
+
+  <img src="http://ww3.sinaimg.cn/large/801b780agw1f8ajemc2wjj20ci083wet.jpg" alt="Alt text">
+
+
+发送方发出了1，2，3，4，5份数据，第一份先到送了，于是就ack回2，结果2因为某些原因没收到，3到达了，于是还是ack回2，后面的4和5都到了，但是还是ack回2，因为2还是没有收到，于是发送端收到了三个ack=2的确认，知道了2还没有到，于是就马上重转2。然后，接收端收到了2，此时因为3，4，5都收到了，于是ack回6。</p>
+</blockquote>
+<h3 id="滑动窗口">滑动窗口</h3>
+<p>TCP滑动窗口主要是提供TCP的流控特性，解决接收端处理数据不及时导致接收缓冲区被填满后丢失数据的问题。
+TCP头中的window字段，是接收端告诉发送端自己还有多少缓冲区可以接收数据。于是发送端就可以根据这个接收端的处理能力来发送数据，而不会导致接收端处理不过来。
+
+  <img src="http://ww4.sinaimg.cn/large/006y8lVagw1f8d3db29swj30ii0n8adu.jpg" alt="Alt text">
+
+</p>
+<p>从上图中看出，把发送数据横拍做长列状，发送方一但有数据收到ACK，那么滑动窗口左侧边就进行左移。同样，一旦接收方有数据被应用层消费，那么，滑动窗口的右侧边就进行右移。</p>
+<ul>
+<li>发送窗口及发送方数据状态</li>
+</ul>
+<blockquote>
+</blockquote>
+<ol>
+<li>已发送并得到对方ACK；</li>
+<li>已发送未收到ACK；</li>
+<li>未发送但对方允许发送；</li>
+<li>未发送，对方不允许发送。</li>
+</ol>
+<blockquote>
+<p>其中已发送未收到ACK和未发送但对方允许发送的数据称为<strong>发送窗口</strong></p>
+</blockquote>
+<ul>
+<li>接收窗口接收方数据状态</li>
+</ul>
+<blockquote>
+</blockquote>
+<ol>
+<li>已接收；</li>
+<li>未接收，准备接收；</li>
+<li>未接收，并不准备接收。</li>
+</ol>
+<blockquote>
+<p>其中未接收，准备接收的数据称为<strong>接收窗口</strong></p>
+</blockquote>
+<p>一旦滑动窗口大小缩小为0，发送端将停止发送数据，等待接收端新接收窗口值（大于0）的到来以移动滑动窗口的右边沿。上述滑动窗口机制自然能抑制发送端的发包速率，但同时引入了糊涂窗口综合症。</p>
+<p>糊涂窗口综合症（Silly Window Syndrome）是指接收方通告一个较小的窗口，而发送方发送少量的数据的现象。要解决这个问题也不难，就是避免对小的window size做出响应，直到有足够大的window size再响应。</p>
+<h3 id="拥塞处理">拥塞处理</h3>
+<p>如果网络不佳的情况下，接收端可能会因为网络包拥塞而无法接收到，而根据重传的特性发送端会在RTO时间后重传数据，这样更加加剧数据拥塞。解决办法有慢启动、拥塞避免、快速重传与快速恢复</p>
+<p>发送方维护了两个窗口：拥塞窗口和滑动窗口。两者都是试图对发送窗口大小进行控制的，自然发送窗口大小=min{滑动窗口大小，拥塞窗口大小}。当无网络拥塞发生时，滑动窗口大小一般小于拥塞窗口大小。</p>
+<h4 id="慢启动">慢启动</h4>
+<blockquote>
+<p>慢启动的意思是，刚刚加入网络的连接，一点一点地提速，其实并不慢，拥塞窗口大小呈指数上升。</p>
+</blockquote>
+<h4 id="拥塞避免算法">拥塞避免算法</h4>
+<blockquote>
+<p>慢启动使得cwnd是呈指数增长。一定不可能是无限增长的，这里就有个阀值，超过这个阀值，就进入拥塞避免算法。
+拥塞避免算法说的是拥塞窗口的增加不再是“每收到一个ACK，拥塞窗口就增加一个报文段”。 而是“每收到一个ACK，cwnd = cwnd + 1/cwnd”</p>
+</blockquote>
+<h4 id="判断拥塞">判断拥塞</h4>
+<ol>
+<li>超时重传</li>
+</ol>
+<blockquote>
+<p>发出去一个包，超时定时器就开始计时，当超时定时器到时间之后，没有收到ACK，那么这个时候就判断为拥堵了,需要进行重传。TCP会直接把cwnd调整为1，sshthread 调整为cwnd/2，重新进入到慢启动流程。</p>
+</blockquote>
+<ol start="2">
+<li>快速重传</li>
+</ol>
+<blockquote>
+<p>比如5个请求，但是第2个请求丢失了，第1、3、4、5请求到了接收端，3、4、5请求触发了三个ACK返回，但是由于接收端没有收到请求1，返回的三个ACK都是ACK1的，所以发送方就表现为收到重复ACK。，当连续收到三条重复ACK的时候就进行重传，不需要等待重传计时器。这个时候TCP会觉得网络还是可以的，反应不会那么激烈，cwnd调整为cwnd/2, sshthresh调整为cwnd大小，进入快速恢复算法。</p>
+</blockquote>
+<h4 id="快速恢复">快速恢复</h4>
+<blockquote>
+<p>快速恢复算法是为了不要有一个重传就那么大响应。能尽快恢复到网络流畅时候稳定的状态。</p>
+</blockquote>
+<p>补充阅读</p>
+<blockquote>
+<p><a href="http://www.cnblogs.com/yjf512/p/5680689.html">TCP的阻塞和重传机制</a></p>
+<p><a href="http://coolshell.cn/articles/11564.html">TCP的那些事儿（上）</a></p>
+<p><a href="http://coolshell.cn/articles/11609.html">TCP的那些事儿（下）</a></p>
+<p><a href="http://www.cnblogs.com/yjf512/p/5909031.html">漫谈TCP</a></p>
+</blockquote>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/tcp">tcp</a>
+        </li>
+        
+        
+        <li class="tag-li"><a href="/tags/%E7%AC%94%E8%AE%B0">笔记</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2018-07-31-tcp-note.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>2018  © Copyright zhiqli </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

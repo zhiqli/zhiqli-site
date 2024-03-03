@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>go 1.14.1 timer bug - Ink-Free</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="go 1.14.1 timer bug">
+<meta itemprop="description" content="go 1.14.1 的timer 包存在bug，会导致服务hang死，问题发生在两年前，而go目前的版本也已经迭代到1.22，还是整理出来以记录当时定位问题的思路。
+问题描述 有个服务在压测时发现多容器压测，每次必有一台容器出现CPU跑满的现象。
+定位 尝试进入该容器使用 pprof 抓火焰图进行分析，但进入容器后却发现 pprof 监听的端口根本连不上，只能另想办法。使用 delve 来试试。 首先执行 top 找到 cpu 跑满的线程。
+容器设置是4 core，这里看到也是前面4个线程占满了所有CPU。 接着执行 dlv attach &lt;PID&gt; 进入线程，看到以下信息
+这里看到看起来与redis相关，刚好这次修改有一处redis连接处的变更，猜测与此有关于是回退这个变更再次压测，很遗憾，很快问题又出现了。 继续进入上图中的goroutine，看到下图
+这里漏了一个关键的堆栈，因为总结时现场已经破坏，正是通过这个堆栈在github找到这个issue，堆栈内容与issue中描述相同，可以参考issue。
+为了验证是否因为这个timer 的bug导致，将go升级为14.2，再次压测，问题没有重现，基本上可以确定解决。
+原因分析 简单来说就是
+go 1.14对timer重新设计，将timer挂在P上的一个小根堆上，每一次调度会去查看是否有到期的timer，即调用runtimer这个方法，如果有则执行。 另外timer中还有一个状态机，如果要修改timer的状态会先将状态置为modifying状态。在runtimer这个函数中如果状态为modifying会调用runtime.osyield() 自旋等待，直到timer的modifying状态解除。 而modifying状态正是这个线程自己设置的，所以永远都等不到了，进入死锁。 如何解决 对于我们服务来说，直接升级go版本即可，现在我们团队在选择go版本的时候有一个原则，Golang社区发布的倒数第二个大版本的最后一个小版本。 比如当前已发布go 1.22.x，那么应该选择1.21.7。
+go 社区解决方案在这个issue中说得很清楚。从修复diff来看，在修改timer状态的时候加了一个锁。
+附 golang 基于 netpoll 优化 timer 定时器实现原理 ">
+
+<meta itemprop="wordCount" content="51">
+<meta itemprop="keywords" content="Go," /><meta property="og:title" content="go 1.14.1 timer bug" />
+<meta property="og:description" content="go 1.14.1 的timer 包存在bug，会导致服务hang死，问题发生在两年前，而go目前的版本也已经迭代到1.22，还是整理出来以记录当时定位问题的思路。
+问题描述 有个服务在压测时发现多容器压测，每次必有一台容器出现CPU跑满的现象。
+定位 尝试进入该容器使用 pprof 抓火焰图进行分析，但进入容器后却发现 pprof 监听的端口根本连不上，只能另想办法。使用 delve 来试试。 首先执行 top 找到 cpu 跑满的线程。
+容器设置是4 core，这里看到也是前面4个线程占满了所有CPU。 接着执行 dlv attach &lt;PID&gt; 进入线程，看到以下信息
+这里看到看起来与redis相关，刚好这次修改有一处redis连接处的变更，猜测与此有关于是回退这个变更再次压测，很遗憾，很快问题又出现了。 继续进入上图中的goroutine，看到下图
+这里漏了一个关键的堆栈，因为总结时现场已经破坏，正是通过这个堆栈在github找到这个issue，堆栈内容与issue中描述相同，可以参考issue。
+为了验证是否因为这个timer 的bug导致，将go升级为14.2，再次压测，问题没有重现，基本上可以确定解决。
+原因分析 简单来说就是
+go 1.14对timer重新设计，将timer挂在P上的一个小根堆上，每一次调度会去查看是否有到期的timer，即调用runtimer这个方法，如果有则执行。 另外timer中还有一个状态机，如果要修改timer的状态会先将状态置为modifying状态。在runtimer这个函数中如果状态为modifying会调用runtime.osyield() 自旋等待，直到timer的modifying状态解除。 而modifying状态正是这个线程自己设置的，所以永远都等不到了，进入死锁。 如何解决 对于我们服务来说，直接升级go版本即可，现在我们团队在选择go版本的时候有一个原则，Golang社区发布的倒数第二个大版本的最后一个小版本。 比如当前已发布go 1.22.x，那么应该选择1.21.7。
+go 社区解决方案在这个issue中说得很清楚。从修复diff来看，在修改timer状态的时候加了一个锁。
+附 golang 基于 netpoll 优化 timer 定时器实现原理 " />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/1/01/go-1.14.1-timer-bug/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="go 1.14.1 timer bug"/>
+<meta name="twitter:description" content="go 1.14.1 的timer 包存在bug，会导致服务hang死，问题发生在两年前，而go目前的版本也已经迭代到1.22，还是整理出来以记录当时定位问题的思路。
+问题描述 有个服务在压测时发现多容器压测，每次必有一台容器出现CPU跑满的现象。
+定位 尝试进入该容器使用 pprof 抓火焰图进行分析，但进入容器后却发现 pprof 监听的端口根本连不上，只能另想办法。使用 delve 来试试。 首先执行 top 找到 cpu 跑满的线程。
+容器设置是4 core，这里看到也是前面4个线程占满了所有CPU。 接着执行 dlv attach &lt;PID&gt; 进入线程，看到以下信息
+这里看到看起来与redis相关，刚好这次修改有一处redis连接处的变更，猜测与此有关于是回退这个变更再次压测，很遗憾，很快问题又出现了。 继续进入上图中的goroutine，看到下图
+这里漏了一个关键的堆栈，因为总结时现场已经破坏，正是通过这个堆栈在github找到这个issue，堆栈内容与issue中描述相同，可以参考issue。
+为了验证是否因为这个timer 的bug导致，将go升级为14.2，再次压测，问题没有重现，基本上可以确定解决。
+原因分析 简单来说就是
+go 1.14对timer重新设计，将timer挂在P上的一个小根堆上，每一次调度会去查看是否有到期的timer，即调用runtimer这个方法，如果有则执行。 另外timer中还有一个状态机，如果要修改timer的状态会先将状态置为modifying状态。在runtimer这个函数中如果状态为modifying会调用runtime.osyield() 自旋等待，直到timer的modifying状态解除。 而modifying状态正是这个线程自己设置的，所以永远都等不到了，进入死锁。 如何解决 对于我们服务来说，直接升级go版本即可，现在我们团队在选择go版本的时候有一个原则，Golang社区发布的倒数第二个大版本的最后一个小版本。 比如当前已发布go 1.22.x，那么应该选择1.21.7。
+go 社区解决方案在这个issue中说得很清楚。从修复diff来看，在修改timer状态的时候加了一个锁。
+附 golang 基于 netpoll 优化 timer 定时器实现原理 "/>
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
+
+	<script src="http://localhost:1313/js/feather.min.js"></script>
+	
+		<script src="http://localhost:1313/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+	<h1 class="site-title"><a href="http://localhost:1313/">Ink-Free</a></h1>
+	<div class="site-description"><p>Crisp, minimal, privacy-conscious personal <a href="https://github.com/chollinger93/ink-free">blog theme for Hugo</a></p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/chollinger93/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="matter">
+        <h1 class="title">go 1.14.1 timer bug</h1>
+    </div>
+</div>
+
+
+    
+    
+    <p>go 1.14.1 的timer 包存在bug，会导致服务hang死，问题发生在两年前，而go目前的版本也已经迭代到1.22，还是整理出来以记录当时定位问题的思路。</p>
+<h2 id="问题描述">问题描述</h2>
+<p>有个服务在压测时发现多容器压测，每次必有一台容器出现CPU跑满的现象。</p>
+<p>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020240228145604.png" alt="Pasted image 20240228145604.png">
+
+</p>
+<h2 id="定位">定位</h2>
+<p>尝试进入该容器使用 pprof 抓火焰图进行分析，但进入容器后却发现 pprof 监听的端口根本连不上，只能另想办法。使用 <a href="https://github.com/go-delve/delve">delve</a> 来试试。
+首先执行 <code>top</code> 找到 cpu 跑满的线程。</p>
+<p>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020240228151019.png" alt="Pasted image 20240228151019.png">
+
+</p>
+<p>容器设置是4 core，这里看到也是前面4个线程占满了所有CPU。
+接着执行 <code>dlv attach &lt;PID&gt;</code> 进入线程，看到以下信息</p>
+<p>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020240228151356.png" alt="Pasted image 20240228151356.png">
+
+</p>
+<p>这里看到看起来与redis相关，刚好这次修改有一处redis连接处的变更，猜测与此有关于是回退这个变更再次压测，很遗憾，很快问题又出现了。
+继续进入上图中的goroutine，看到下图</p>
+<p>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020240228151840.png" alt="Pasted image 20240228151840.png">
+
+</p>
+<blockquote>
+<p>这里漏了一个关键的堆栈，因为总结时现场已经破坏，正是通过这个堆栈在github找到这个<a href="https://github.com/golang/go/issues/38023">issue</a>，堆栈内容与issue中描述相同，可以参考issue。</p>
+</blockquote>
+<p>为了验证是否因为这个timer 的bug导致，将go升级为14.2，再次压测，问题没有重现，基本上可以确定解决。</p>
+<h2 id="原因分析">原因分析</h2>
+<p>简单来说就是</p>
+<ul>
+<li>go 1.14对timer重新设计，将timer挂在P上的一个小根堆上，每一次调度会去查看是否有到期的timer，即调用runtimer这个方法，如果有则执行。</li>
+<li>另外timer中还有一个状态机，如果要修改timer的状态会先将状态置为modifying状态。在runtimer这个函数中如果状态为modifying会调用runtime.osyield() 自旋等待，直到timer的modifying状态解除。</li>
+<li>而modifying状态正是这个线程自己设置的，所以永远都等不到了，进入死锁。</li>
+</ul>
+<h2 id="如何解决">如何解决</h2>
+<p>对于我们服务来说，直接升级go版本即可，现在我们团队在选择go版本的时候有一个原则，<strong>Golang社区发布的倒数第二个大版本的最后一个小版本。</strong> 比如当前已发布go 1.22.x，那么应该选择1.21.7。</p>
+<p>go 社区解决方案在这个<a href="https://github.com/golang/go/issues/38070">issue</a>中说得很清楚。从修复<a href="https://github.com/golang/go/commit/b43b463d8fd3b15e9feb5156ff13b51ffa6f4599">diff</a>来看，在修改timer状态的时候加了一个锁。</p>
+<h2 id="附">附</h2>
+<ul>
+<li><a href="https://xiaorui.cc/archives/6483">golang 基于 netpoll 优化 timer 定时器实现原理</a></li>
+</ul>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/chollinger93/ink-free/blob/master/content/posts/2024-02-29-go-1.14.1-timer-bug.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+    
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>1  © Copyright notice </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

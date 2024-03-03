@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>2024-03-03 第九周：把手弄脏 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="2024-03-03 第九周：把手弄脏">
+<meta itemprop="description" content="生活流水账 自从不怎么管大娃学习，换成我带小娃，确实轻松了不少，和两个娃的亲子关系也变好了。 房市大幅度回暖，身边的人又开始讨论房子了？ 又降温了，好冷啊。但下周又回南天，还不如冷一点呢。 最近踢球状态很差，天气回暖，每次五六个队大家玩得认真压迫感很强，越是怕丢球就越丢球，唉，得好好调整。年纪大了护具也不能偷懒，也就一次没带护膝，膝盖已经开始疼了。 换新手机了，说来惭愧，第一次用当年最新款的iPhone，确实丝滑。 阅读 《股票大作手回忆录》 群里炒股的群友们多次聊过的书，因为不炒股，也不太懂书中写的那些做空手法。就觉得很厉害，毕竟赚了那么多钱，但也不知道厉害在哪。作为人物传记来看，确实很传奇。 《Web性能权威指南》 书有点老了，不过内容也不算太过时尤其是前面几章关于TCP/UDP/TLS的内容。作为一个不懂前端的后端，后面几张关于浏览器性能优化的内容收获比较多，当然前端技术变化更快，也许已经过时了，但对我来说也是扩展了视野。 一点想法 纸上得来终觉浅，绝知此事要躬行 ，这两天深得这句话的含义。又在折腾博客，打算采用hugo替换掉原来的jekyII，对比下来感觉hugo更简单，毕竟我完全不懂前端。而且对比评价，hugo因为是编译好的二进制，网页生成速度要快得多。
+看了两篇文章和官方文档，觉得也太简单了。直接 hugo new site 生成，然后 hugo server 跑起来就可以了。
+然而实际操作的时候，却花了我几个小时时间，首先是一个网络问题，虽然我已经开启了科学上网，但在执行的时候还是无法从twitter这个域名成功连接。看到错误的时候当然是考虑从网络方面去解决，来来回回折腾了好久也没解决。后来一想，这些报错页面都是theme中例子的文件，删掉不就好了。果然删掉无用的那些示例 markdown 就好了。
+第二个问题则是部署以后 css 和 js 资源下载失败，导致页面无法正常显示。问题我倒一眼看出来了，虽然我不懂前端，但我也会 F12 进入debug模式查看。
+后面发现是由于配置的baseURL，本应是https错写成http
+所以说，想要学会一门技能，必须先把手弄脏，实践才能出真知。
+好了，现在我的blog可以运行起来了，以后要多多写文章，先从每周周记开始。"><meta itemprop="datePublished" content="2024-03-03T00:00:00+00:00" />
+<meta itemprop="dateModified" content="2024-03-03T00:00:00+00:00" />
+<meta itemprop="wordCount" content="35">
+<meta itemprop="keywords" content="weekly," /><meta property="og:title" content="2024-03-03 第九周：把手弄脏" />
+<meta property="og:description" content="生活流水账 自从不怎么管大娃学习，换成我带小娃，确实轻松了不少，和两个娃的亲子关系也变好了。 房市大幅度回暖，身边的人又开始讨论房子了？ 又降温了，好冷啊。但下周又回南天，还不如冷一点呢。 最近踢球状态很差，天气回暖，每次五六个队大家玩得认真压迫感很强，越是怕丢球就越丢球，唉，得好好调整。年纪大了护具也不能偷懒，也就一次没带护膝，膝盖已经开始疼了。 换新手机了，说来惭愧，第一次用当年最新款的iPhone，确实丝滑。 阅读 《股票大作手回忆录》 群里炒股的群友们多次聊过的书，因为不炒股，也不太懂书中写的那些做空手法。就觉得很厉害，毕竟赚了那么多钱，但也不知道厉害在哪。作为人物传记来看，确实很传奇。 《Web性能权威指南》 书有点老了，不过内容也不算太过时尤其是前面几章关于TCP/UDP/TLS的内容。作为一个不懂前端的后端，后面几张关于浏览器性能优化的内容收获比较多，当然前端技术变化更快，也许已经过时了，但对我来说也是扩展了视野。 一点想法 纸上得来终觉浅，绝知此事要躬行 ，这两天深得这句话的含义。又在折腾博客，打算采用hugo替换掉原来的jekyII，对比下来感觉hugo更简单，毕竟我完全不懂前端。而且对比评价，hugo因为是编译好的二进制，网页生成速度要快得多。
+看了两篇文章和官方文档，觉得也太简单了。直接 hugo new site 生成，然后 hugo server 跑起来就可以了。
+然而实际操作的时候，却花了我几个小时时间，首先是一个网络问题，虽然我已经开启了科学上网，但在执行的时候还是无法从twitter这个域名成功连接。看到错误的时候当然是考虑从网络方面去解决，来来回回折腾了好久也没解决。后来一想，这些报错页面都是theme中例子的文件，删掉不就好了。果然删掉无用的那些示例 markdown 就好了。
+第二个问题则是部署以后 css 和 js 资源下载失败，导致页面无法正常显示。问题我倒一眼看出来了，虽然我不懂前端，但我也会 F12 进入debug模式查看。
+后面发现是由于配置的baseURL，本应是https错写成http
+所以说，想要学会一门技能，必须先把手弄脏，实践才能出真知。
+好了，现在我的blog可以运行起来了，以后要多多写文章，先从每周周记开始。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://zhiqli.github.io/weekly/2024-03-03-w9/" /><meta property="article:section" content="weekly" />
+<meta property="article:published_time" content="2024-03-03T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-03-03T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="2024-03-03 第九周：把手弄脏"/>
+<meta name="twitter:description" content="生活流水账 自从不怎么管大娃学习，换成我带小娃，确实轻松了不少，和两个娃的亲子关系也变好了。 房市大幅度回暖，身边的人又开始讨论房子了？ 又降温了，好冷啊。但下周又回南天，还不如冷一点呢。 最近踢球状态很差，天气回暖，每次五六个队大家玩得认真压迫感很强，越是怕丢球就越丢球，唉，得好好调整。年纪大了护具也不能偷懒，也就一次没带护膝，膝盖已经开始疼了。 换新手机了，说来惭愧，第一次用当年最新款的iPhone，确实丝滑。 阅读 《股票大作手回忆录》 群里炒股的群友们多次聊过的书，因为不炒股，也不太懂书中写的那些做空手法。就觉得很厉害，毕竟赚了那么多钱，但也不知道厉害在哪。作为人物传记来看，确实很传奇。 《Web性能权威指南》 书有点老了，不过内容也不算太过时尤其是前面几章关于TCP/UDP/TLS的内容。作为一个不懂前端的后端，后面几张关于浏览器性能优化的内容收获比较多，当然前端技术变化更快，也许已经过时了，但对我来说也是扩展了视野。 一点想法 纸上得来终觉浅，绝知此事要躬行 ，这两天深得这句话的含义。又在折腾博客，打算采用hugo替换掉原来的jekyII，对比下来感觉hugo更简单，毕竟我完全不懂前端。而且对比评价，hugo因为是编译好的二进制，网页生成速度要快得多。
+看了两篇文章和官方文档，觉得也太简单了。直接 hugo new site 生成，然后 hugo server 跑起来就可以了。
+然而实际操作的时候，却花了我几个小时时间，首先是一个网络问题，虽然我已经开启了科学上网，但在执行的时候还是无法从twitter这个域名成功连接。看到错误的时候当然是考虑从网络方面去解决，来来回回折腾了好久也没解决。后来一想，这些报错页面都是theme中例子的文件，删掉不就好了。果然删掉无用的那些示例 markdown 就好了。
+第二个问题则是部署以后 css 和 js 资源下载失败，导致页面无法正常显示。问题我倒一眼看出来了，虽然我不懂前端，但我也会 F12 进入debug模式查看。
+后面发现是由于配置的baseURL，本应是https错写成http
+所以说，想要学会一门技能，必须先把手弄脏，实践才能出真知。
+好了，现在我的blog可以运行起来了，以后要多多写文章，先从每周周记开始。"/>
+<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+
+	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	
+		<script src="https://zhiqli.github.io/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+		<div class="avatar">
+			<a href="https://zhiqli.github.io/">
+				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
+			</a>
+		</div>
+	
+	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/weekly">Weekly</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="meta">
+        <div class="date">
+            <span class="day">03</span>
+            <span class="rest">Mar 2024</span>
+        </div>
+    </div>
+    
+    <div class="matter">
+        <h1 class="title">2024-03-03 第九周：把手弄脏</h1>
+    </div>
+</div>
+
+
+    
+    
+    <h2 id="生活流水账">生活流水账</h2>
+<ul>
+<li>自从不怎么管大娃学习，换成我带小娃，确实轻松了不少，和两个娃的亲子关系也变好了。</li>
+<li>房市大幅度回暖，身边的人又开始讨论房子了？</li>
+<li>又降温了，好冷啊。但下周又回南天，还不如冷一点呢。</li>
+<li>最近踢球状态很差，天气回暖，每次五六个队大家玩得认真压迫感很强，越是怕丢球就越丢球，唉，得好好调整。年纪大了护具也不能偷懒，也就一次没带护膝，膝盖已经开始疼了。</li>
+<li>换新手机了，说来惭愧，第一次用当年最新款的iPhone，确实丝滑。</li>
+</ul>
+<h2 id="阅读">阅读</h2>
+<ul>
+<li>《<a href="https://book.douban.com/subject/5382213/">股票大作手回忆录</a>》
+<ul>
+<li>群里炒股的群友们多次聊过的书，因为不炒股，也不太懂书中写的那些做空手法。就觉得很厉害，毕竟赚了那么多钱，但也不知道厉害在哪。作为人物传记来看，确实很传奇。</li>
+</ul>
+</li>
+<li>《<a href="https://book.douban.com/subject/25856314/">Web性能权威指南</a>》
+<ul>
+<li>书有点老了，不过内容也不算太过时尤其是前面几章关于TCP/UDP/TLS的内容。作为一个不懂前端的后端，后面几张关于浏览器性能优化的内容收获比较多，当然前端技术变化更快，也许已经过时了，但对我来说也是扩展了视野。</li>
+</ul>
+</li>
+</ul>
+<h2 id="一点想法">一点想法</h2>
+<ul>
+<li>
+<p>纸上得来终觉浅，绝知此事要躬行 ，这两天深得这句话的含义。又在折腾博客，打算采用hugo替换掉原来的jekyII，对比下来感觉hugo更简单，毕竟我完全不懂前端。而且对比评价，hugo因为是编译好的二进制，网页生成速度要快得多。</p>
+</li>
+<li>
+<p>看了两篇文章和官方文档，觉得也太简单了。直接 <code>hugo new site</code> 生成，然后 <code>hugo server</code> 跑起来就可以了。</p>
+</li>
+<li>
+<p>然而实际操作的时候，却花了我几个小时时间，首先是一个网络问题，虽然我已经开启了科学上网，但在执行的时候还是无法从twitter这个域名成功连接。看到错误的时候当然是考虑从网络方面去解决，来来回回折腾了好久也没解决。后来一想，这些报错页面都是theme中例子的文件，删掉不就好了。果然删掉无用的那些示例 markdown 就好了。</p>
+</li>
+<li>
+<p>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020240303141954.png" alt="Pasted image 20240303141954.png">
+
+</p>
+</li>
+<li>
+<p>第二个问题则是部署以后 css 和 js 资源下载失败，导致页面无法正常显示。问题我倒一眼看出来了，虽然我不懂前端，但我也会 F12 进入debug模式查看。</p>
+</li>
+<li>
+<p>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020240302214252.png" alt="Pasted image 20240302214252.png">
+
+</p>
+</li>
+<li>
+<p>后面发现是由于配置的baseURL，本应是https错写成http</p>
+</li>
+<li>
+<p>所以说，想要学会一门技能，必须先把手弄脏，实践才能出真知。</p>
+</li>
+<li>
+<p>好了，现在我的blog可以运行起来了，以后要多多写文章，先从每周周记开始。</p>
+</li>
+</ul>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/weekly">weekly</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/weekly/2024-03-03-W9.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>2024  © Copyright zhiqli </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

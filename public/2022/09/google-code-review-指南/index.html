@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>Google Code review 指南 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="Google Code review 指南">
+<meta itemprop="description" content="Google 拥有许多覆盖所有语言和所有项目的通用工程实践。这些文档是Google长期以来形成的各种最佳做法的集体经验。
+名词解释 Nit: nitpick 意思鸡蛋里挑骨头 CL: changelist LGTM: “Looks Good to Me”. 一般Code reviewer approve 一个CL的时候的回复。 1. Code Reviewer指南 1.1 Code Review的标准 Code review的目的是确保随着时间的推移，代码质量能够保持良好。为了实现这个目标，需要做一些权衡和取舍。
+首先，开发人员必须能够在他们的任务上取得进展。如果您从未向代码库提交改进，那么代码库就永远不会改进。此外，如果reviewer使得任何更改都很难进行，那么开发人员就没有动力在将来进行改进。 另一方面，reviewer有责任确保每个 CL 的质量都没问题，以至于其代码库的总体代码质量不会随着时间的推移而下降。这可能很棘手，因为通常情况下，代码库会随着时间的推移而逐渐退化，特别是当团队受到严重的时间限制，并且他们觉得必须走捷径才能完成目标的时候。
+此外，reviewer对他们正在review的代码拥有所有权和责任。他们希望确保代码库保持一致、可维护等等。
+因此，我们得到以下规则作为我们在codereview中的标准:
+一般来说，即使 CL 并不完美，reviewer也应该支持批准 CL，因为它处于肯定能够改善正在处理的系统的整体代码健康状况的状态。 这是所有代码审查指南中的高级原则。
+当然，这也有局限性。 比如，如果 CL 添加了reviewer不希望在其系统中使用的特性，即使代码设计良好，也是可以拒绝批准的。 这里的一个关键点是，没有所谓的“完美”代码ーー只有更好的代码。reviewer应该要求作者在批准之前解决 CL 的每一个细小部分。相反，reviewer应该平衡取得进展的需要与他们所建议的变更的重要性之间的关系。与其追求完美，reviewer应该追求的是持续的改进。作为一个整体，改进系统的可维护性、可读性和可理解性的 CL 不应该因为它不“完美”而被推迟数天或数周 reviewer应该随时留下评论，表示有些东西可以做得更好，但如果不是很重要，可以加上“ Nit:”这样的前缀，让作者知道这只是一个他们可以选择忽略的润色点。
+1.2 指导 code review对于教会开发人员一些关于语言、框架或通用软件设计原则的新知识具有重要作用。留下有助于开发人员学习新东西的评论总是可以的。随着时间的推移，共享知识是提高系统代码健康性的一部分。请记住，如果您的评论纯粹是教育性的，但对于满足本文档中描述的标准并不重要，请在评论前加上“ Nit:”，或者以其他方式表明作者并不必须在本 CL 中解决这个问题。
+1.3 原则 技术事实和数据否定观点和个人偏好。 在风格问题上，风格指南是绝对的权威。任何不在样式指南中的纯样式点(空格等)都是个人偏好的问题。风格应该与现有的一致。如果没有以前的风格，接受作者的。 软件设计的各个方面几乎从来不是一个纯粹的风格问题或者只是个人偏好。它们是基于基本原则的，应该根据这些原则来衡量，而不仅仅是根据个人意见。有时候有一些有效的选择。如果作者能够(通过数据或基于可靠的工程原理)证明几种方法同样有效，那么评论者应该接受作者的偏好。否则，选择将由软件设计的标准原则决定。 如果没有其他规则适用，那么reviewer可能会要求作者与当前代码库中的代码保持一致，只要这不会恶化系统的整体代码质量。 1.4 解决冲突 如果在code review中出现任何冲突，第一步应该是开发人员和reviewer根据本文档的内容以及 CL 作者指南和评审人员指南中的其他文档，努力达成共识。 当达成共识变得特别困难时，reviewer和作者之间应该举行一次面对面的会议或视频会议来讨论，而不仅仅是试图通过注释来解决冲突。(但是，如果您这样做，请确保将讨论结果记录为 CL 上的评论，以便将来的读者使用。)
+2. Code review应该看什么 2."><meta itemprop="datePublished" content="2022-09-21T00:00:00+00:00" />
+<meta itemprop="dateModified" content="2022-09-21T00:00:00+00:00" />
+<meta itemprop="wordCount" content="700">
+<meta itemprop="keywords" content="Software Engineering," /><meta property="og:title" content="Google Code review 指南" />
+<meta property="og:description" content="Google 拥有许多覆盖所有语言和所有项目的通用工程实践。这些文档是Google长期以来形成的各种最佳做法的集体经验。
+名词解释 Nit: nitpick 意思鸡蛋里挑骨头 CL: changelist LGTM: “Looks Good to Me”. 一般Code reviewer approve 一个CL的时候的回复。 1. Code Reviewer指南 1.1 Code Review的标准 Code review的目的是确保随着时间的推移，代码质量能够保持良好。为了实现这个目标，需要做一些权衡和取舍。
+首先，开发人员必须能够在他们的任务上取得进展。如果您从未向代码库提交改进，那么代码库就永远不会改进。此外，如果reviewer使得任何更改都很难进行，那么开发人员就没有动力在将来进行改进。 另一方面，reviewer有责任确保每个 CL 的质量都没问题，以至于其代码库的总体代码质量不会随着时间的推移而下降。这可能很棘手，因为通常情况下，代码库会随着时间的推移而逐渐退化，特别是当团队受到严重的时间限制，并且他们觉得必须走捷径才能完成目标的时候。
+此外，reviewer对他们正在review的代码拥有所有权和责任。他们希望确保代码库保持一致、可维护等等。
+因此，我们得到以下规则作为我们在codereview中的标准:
+一般来说，即使 CL 并不完美，reviewer也应该支持批准 CL，因为它处于肯定能够改善正在处理的系统的整体代码健康状况的状态。 这是所有代码审查指南中的高级原则。
+当然，这也有局限性。 比如，如果 CL 添加了reviewer不希望在其系统中使用的特性，即使代码设计良好，也是可以拒绝批准的。 这里的一个关键点是，没有所谓的“完美”代码ーー只有更好的代码。reviewer应该要求作者在批准之前解决 CL 的每一个细小部分。相反，reviewer应该平衡取得进展的需要与他们所建议的变更的重要性之间的关系。与其追求完美，reviewer应该追求的是持续的改进。作为一个整体，改进系统的可维护性、可读性和可理解性的 CL 不应该因为它不“完美”而被推迟数天或数周 reviewer应该随时留下评论，表示有些东西可以做得更好，但如果不是很重要，可以加上“ Nit:”这样的前缀，让作者知道这只是一个他们可以选择忽略的润色点。
+1.2 指导 code review对于教会开发人员一些关于语言、框架或通用软件设计原则的新知识具有重要作用。留下有助于开发人员学习新东西的评论总是可以的。随着时间的推移，共享知识是提高系统代码健康性的一部分。请记住，如果您的评论纯粹是教育性的，但对于满足本文档中描述的标准并不重要，请在评论前加上“ Nit:”，或者以其他方式表明作者并不必须在本 CL 中解决这个问题。
+1.3 原则 技术事实和数据否定观点和个人偏好。 在风格问题上，风格指南是绝对的权威。任何不在样式指南中的纯样式点(空格等)都是个人偏好的问题。风格应该与现有的一致。如果没有以前的风格，接受作者的。 软件设计的各个方面几乎从来不是一个纯粹的风格问题或者只是个人偏好。它们是基于基本原则的，应该根据这些原则来衡量，而不仅仅是根据个人意见。有时候有一些有效的选择。如果作者能够(通过数据或基于可靠的工程原理)证明几种方法同样有效，那么评论者应该接受作者的偏好。否则，选择将由软件设计的标准原则决定。 如果没有其他规则适用，那么reviewer可能会要求作者与当前代码库中的代码保持一致，只要这不会恶化系统的整体代码质量。 1.4 解决冲突 如果在code review中出现任何冲突，第一步应该是开发人员和reviewer根据本文档的内容以及 CL 作者指南和评审人员指南中的其他文档，努力达成共识。 当达成共识变得特别困难时，reviewer和作者之间应该举行一次面对面的会议或视频会议来讨论，而不仅仅是试图通过注释来解决冲突。(但是，如果您这样做，请确保将讨论结果记录为 CL 上的评论，以便将来的读者使用。)
+2. Code review应该看什么 2." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://zhiqli.github.io/2022/09/google-code-review-%E6%8C%87%E5%8D%97/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-09-21T00:00:00+00:00" />
+<meta property="article:modified_time" content="2022-09-21T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Google Code review 指南"/>
+<meta name="twitter:description" content="Google 拥有许多覆盖所有语言和所有项目的通用工程实践。这些文档是Google长期以来形成的各种最佳做法的集体经验。
+名词解释 Nit: nitpick 意思鸡蛋里挑骨头 CL: changelist LGTM: “Looks Good to Me”. 一般Code reviewer approve 一个CL的时候的回复。 1. Code Reviewer指南 1.1 Code Review的标准 Code review的目的是确保随着时间的推移，代码质量能够保持良好。为了实现这个目标，需要做一些权衡和取舍。
+首先，开发人员必须能够在他们的任务上取得进展。如果您从未向代码库提交改进，那么代码库就永远不会改进。此外，如果reviewer使得任何更改都很难进行，那么开发人员就没有动力在将来进行改进。 另一方面，reviewer有责任确保每个 CL 的质量都没问题，以至于其代码库的总体代码质量不会随着时间的推移而下降。这可能很棘手，因为通常情况下，代码库会随着时间的推移而逐渐退化，特别是当团队受到严重的时间限制，并且他们觉得必须走捷径才能完成目标的时候。
+此外，reviewer对他们正在review的代码拥有所有权和责任。他们希望确保代码库保持一致、可维护等等。
+因此，我们得到以下规则作为我们在codereview中的标准:
+一般来说，即使 CL 并不完美，reviewer也应该支持批准 CL，因为它处于肯定能够改善正在处理的系统的整体代码健康状况的状态。 这是所有代码审查指南中的高级原则。
+当然，这也有局限性。 比如，如果 CL 添加了reviewer不希望在其系统中使用的特性，即使代码设计良好，也是可以拒绝批准的。 这里的一个关键点是，没有所谓的“完美”代码ーー只有更好的代码。reviewer应该要求作者在批准之前解决 CL 的每一个细小部分。相反，reviewer应该平衡取得进展的需要与他们所建议的变更的重要性之间的关系。与其追求完美，reviewer应该追求的是持续的改进。作为一个整体，改进系统的可维护性、可读性和可理解性的 CL 不应该因为它不“完美”而被推迟数天或数周 reviewer应该随时留下评论，表示有些东西可以做得更好，但如果不是很重要，可以加上“ Nit:”这样的前缀，让作者知道这只是一个他们可以选择忽略的润色点。
+1.2 指导 code review对于教会开发人员一些关于语言、框架或通用软件设计原则的新知识具有重要作用。留下有助于开发人员学习新东西的评论总是可以的。随着时间的推移，共享知识是提高系统代码健康性的一部分。请记住，如果您的评论纯粹是教育性的，但对于满足本文档中描述的标准并不重要，请在评论前加上“ Nit:”，或者以其他方式表明作者并不必须在本 CL 中解决这个问题。
+1.3 原则 技术事实和数据否定观点和个人偏好。 在风格问题上，风格指南是绝对的权威。任何不在样式指南中的纯样式点(空格等)都是个人偏好的问题。风格应该与现有的一致。如果没有以前的风格，接受作者的。 软件设计的各个方面几乎从来不是一个纯粹的风格问题或者只是个人偏好。它们是基于基本原则的，应该根据这些原则来衡量，而不仅仅是根据个人意见。有时候有一些有效的选择。如果作者能够(通过数据或基于可靠的工程原理)证明几种方法同样有效，那么评论者应该接受作者的偏好。否则，选择将由软件设计的标准原则决定。 如果没有其他规则适用，那么reviewer可能会要求作者与当前代码库中的代码保持一致，只要这不会恶化系统的整体代码质量。 1.4 解决冲突 如果在code review中出现任何冲突，第一步应该是开发人员和reviewer根据本文档的内容以及 CL 作者指南和评审人员指南中的其他文档，努力达成共识。 当达成共识变得特别困难时，reviewer和作者之间应该举行一次面对面的会议或视频会议来讨论，而不仅仅是试图通过注释来解决冲突。(但是，如果您这样做，请确保将讨论结果记录为 CL 上的评论，以便将来的读者使用。)
+2. Code review应该看什么 2."/>
+<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+
+	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	
+		<script src="https://zhiqli.github.io/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container-wide wrapper">
+		<div class="header">
+	
+		<div class="avatar">
+			<a href="https://zhiqli.github.io/">
+				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
+			</a>
+		</div>
+	
+	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/weekly">Weekly</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		
+<div class="article-nav" id="article-nav-id">
+    <div class="post">
+        <div class="post-header">
+    
+    <div class="meta">
+        <div class="date">
+            <span class="day">21</span>
+            <span class="rest">Sep 2022</span>
+        </div>
+    </div>
+    
+    <div class="matter">
+        <h1 class="title">Google Code review 指南</h1>
+    </div>
+</div>
+
+
+        
+        
+        <aside class="toc" id="static-toc">
+            <header>
+                <h3>Contents</h3>
+            </header>
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#名词解释">名词解释</a>
+      <ol>
+        <li><a href="#1-code-reviewer指南">1. Code Reviewer指南</a></li>
+        <li><a href="#2-code-review应该看什么">2. Code review应该看什么</a></li>
+        <li><a href="#3-如何浏览cl">3 如何浏览CL</a></li>
+        <li><a href="#4-codereview的速度">4 Codereview的速度</a></li>
+        <li><a href="#5-怎么写comments">5. 怎么写comments</a></li>
+        <li><a href="#6-如何处理codereview中的反驳">6. 如何处理codereview中的反驳</a></li>
+      </ol>
+    </li>
+    <li><a href="#代码提交者指南">代码提交者指南</a>
+      <ol>
+        <li><a href="#1-写一个好的cl描述">1. 写一个好的CL描述</a></li>
+        <li><a href="#2-小的cl">2. 小的CL</a></li>
+        <li><a href="#3-如何处理reviewer的意见">3. 如何处理reviewer的意见</a></li>
+      </ol>
+    </li>
+    <li><a href="#原文">原文</a></li>
+  </ol>
+</nav>
+        </aside>
+        
+
+        <p>Google 拥有许多覆盖所有语言和所有项目的通用工程实践。这些文档是Google长期以来形成的各种最佳做法的集体经验。</p>
+<h2 id="名词解释">名词解释</h2>
+<ul>
+<li><strong>Nit</strong>: nitpick 意思鸡蛋里挑骨头</li>
+</ul>
+<ul>
+<li><strong>CL</strong>: changelist</li>
+<li><strong>LGTM</strong>:  “Looks Good to Me”. 一般Code reviewer approve 一个CL的时候的回复。</li>
+</ul>
+<h3 id="1-code-reviewer指南">1. Code Reviewer指南</h3>
+<h4 id="11-code-review的标准">1.1 Code Review的标准</h4>
+<p>Code review的目的是确保随着时间的推移，代码质量能够保持良好。为了实现这个目标，需要做一些权衡和取舍。</p>
+<p>首先，开发人员必须能够在他们的任务上取得进展。如果您从未向代码库提交改进，那么代码库就永远不会改进。此外，如果reviewer使得任何更改都很难进行，那么开发人员就没有动力在将来进行改进。
+另一方面，reviewer有责任确保每个 CL 的质量都没问题，以至于其代码库的总体代码质量不会随着时间的推移而下降。这可能很棘手，因为通常情况下，代码库会随着时间的推移而逐渐退化，特别是当团队受到严重的时间限制，并且他们觉得必须走捷径才能完成目标的时候。</p>
+<p>此外，reviewer对他们正在review的代码拥有所有权和责任。他们希望确保代码库保持一致、可维护等等。</p>
+<p>因此，我们得到以下规则作为我们在codereview中的标准:</p>
+<p>一般来说，即使 CL 并不完美，reviewer也应该支持批准 CL，因为它处于肯定能够改善正在处理的系统的整体代码健康状况的状态。
+这是所有代码审查指南中的高级原则。</p>
+<p>当然，这也有局限性。 比如，如果 CL 添加了reviewer不希望在其系统中使用的特性，即使代码设计良好，也是可以拒绝批准的。
+这里的一个关键点是，没有所谓的“完美”代码ーー只有更好的代码。reviewer应该要求作者在批准之前解决 CL 的每一个细小部分。相反，reviewer应该平衡取得进展的需要与他们所建议的变更的重要性之间的关系。与其追求完美，reviewer应该追求的是持续的改进。作为一个整体，改进系统的可维护性、可读性和可理解性的 CL 不应该因为它不“完美”而被推迟数天或数周
+reviewer应该随时留下评论，表示有些东西可以做得更好，但如果不是很重要，可以加上“ Nit:”这样的前缀，让作者知道这只是一个他们可以选择忽略的润色点。</p>
+<h4 id="12-指导">1.2 指导</h4>
+<p>code review对于教会开发人员一些关于语言、框架或通用软件设计原则的新知识具有重要作用。留下有助于开发人员学习新东西的评论总是可以的。随着时间的推移，共享知识是提高系统代码健康性的一部分。请记住，如果您的评论纯粹是教育性的，但对于满足本文档中描述的标准并不重要，请在评论前加上“ Nit:”，或者以其他方式表明作者并不必须在本 CL 中解决这个问题。</p>
+<h4 id="13-原则">1.3 原则</h4>
+<ul>
+<li>技术事实和数据否定观点和个人偏好。</li>
+<li>在风格问题上，风格指南是绝对的权威。任何不在样式指南中的纯样式点(空格等)都是个人偏好的问题。风格应该与现有的一致。如果没有以前的风格，接受作者的。</li>
+<li>软件设计的各个方面几乎从来不是一个纯粹的风格问题或者只是个人偏好。它们是基于基本原则的，应该根据这些原则来衡量，而不仅仅是根据个人意见。有时候有一些有效的选择。如果作者能够(通过数据或基于可靠的工程原理)证明几种方法同样有效，那么评论者应该接受作者的偏好。否则，选择将由软件设计的标准原则决定。</li>
+<li>如果没有其他规则适用，那么reviewer可能会要求作者与当前代码库中的代码保持一致，只要这不会恶化系统的整体代码质量。</li>
+</ul>
+<h4 id="14-解决冲突">1.4 解决冲突</h4>
+<p>如果在code review中出现任何冲突，第一步应该是开发人员和reviewer根据本文档的内容以及 CL 作者指南和评审人员指南中的其他文档，努力达成共识。
+当达成共识变得特别困难时，reviewer和作者之间应该举行一次面对面的会议或视频会议来讨论，而不仅仅是试图通过注释来解决冲突。(但是，如果您这样做，请确保将讨论结果记录为 CL 上的评论，以便将来的读者使用。)</p>
+<h3 id="2-code-review应该看什么">2. Code review应该看什么</h3>
+<h4 id="21-设计">2.1 设计</h4>
+<p>Code review中最重要的内容是 CL 的总体设计。CL 中各段代码的交互有意义吗？这个更改是属于您的代码库，还是属于库？它与系统的其他部分集成良好吗？现在是添加此功能的好时机吗？</p>
+<h4 id="22-功能">2.2 功能</h4>
+<p>这个CL是否符合需求预期？作为reviewer，应该考虑边界情况，寻找并发性问题，尝试像用户一样思考，并确保仅仅通过阅读代码就不会看到 bug。
+如果可以的话reviewer也可以去验证功能是否影响用户，真正作为用户去体验。
+在code revie中还有一个特别重要的问题，检查CL 中是否存在某种并行编程，理论上可能导致死锁或竞态条件。这类问题很难通过运行代码来检测，通常需要有人(包括开发和reviewer)仔细思考，以确保不会引入问题。</p>
+<h4 id="23-复杂性">2.3 复杂性</h4>
+<p>CL 是否比它应该的更复杂？在 CL 的每个级别检查这个问题ーー单个逻辑是否太复杂了？函数太复杂了吗？类太复杂了吗？“过于复杂”通常意味着“不能被代码阅读器迅速理解”这也可能意味着“开发人员在尝试调用或修改此代码时可能会引入 bug。”
+一些复杂性是因为过度设计导致的，开发人员使代码变得比需要的更通用，或者增加了系统目前不需要的功能。Reviewer要特别警惕过度设计。鼓励开发人员解决他们知道现在需要解决的问题，而不是开发人员推测将来可能需要解决的问题。未来的问题应该在它到来的时候再解决。</p>
+<h4 id="24-测试">2.4 测试</h4>
+<p>根据更改要求进行适当的Unit Test、集成测试或端到端测试。一般来说，除非 CL 非常紧急，否则都应该添加测试。
+确保测试是正确的、合理的、有用的。
+当代码真的有问题，测试是否会失败？如果被测试的程序发生改动时，测试是否会产生误报？每一个测试是否做出了简单而有用的断言？不同的测试方法之间的测试是否适当分开？
+记住，测试也是必须要维护的代码。不要因为测试不是主程序的一部分就接受它的复杂性。</p>
+<h4 id="25-命名">2.5 命名</h4>
+<p>一个好的名字足够长，可以充分表达这个项目是什么或做什么，而不会太长以至于很难读懂。</p>
+<h4 id="26-注释">2.6 注释</h4>
+<p>开发的注释是否描述清楚？所有的注释都是有必要的吗？一般来说有用的注释是解释这段代码为什么需要，而不是解释这段代码实现了什么，如果代码不够清晰来解释它自身，那应该使代码更简单。也有一些例外(比如，正则表达式和复杂算法通常从解释它们正在做什么的注释中获益匪浅) ，但大多数注释是针对代码本身不可能包含的信息，比如决策背后的推理。
+查看在这个 CL 之前的评论也是有帮助的。也许一个以前的TODO 现在可以被删除，一个反对这个修改的评论，等等。
+注释和介绍一个类、函数或者模块的文档不一样，相反，它应该表达一段代码的用途、应该如何使用以及使用时的行为。</p>
+<h4 id="27-风格">2.7 风格</h4>
+<p>Goole有各种语言的<a href="https://google.github.io/styleguide/">Google Style Guides | styleguide</a>可以参考。
+如果您想要改进一些样式指南中没有的样式点，可以在注释的前面加上“ Nit:”，让开发人员知道这是一个你认为可以改进代码但不是强制性的吹毛求疵的问题。不要仅仅基于个人风格偏好来阻止 CL 的提交。
+CL的作者不应该把风格变化与其他变化结合起来。这使人很难看清CL中的修改内容，使合并和回滚更加复杂，并引起其他问题。例如，如果作者想重新格式化整个文件，让他们只把重新格式化的内容作为一个CL发给你，然后再把另一个CL和他们的功能修改一起发给你。</p>
+<h4 id="28-一致性">2.8 一致性</h4>
+<p>代码风格应该保持一致，这是权威。在某些情况下，风格指南是建议而不是强制要求。在这些情况下，新的代码是否应该与建议的或周围的代码保持一致，这是一个判断的问题。倾向于遵循风格指南，除非局部的不一致会过于混乱。如果没有其他规则，应该保持与现有代码的一致性。无论哪种方式，都要鼓励向作者提出一个错误，并为清理现有的代码添加一个TODO。</p>
+<h4 id="29-文档">2.9 文档</h4>
+<p>如果CL改变了用户构建、测试、交互或发布代码的方式，要检查它是否也更新了相关文档，包括README、g3doc页面和任何生成的参考文档。如果CL删除了或废弃了代码，请考虑是否也应该删除文档。如果文档缺失，就要求提供。</p>
+<h4 id="210-每一行代码">2.10 每一行代码</h4>
+<p>在一般情况下，需要阅读每一行代码。有些东西，比如数据文件、生成的代码或者大型数据结构，你可以偶尔扫描一下，但是对于类、函数或者代码块不要仅仅简单扫描。显然，有些代码比其他代码值得更仔细的审查ーー这是您必须做出的判断性调用ーー但是您至少应该确保您理解所有代码在做什么。
+如果对你来说，代码太难读了，拖慢了审查的速度，那么你应该让开发人员知道这一点，等他们解释后再尝试审查。在Google，大家都是优秀的软件工程师。如果你不能理解代码，很可能其他开发者也不会理解。因此，当你要求开发者解释代码时，你也在帮助未来的开发者理解这段代码。
+如果你理解代码，但你觉得没有资格做某些部分的review，请确保CL上有一个合格的reviewer，特别是对于复杂的问题，如隐私、安全、并发性、可访问性、国际化等。</p>
+<h4 id="211-上下文">2.11 上下文</h4>
+<p>通常情况下，codereview工具只会向你展示被修改部分周围的几行代码。有时你必须要看整个文件，以确定这个改动是否真的有意义。例如，你可能只看到新增的四行，但当你看整个文件时，你会发现这四行是在一个50行的方法中，现在确实需要分成更小的方法。
+从整个系统的角度来考虑CL也是很有用的。这个CL是在提高系统的代码质量，还是在使整个系统变得更复杂，更少测试，等等？不要接受那些降低了系统代码质量的CL。大多数系统都是通过许多小的变化而变得复杂，所以在新的变化中防止小的复杂是很重要的。</p>
+<h4 id="212-好的方面">2.12 好的方面</h4>
+<p>如果您在 CL 中看到了一些不错的东西，请告诉开发人员，特别是当他们以一种很好的方式处理您的评论时。codereview通常只关注错误，但是它们也应该为良好实践提供鼓励和赞赏。就指导而言，有时告诉开发人员他们做对了什么比告诉他们做错了什么更有价值。</p>
+<h4 id="213-总结">2.13 总结</h4>
+<p>在codereview的时候你要确保</p>
+<ul>
+<li>代码的设计很好。</li>
+<li>功能对代码的使用者来说是好的。</li>
+<li>任何用户界面的改变都是合理的，并且看起来不错。</li>
+<li>任何并行编程都是安全完成的。</li>
+<li>代码不会比它需要的更复杂。</li>
+<li>开发者没有实现他们未来可能需要但现在不知道需要的东西。</li>
+<li>代码有适当的单元测试。</li>
+<li>测试是精心设计的。</li>
+<li>开发者对所有东西都使用了明确的命名。</li>
+<li>注释是清晰和有用的，并且大多解释了为什么而不是什么。</li>
+<li>代码有适当的文档（一般在g3doc中）。</li>
+<li>代码符合我们的风格指南。</li>
+</ul>
+<h3 id="3-如何浏览cl">3 如何浏览CL</h3>
+<h4 id="31-第一步粗略浏览一遍修改">3.1 第一步：粗略浏览一遍修改</h4>
+<p>通常来说需要线看一遍CL的描述和大概修改。确定这种变化有意义吗？如果这个改变一开始就不应该发生，请立即回应，解释为什么这个改变不应该发生。当你觉得不应该修改时，向开发者建议他们应该怎么做也是一个好主意。用比较礼貌的话语提出建议。</p>
+<h4 id="32-第二步检查cl的主要部分">3.2 第二步：检查CL的主要部分</h4>
+<p>找到作为这个CL的 &ldquo;主要 &ldquo;部分的一个或多个文件。通常，有一个文件的逻辑变化量最大，它是CL的主要部分。先看看这些主要部分。这有助于给CL中所有较小的部分提供背景，并且通常会加快代码审查的速度。如果CL太大，你无法弄清楚哪些部分是主要部分，请问开发人员你应该先看什么，或者请他们把CL拆成多个CL。
+如果你发现CL的这一部分有一些重大的设计问题，你应该立即发送这些评论，即使你现在没有时间去审查CL的其他部分。事实上，审查CL的其他部分可能是浪费时间，因为如果设计问题足够重要，那么其他被审查的很多代码就会消失，反正也不重要。
+原因如下</p>
+<ul>
+<li>开发人员经常在提交CL后，在等待review的同时立即开始基于该CL的新工作。如果你正在review的CL中存在重大的设计问题，他们也将不得不重新调整他们后来的CL。你要在他们在有问题的设计上做了太多的额外工作之前中断他们。</li>
+<li>重大的设计修改比小的修改需要更长的时间。开发人员几乎都有dead line；为了赶上这些dead line，并且在代码库中仍然有高质量的代码，开发人员需要尽快开始对CL进行调整。</li>
+</ul>
+<h4 id="33-第三步采用合理的顺序阅读cl的其他部分">3.3 第三步：采用合理的顺序阅读CL的其他部分</h4>
+<p>一旦你确认CL整体上没有重大的设计问题，试着找出一个逻辑顺序来查看文件，同时确保你不会错过任何文件的审查。通常在你看完主要文件后，最简单的做法是按照代码审查工具向你展示的顺序去看每个文件。有时，在阅读主代码之前，先阅读测试也是很有帮助的，因为这样你就能知道这个改动应该做什么了。</p>
+<h3 id="4-codereview的速度">4 Codereview的速度</h3>
+<h4 id="41-为什么code-review的速度要快">4.1 为什么Code review的速度要快？</h4>
+<p>在谷歌，优化的是开发人员团队的产出速度，而不是优化单个开发人员编写代码的速度。个人开发的速度很重要，只是没有整个团队的速度那么重要。
+当代码审查慢时，会发生这几件事。</p>
+<ul>
+<li>整个团队的速度就会下降。由于每个CL都在等待review和再review，团队其他成员的新功能和bug修复被推迟了几天、几周或几个月。</li>
+<li>开发人员开始抗议Codereview。如果一个reviewer隔几天才回复一次，但每次都要求对CL进行重大修改，这会让开发人员感到不爽。如果reviewer要求同样的实质性修改（这些修改确实能够改善代码的健康状况），但在开发者每次进行更新时都能快速响应，那么这些抱怨就会消失。大多数关于codereview过程的抱怨实际上是通过使codereview过程更快解决的。</li>
+<li>代码质量会受到影响。当code review慢时，就会有更大的压力，让开发者提交的CL不尽如人意。缓慢的code review也不利于代码的清理、重构和对现有CL的进一步改进。</li>
+</ul>
+<h4 id="42-code-review要有多快">4.2 Code review要有多快？</h4>
+<ul>
+<li>如果你没有处于需要专注的工作时，你应该在CL提交后尽快进行Code review。</li>
+<li>一个工作日是回应代码审查请求的最长时间（即，第二天早上的第一件事）。</li>
+<li>如果遵循这些准则意味着通常一个CL应该在一天内得到多轮review（如果需要的话）。</li>
+</ul>
+<h4 id="43-速度-vs-中断">4.3 速度 VS 中断</h4>
+<p>有时候个人速度会优先于团队速度。比如你正在进行一项需要专注的工作，比如写代码，不要打断自己去做codereview。研究表明，开发人员在被打断后，可能需要很长时间才能重新进入流畅的开发流程。因此，在编码时打断自己，对团队来说，实际上比让另一个开发人员等待一下进行代码审查的成本更高。
+相反，在你回应code review请求之前，要等待你工作中的一个中断点。这可能是当你当前的编码任务完成后，午餐后，从一个会议回来，从休息室回来，等等。</p>
+<h4 id="44-快速响应">4.4 快速响应</h4>
+<p>当我们谈论代code review的速度时，我们关注的是响应时间，而不是CL需要多长时间完成review并被提交。理想情况下，整个过程也应该是快速的，但是单个的响应快速到来比整个过程快速发生更为重要。
+即使有时需要很长的时间来完成整个review，但在整个过程中reviewer的快速响应可以大大缓解开发人员对 &ldquo;缓慢 &ldquo;的代码审查的挫败感。
+如果你太忙了，无法在收到CL时进行全面review，你仍然可以发送一个快速回复，让开发人员知道你什么时候会去做，建议其他reviewer更快地作出回应，或者提供一些初步的广泛评论。(注意：这并不意味着你应该中断编码来发送这样的回复&ndash;在你工作中的一个合理的休息点发送回复。）
+重要的是，reviewer要花足够的时间在reiview上，他们要确定他们的 &ldquo;LGTM &ldquo;意味着 &ldquo;这段代码符合我们的标准”。尽管如此，个人的回应最好还是要快。</p>
+<h4 id="45-跨时区的review">4.5 跨时区的review</h4>
+<p>在处理时差问题时，尽量在作者工作时间结束前有时间回复他们。如果他们已经完成了当天的工作，那么尽量确保在他们第二天开始工作之前完成你的评论。</p>
+<h4 id="46-lgtm评论">4.6 LGTM评论</h4>
+<p>为了加快Code review的速度，在某些情况下，reviewer应该给予LGTM/Approval，即使他们也在CL上留下未解决的评论。这是在以下两种情况下进行的。</p>
+<ul>
+<li>Reviewer相信开发人员会适当地处理所有剩余评论。</li>
+<li>剩余的评论是微不足道的，或者不需要由开发者来处理。</li>
+<li>Reviewer必须清楚指明他们是指上面哪种情况。</li>
+</ul>
+<p>当开发者和审查者处于不同的时区时，LGTM With Comments尤其值得考虑，否则开发者会为了得到 &ldquo;LGTM, Approval &ldquo;而等待一整天。</p>
+<h4 id="47-大型cl">4.7 大型CL</h4>
+<p>如果有人给你发了一份codereview报告，而你又不确定什么时候能有时间review，那么你应该要求开发者把CL分成几个小的CL，互相建立在一起，而不是一个巨大的CL，必须一次review。
+如果一个CL不能被分解成更小的CL，而你又没有时间快速地review所有，那么至少要对CL的整体设计写一些评论，并把它送回给开发者进行改进。作为一个reviewer，你的目标之一应该是始终解除开发人员的障碍，或者使他们能够迅速采取某种进一步的行动，而不牺牲代码的质量。</p>
+<h4 id="48-cr能力会随着时间提升">4.8 CR能力会随着时间提升</h4>
+<p>如果你遵循这些准则，并且你的Codereview很严格，你应该发现整个Codereview过程随着时间的推移会越来越快。开发人员学会了什么是高质量的代码，并从一开始就向你发送优秀的CL，需要越来越少的review时间。reviewer学会快速反应，不给review过程增加不必要的延迟。但是，不要为了想象中的速度提高而在Codereview标准或质量上做出妥协&ndash;从长远来看，这实际上不会使任何事情更快发生。</p>
+<h4 id="49-紧急情况">4.9 紧急情况</h4>
+<p>也有一些紧急情况，CL必须非常迅速地通过review，而且质量准则将被放宽。然而，可以参考<a href="https://github.com/google/eng-practices/blob/master/review/emergencies.md#what">eng-practices</a>.</p>
+<h3 id="5-怎么写comments">5. 怎么写comments</h3>
+<h4 id="51-礼貌">5.1 礼貌</h4>
+<p>通常最重要的是要有礼貌和尊重，确保你总是对代码进行评论，而不是对开发者进行评论。你不必总是遵循这种做法，但当你说一些可能会引起不满或争议的事情时，你肯定应该使用这种做法。比如说。</p>
+<ul>
+<li>不好。&ldquo;你为什么要在这里使用线程，因为显然从并发中得不到任何好处？&rdquo;</li>
+<li>好：&ldquo;这里的并发模型增加了系统的复杂性，但我看不到任何实际的性能好处。因为没有性能上的好处，所以这段代码最好是单线程的，而不是使用多线程。&rdquo;</li>
+</ul>
+<h4 id="52-解释为什么">5.2 解释为什么</h4>
+<p>你会注意到上面那个 &ldquo;好 &ldquo;的例子，它帮助开发者理解你为什么要发表评论。你并不总是需要在你的评论中包括这些信息，但有时围绕你的意图，你所遵循的最佳实践，或者你的建议是如何提高代码健康度的，多做一些解释是合适的。</p>
+<h4 id="53-给出一些指导">5.3 给出一些指导</h4>
+<p>一般来说，修复CL是开发者的责任，而不是reviewer的责任。你不需要对解决方案进行详细设计，也不需要为开发者写代码。
+但这并不意味着reviewer什么也不做。一般来说，你应该在指出问题和提供直接指导之间取得一个适当的平衡。指出问题并让开发者做出决策往往有助于开发者学习，并使codereview更容易进行。也可能会有更好的解决方案，因为开发者比reviewer更了解代码。
+然而，有时直接的指示、建议，甚至是代码都更有帮助。codereview的首要目标是获得尽可能好的CL。次要目标是提高开发人员的技能，以便随着时间的推移，他们需要越来越少的review。
+记住，人们从强化他们做得好的地方中学习，而不仅仅是他们可以做得更好的地方。如果你在CL中看到你喜欢的东西，也要对这些进行评论 例如：开发人员清理了一个混乱的算法，增加了规范的测试覆盖率，或者你作为reviewer从CL中学到了什么。就像所有的评论一样，包括你为什么喜欢的东西，进一步鼓励开发者继续良好的做法。</p>
+<h4 id="54-标签标识评论的严重性">5.4 标签标识评论的严重性</h4>
+<p>考虑给你的评论贴上严重性的标签，将要求的改变与准则或建议区分开来。</p>
+<ul>
+<li>Nit: 这是小问题。从技术上讲，你应该这样做，但它不会对事情产生巨大的影响。</li>
+<li>Optional (or Consider)：我认为这可能是个好主意，但不是严格要求。</li>
+<li>FYI：我不期望你在这个CL里做这个，但你可能会发现这个很有趣，可以为将来考虑。</li>
+</ul>
+<p>这使得review意图明确，并帮助作者对各种评论的重要性进行优先排序。它还有助于避免误解；例如，如果没有评论标签，作者可能会把所有的评论都理解为强制性的，即使有些评论只是为了提供信息或可选。</p>
+<h4 id="55-接受解释">5.5 接受解释</h4>
+<p>如果你要求开发人员解释一段你不理解的代码，这通常应该会导致他们更清楚地重写代码。偶尔，在代码中添加一个注释也是一个适当的回应，只要不是仅仅解释过于复杂的代码。
+只写在codereview工具中的注释对未来的代码读者没有帮助。它们只有在少数情况下是可以接受的，例如当你正在review一个你不是很熟悉的领域，而开发者解释了一些正常的代码读者会已经知道的东西。</p>
+<h3 id="6-如何处理codereview中的反驳">6. 如何处理codereview中的反驳</h3>
+<p>有时候，开发人员会对codereview提出异议。要么他们不同意你的建议，要么他们会抱怨你总体上太严格了。</p>
+<h4 id="61-谁是对的">6.1 谁是对的</h4>
+<p>当一个开发者不同意你的建议时，先花点时间考虑他们是否正确。通常，他们比你更了解代码，所以他们可能真的对代码的某些方面有更好的见解。他们的论点有意义吗？从代码质量的角度来看，它有意义吗？如果是的话，让他们知道他们是对的，让这个问题停下来。
+然而，开发人员并不总是正确的。在这种情况下，reviewer应该进一步解释为什么他们认为他们的建议是正确的。一个好的解释既表明了对开发者的答复的理解，也表明了关于为什么要求改变的额外信息。
+特别是，当reviewer认为他们的建议会改善代码的质量时，如果他们认为由此带来的代码质量的改善可以证明所要求的额外工作是合理的，那么他们应该继续倡导这一改变。改善代码质量往往是以小步快跑的方式进行的。
+有时，需要对一个建议进行几轮的解释，才能让它真正地深入人心。只要确保始终保持礼貌，让开发人员知道你听到了他们所说的，只是你不同意。</p>
+<h4 id="62-扰乱开发者">6.2 扰乱开发者</h4>
+<p>Reviewer有时会认为，如果坚持要求改进，开发者会很不高兴。有时开发人员确实会不高兴，但通常是短暂的，他们后来会非常感谢你帮助他们提高了代码的质量。通常情况下，如果你的评论很有礼貌，开发人员实际上根本不会变得不高兴，担心的只是reviewer的想法。烦恼通常更多的是关于评论的写法，而不是关于reviewer对代码质量的坚持。</p>
+<h4 id="63-稍后清理">6.3 稍后清理</h4>
+<p>一个常见的阻力来源是，开发人员（可以理解）想把事情做完。他们不想为了得到这个CL而经历另一轮的review。所以他们说会在以后的CL中清理一些东西，因此你现在应该LGTM这个CL。有些开发者在这方面做得很好，他们会立即写一个后续的CL来解决这个问题。然而，经验表明，当开发者写完原始CL后，时间越长，这种清理就越不可能发生。事实上，除非开发者在写完本期CL后立即进行清理，否则通常不会发生。这并不是因为开发者不负责任，而是因为他们有很多工作要做，而清理工作在其他工作的压力下被丢失或遗忘。因此，通常最好的做法是坚持让开发人员现在就清理他们的CL，在代码进入代码库和 “完成 “之前。让人们 “以后再清理 “是代码库退化的一个常见方式。
+如果一个CL引入了新的复杂性，除非是紧急情况，否则必须在提交之前清理掉。如果CL暴露了周围的问题，而这些问题现在无法解决，开发者应该为清理工作提交一个bug，并将其分配给自己，这样就不会丢失。他们也可以选择在代码中写一个TODO注释，引用已提交的bug。</p>
+<h4 id="64-对严格的抱怨">6.4 对严格的抱怨</h4>
+<p>如果你以前有相当宽松的codereview，而你改成有严格的review，一些开发人员会非常大声地抱怨。提高你的codereview的速度通常会使这些抱怨逐渐消失。
+有时，这些抱怨可能需要几个月的时间才能消失，但最终开发人员往往会看到严格的codereview的价值，因为他们看到了严格的codereview有助于产生什么伟大的代码。有时，一旦发生一些事情，使他们真正看到你通过严格review所增加的价值，那些最大声的抗议者甚至会成为你最强有力的支持者。</p>
+<h4 id="65-解决冲突">6.5 解决冲突</h4>
+<p>如果你遵循了以上所有的规定，但你仍然遇到了自己和开发者之间无法解决的冲突，请参见《代码审查标准》，以了解可以帮助解决冲突的准则和原则。</p>
+<h2 id="代码提交者指南">代码提交者指南</h2>
+<h3 id="1-写一个好的cl描述">1. 写一个好的CL描述</h3>
+<p>CL描述是一个公开的记录，说明了正在进行的改变以及为什么要这样做。它将成为我们版本控制历史的一个永久组成部分，而且除了你的reviewer之外，多年来可能会有数百人阅读。
+未来的开发者会根据你的CL的描述来搜索。未来的人可能会因为对你的改动有微弱的记忆而寻找你的改动，但却没有具体的细节。如果所有的重要信息都在代码中，而不是在描述中，那么他们要找到你的CL就会难得多。</p>
+<h4 id="11-第一行">1.1 第一行</h4>
+<ul>
+<li>对正在进行的工作的简短总结。</li>
+<li>完整的句子，写得好像是一个命令一样。</li>
+<li>后面是空行。</li>
+</ul>
+<p>CL描述的第一行应该是一个简短的摘要，具体说明该CL正在做什么，然后是一个空行。这就是出现在版本控制历史摘要中的内容，所以它应该有足够的信息量，使未来的代码搜索者不必阅读你的CL或其整个描述来了解你的CL到底做了什么，或者它与其他CL有什么不同。也就是说，第一行应该是独立的，让读者能够更快地浏览代码历史。
+尽量使你的第一行简短、集中，并直奔主题。对读者的清晰度和实用性应该是最关心的问题。
+按照传统，CL描述的第一行是一个完整的句子，写起来就好像是一个命令（命令句）。例如，说 &ldquo;删除FizzBuzz RPC，用新系统取代它。&ldquo;而不是 &ldquo;删除FizzBuzz RPC，用新系统取代它。&rdquo; 不过，你不必把描述的其余部分写成命令句。</p>
+<h4 id="12-内容体">1.2 内容体</h4>
+<p>第一行应该是一个简短的、有重点的摘要，而描述的其余部分应该填补细节，并包括读者需要的任何补充信息，以全面了解该变更列表。它可能包括对正在解决的问题的简要描述，以及为什么这是最好的方法。如果该方法有任何不足之处，应该提及。如果相关的话，包括背景信息，如错误数字、基准结果和设计文件的链接。
+如果你包括外部资源的链接，考虑到由于访问限制或保留政策，未来的读者可能无法看到这些链接。在可能的情况下，为审稿人和未来的读者提供足够的背景信息来理解CL。
+即使是小的CL也应该注意一下细节，把上下文写进CL中。</p>
+<h4 id="14-不好的cl描述">1.4 不好的CL描述</h4>
+<p>“Fix bug” 是一个不充分的CL描述。什么错误？你做了什么来修复它？其他类似的糟糕描述包括。</p>
+<ul>
+<li>“Fix build.”</li>
+<li>“Add patch.”</li>
+<li>“Moving code from A to B.”</li>
+<li>“Phase 1.”</li>
+<li>“Add convenience functions.”</li>
+<li>“kill weird URLs.”</li>
+</ul>
+<p>其中一些是真正的CL描述。虽然简短，但它们没有提供足够的有用信息。</p>
+<h4 id="15-好的cl描述">1.5 好的CL描述</h4>
+<ul>
+<li>功能修改</li>
+</ul>
+<div class="highlight"><div style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>rpc: remove size limit on RPC server message freelist.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Servers like FizzBuzz have very large messages and would benefit from reuse. Make the freelist larger, and add a goroutine that frees the freelist entries slowly over time, so that idle servers eventually release all freelist entries.
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>前面几句话描述了CL的实际作用。描述的其余部分谈到了正在解决的问题，为什么这是一个好的解决方案，以及关于具体实现的更多信息。</p>
+<ul>
+<li>重构</li>
+</ul>
+<div class="highlight"><div style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>Construct a Task with a TimeKeeper to use its TimeStr and Now methods.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Add a Now method to Task, so the borglet() getter method can be removed (which was only used by OOMCandidate to call borglet&#39;s Now method). This replaces the methods on Borglet that delegate to a TimeKeeper.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Allowing Tasks to supply Now is a step toward eliminating the dependency on Borglet. Eventually, collaborators that depend on getting Now from the Task should be changed to use a TimeKeeper directly, but this has been an accommodation to refactoring in small steps.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Continuing the long-range goal of refactoring the Borglet Hierarchy.
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>第一行描述了CL的作用，以及这是一个重构。描述的其余部分谈到了具体的实现，CL的背景，该解决方案并不理想，以及未来可能的方向。它还解释了为什么要做这种改变。、</p>
+<ul>
+<li>小的CL也需要上下文</li>
+</ul>
+<div class="highlight"><div style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-gdscript3" data-lang="gdscript3"><span style="display:flex;"><span>Create a Python3 build rule <span style="color:#069;font-weight:bold">for</span> status<span style="color:#555">.</span>py<span style="color:#555">.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>This allows consumers who are already using this as <span style="color:#000;font-weight:bold">in</span> Python3 to depend on a rule that is next to the original status build rule instead of somewhere <span style="color:#000;font-weight:bold">in</span> their own tree<span style="color:#555">.</span> It encourages new consumers to use Python3 <span style="color:#069;font-weight:bold">if</span> they can, instead of Python2, <span style="color:#000;font-weight:bold">and</span> significantly simplifies some automated build file refactoring tools being worked on currently<span style="color:#555">.</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>第一句话描述了实际正在做什么。描述的其余部分解释了为什么要做这个改变，并给审查者提供了很多背景。</p>
+<h4 id="16-自动生成的cl描述">1.6 自动生成的CL描述</h4>
+<p>有些CL是由工具生成的。只要有可能，它们的描述也应该遵循这里的建议。也就是说，它们的第一行应该很短，重点突出，并且是独立的，而CL描述的主体应该包括信息性的细节，以帮助审查者和未来的代码搜索者了解每个CL的效果。</p>
+<h4 id="17-在提交cl之前请review描述">1.7 在提交CL之前，请review描述</h4>
+<p>CL在review期间可能会发生重大变化。在提交CL之前，review CL的描述可能是值得的，以确保描述仍然反映CL的作用。</p>
+<h3 id="2-小的cl">2. 小的CL</h3>
+<h4 id="21-为什么要写小的cl">2.1 为什么要写小的CL</h4>
+<p>小的，简单的CL</p>
+<ul>
+<li>**Review得更快。**对reviewer来说，抽出5分钟时间多次review小的CL比留出30分钟的时间review一个大的CL要容易。</li>
+<li>**Review得更彻底。**对于大的改动，reviewer和作者往往会因为大量的详细评论来回转换而感到沮丧—有时甚至会遗漏或放弃重要的观点。</li>
+<li>**不太可能引入错误。**由于你做的改动较少，你和你的reviewer更容易对CL的影响进行有效的推理，并查看是否引入了错误。</li>
+<li>**如果被拒绝，浪费的工作更少。**如果你写了一个巨大的CL，然后你的reviewer说整体方向是错误的，你就浪费了大量的工作。</li>
+<li><strong>更容易合并。</strong> 在一个大的CL上工作需要很长的时间，所以当你合并时，你会有很多冲突，而且你必须经常合并。</li>
+<li>**更容易设计好。**完善一个小改动的设计和代码健康，比完善一个大改动的所有细节要容易得多。</li>
+<li>**更少的review障碍。**提交你的整体变化的独立部分，允许你在等待你的当前CL review时继续编码。</li>
+<li>**回滚更简单。**一个大型的 CL 更有可能触及在最初提交的 CL 和回滚的 CL 之间更新的文件，使回滚变得复杂（中间的 CL 可能也需要回滚）。</li>
+</ul>
+<p>请注意，reviewer可以直接拒绝你的修改，理由是它太大。通常他们会感谢你的贡献，但要求你以某种方式把它变成一系列小的修改。在你已经写完一个修改之后，再把它分割开来，这可能是一个很大的工作，或者需要花很多时间来争论为什么reviewer应该接受你的大修改。一开始就写小的改动会更容易。</p>
+<h4 id="22-什么是小的cl">2.2 什么是小的CL</h4>
+<p>通常来说，一个合适的大小就是一个独立的变化。具体来说</p>
+<ul>
+<li>CL做了一个最小的改变，只解决了一件事。这通常只是一个功能的一部分，而不是一次性的整个功能。一般来说，写的CL太小比写的CL太大要好一些。</li>
+<li>CL应该包括相关的测试代码。</li>
+<li>reviewer需要了解的关于CL的一切（除了未来的发展）都在CL中，CL的描述，现有的代码库，或者他们已经评审过的CL。</li>
+<li>在CL被revie后，系统将继续为其用户和开发者提供良好的工作。</li>
+<li>CL并不是小到难以理解其影响。如果你增加了一个新的API，你应该在同一个CL中包括该API的用法，以便reviewer能够更好地理解该API将如何被使用。这也可以防止提交未使用的API。
+关于多大是 &ldquo;太大&rdquo;，没有硬性规定。100行通常是CL的合理大小，1000行通常太大，但这取决于reviewer的判断。一项修改分布在多少个文件中，也会影响其 &ldquo;大小&rdquo;。一个文件中的200行修改可能是可以的，但分散到50个文件中，通常就会太大。</li>
+</ul>
+<p>请记住，尽管你从开始写代码的那一刻起就与你的代码密切相关，但reviewer往往没有任何背景。对你来说是一个可以接受的CL，但对你的reviewer来说却可能是不堪重负的。在有疑问的时候，写的CL要比你认为需要写的小。reviewer很少抱怨收到太小的 CL。</p>
+<h4 id="23-什么时候大的cl也是可以的">2.3 什么时候大的CL也是可以的？</h4>
+<p>在有些情况大的CL也是合理的</p>
+<ul>
+<li>可以把删除整个文件算作只是一行改动，因为它不需要reviewer花很长时间来审查。</li>
+<li>有时，一个大的CL是由你完全信任的自动重构工具生成的，而reviewer的工作只是验证并说他们真的想要这个改动。这些CL可以更大，尽管上面的一些注意事项（如合并和测试）仍然适用。</li>
+</ul>
+<h4 id="24-通过文件分割">2.4 通过文件分割</h4>
+<p>另一种分割CL的方法是将需要不同reviewer的文件分组，但在其他方面是自成一体的变化。
+例如：你提交了一份protocol buffer的CL和另一份使用该proto的代码的修改报告。你必须在代码CL之前提交proto CL，但它们可以同时被review。如果你这样做，你可能想把你写的另一个 CL 告知两组reviewer，这样他们就能了解你的修改的背景。
+另一个例子：你为一个代码修改提交一份CL，为使用该代码的配置或实验提交另一份CL；如果有必要，这也更容易回滚，因为配置/实验文件有时会比代码修改更快地推送到生产中。</p>
+<h4 id="25-分离出重构部分">2.5 分离出重构部分</h4>
+<p>通常情况下，最好是在单独的CL中进行重构，而不是在功能变化或错误修复中进行。例如，移动和重命名一个类应该和修复该类中的错误放在不同的CL中。当它们分开时，评审员会更容易理解每个CL所带来的变化。
+小的清理工作，如修正局部变量的名称，可以包含在特性变更或错误修复的CL中。这取决于开发者和reviewer的判断，以决定什么时候重构的规模大到如果包含在当前的CL中会使review更加困难。</p>
+<h4 id="26-将相关的测试代码放在同一个cl中">2.6 将相关的测试代码放在同一个CL中</h4>
+<p>CL应该包括相关的测试代码。记住，这里的小指的是概念上的想法，即CL应该是有重点的，而不是行数上的简单功能。
+增加或改变逻辑的CL应该伴随着新的或更新的对新行为的测试。纯粹的重构CL（不是为了改变行为）也应该由测试来覆盖；理想情况下，这些测试已经存在，但如果没有，你应该添加它们。</p>
+<ul>
+<li>独立的测试修改可以先进入独立的CL，类似于重构的准则。这包括
+用新的测试来验证预先存在的、已提交的代码。
+<ul>
+<li>确保重要的逻辑被测试所覆盖。</li>
+<li>增加了对受影响代码的后续重构的信心。例如，如果你想重构那些还没有被测试覆盖的代码，在提交重构CL之前提交测试CL可以验证测试行为在重构之前和之后是不变的。</li>
+</ul>
+</li>
+<li>重构测试代码（例如，引入辅助函数）。</li>
+<li>引入更大的测试框架代码（例如，一个集成测试）。</li>
+</ul>
+<h4 id="27-不要破坏构建">2.7 不要破坏构建</h4>
+<p>如果你有几个互相依赖的CL，你需要找到一种方法来确保整个系统在每个CL提交后都能继续工作。否则，你可能会在你的CL提交后破坏所有其他开发者的构建。</p>
+<h4 id="28-无法写小的cl">2.8 无法写小的CL</h4>
+<p>有时会遇到这样的情况，似乎CL没法变小，但这是不可能的。总能找到一种方法，将功能分解成一系列的小改动。
+在写一个大的CL之前，考虑能否先写一个重构CL来为后面写小CL铺平道路。可以与其他同事沟通，看看是否有人对如何用小的CL来实现功能有想法。
+如果所有这些选择都失败了（这应该是非常罕见的），那么事先征得你的reviewer的同意来review一个大型的CL。在这种情况下，预计要经历很长一段时间的review过程，要警惕不要引入bug，并且要特别勤奋地写测试。</p>
+<h3 id="3-如何处理reviewer的意见">3. 如何处理reviewer的意见</h3>
+<p>当你的CL提交以后，Reviewer可能会提出一些评论，这里有一些如何处理这些评论的方法</p>
+<h4 id="31-不要带有个人情绪">3.1 不要带有个人情绪</h4>
+<p>审查的目的是为了保持我们的代码库和产品的质量。当reviewer对你的代码提出批评时，请将其视为他们想要帮助你，而不是对你或你的能力进行人身攻击。
+有时reviewer会在评论中表达情绪，对reviewer来说折不是一个好的做法，但作为一个开发者，你应该对此有所准备。问问你自己，”reviewer想向我传达的建设性的东西是什么？”然后就按照他们正式表达的意思去做。
+永远不要对reviewer意见作出愤怒的反应。这是严重违反职业礼仪的行为。如果你太生气或恼怒而无法做出善意的回应，那就先冷静，直到你觉得足够冷静，可以有礼貌地回答。
+一般来说，如果一个reviewer没有以建设性和礼貌的方式提供反馈，请当面向他们解释。如果你不能当面或通过视频电话与他们交谈，那么就给他们发一封私人电子邮件。以友好的方式向他们解释你不喜欢什么，以及你希望他们以不同的方式做什么。如果他们也以非建设性的方式回应这次私下讨论，或者没有达到预期的效果，那么就适当地升级到你的经理。</p>
+<h4 id="32-修改代码">3.2 修改代码</h4>
+<p>如果reviewer说他们不理解你代码中的某些内容，你的第一个反应应该是修改代码使得代码更好懂。如果代码不能被解释，就添加一个代码注释，解释为什么会有这些代码。如果注释看起来毫无意义，才需要在CR工具中解释。
+如果一个reviewer没有理解你的某段代码，很可能其他未来的代码读者也不会理解。在代CR工具中写一个回应并不能帮助未来的代码读者，但重构代码或添加注释却能帮助他们。</p>
+<h4 id="33-协同思考">3.3 协同思考</h4>
+<p>撰写CL可能需要大量的工作。当你终于把它发出去供人review，感觉它已经完成了，而且非常确定不需要再做进一步的工作时，往往会感到非常满意。如果收到要求修改的意见，尤其是在你不同意的情况下，这可能是令人沮丧的。
+在这种时候，花点时间退后一步，考虑评论者是否提供了有价值的反馈，对代码质量和团队有所帮助。你对自己的第一个问题应该始终是：”我是否理解reviewer的要求？”
+如果你不能回答这个问题，请要求reviewer解释。
+然后，如果你理解评论，但不同意他们的意见，重要的是要合作思考，而不是战斗或防御性地思考。</p>
+<ul>
+<li>不好。”不，我不打算这样做。”</li>
+<li>好：”我选择X是因为[这些优点/缺点]和[这些权衡]。我的理解是，由于[这些原因]，使用Y会更糟。你是建议Y更好地服务于原来的权衡，我们应该以不同的方式权衡权衡，还是其他什么？”</li>
+</ul>
+<p>记住，礼貌和尊重应该永远是第一要务。如果你不同意reviewer的意见，要想办法合作：要求澄清，讨论利弊，并提供解释，说明为什么你的做事方法对代码、用户和/或团队更好。
+有时，你可能知道一些用户、代码库或CL的情况，而reviewer不知道。在适当的地方修复代码，并让你的reviewer参与讨论，包括给他们更多的背景。通常情况下，你可以在技术事实的基础上与reviewer达成一些共识。</p>
+<h4 id="34-解决冲突">3.4 解决冲突</h4>
+<p>如果你遵循了以上所有的规定，但你仍然遇到了自己和reviewer之间无法解决的冲突，请参见《代码审查标准》，以了解可以帮助解决冲突的准则和原则。</p>
+<h2 id="原文">原文</h2>
+<ul>
+<li><a href="https://github.com/google/eng-practices/tree/master/review">eng-practices/review at master · google/eng-practices · GitHub</a></li>
+</ul>
+
+
+    </div>
+    <nav class="hide-on-mobile section-nav">
+        <nav id="TableOfContents">
+  <ol>
+    <li><a href="#名词解释">名词解释</a>
+      <ol>
+        <li><a href="#1-code-reviewer指南">1. Code Reviewer指南</a></li>
+        <li><a href="#2-code-review应该看什么">2. Code review应该看什么</a></li>
+        <li><a href="#3-如何浏览cl">3 如何浏览CL</a></li>
+        <li><a href="#4-codereview的速度">4 Codereview的速度</a></li>
+        <li><a href="#5-怎么写comments">5. 怎么写comments</a></li>
+        <li><a href="#6-如何处理codereview中的反驳">6. 如何处理codereview中的反驳</a></li>
+      </ol>
+    </li>
+    <li><a href="#代码提交者指南">代码提交者指南</a>
+      <ol>
+        <li><a href="#1-写一个好的cl描述">1. 写一个好的CL描述</a></li>
+        <li><a href="#2-小的cl">2. 小的CL</a></li>
+        <li><a href="#3-如何处理reviewer的意见">3. 如何处理reviewer的意见</a></li>
+      </ol>
+    </li>
+    <li><a href="#原文">原文</a></li>
+  </ol>
+</nav>
+    </nav>
+</div>
+<div class="post">
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/software-engineering">Software Engineering</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2022-09-21-google-code-review-guide.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>2022  © Copyright zhiqli </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+	<script>
+    var enableTruncate =  true 
+    var filterDepth = false;
+    const MAX_DEPTH = 9; 
+
+    
+    window.addEventListener('DOMContentLoaded', () => {
+        const observerForTableOfContentActiveState = new IntersectionObserver(entries => {
+            entries.reverse().forEach(entry => {
+                const id = entry.target.getAttribute('id');
+                if (entry.intersectionRatio > 0) {
+                    var selected = document.querySelectorAll(`nav li a[href="#${id}"]`)
+                    if (selected != null) {
+                        selected.forEach(s => {
+                            if (s != null) {
+                                var depth = getDepth(s.parentElement);
+                                if (filterDepth && depth <= MAX_DEPTH) {
+                                    clearActiveStatesInTableOfContents();
+                                    s.parentElement.classList.add('active')
+                                }
+                            } else if (!filterDepth) {
+                                clearActiveStatesInTableOfContents();
+                                s.parentElement.classList.add('active');
+                            }
+                        }
+                        )
+                    }
+
+                }
+            });
+        });
+        document.querySelectorAll('h1[id],h2[id],h3[id],h4[id]').forEach((section) => {
+            observerForTableOfContentActiveState.observe(section);
+        });
+
+    });
+
+    
+    function isVisible(elem) {
+        if (!(elem instanceof Element)) return false; 
+        const style = getComputedStyle(elem);
+        if (style.display === 'none') return false;
+        if (style.visibility !== 'visible') return false;
+        if (style.opacity < 0.1) return false;
+        if (elem.offsetWidth + elem.offsetHeight + elem.getBoundingClientRect().height +
+            elem.getBoundingClientRect().width === 0) {
+            return false;
+        }
+        const elemCenter = {
+            x: elem.getBoundingClientRect().left + elem.offsetWidth / 2,
+            y: elem.getBoundingClientRect().top + elem.offsetHeight / 2
+        };
+        if (elemCenter.x < 0) return false;
+        if (elemCenter.x > (document.documentElement.clientWidth || window.innerWidth)) return false;
+        if (elemCenter.y < 0) return false;
+        if (elemCenter.y > (document.documentElement.clientHeight || window.innerHeight)) return false;
+        let pointContainer = document.elementFromPoint(elemCenter.x, elemCenter.y);
+        do {
+            if (pointContainer === elem) return true;
+        } while (pointContainer = pointContainer.parentNode);
+        return false;
+    }
+
+
+    function clearActiveStatesInTableOfContents() {
+        document.querySelectorAll('nav li').forEach((section) => {
+            section.classList.remove('active');
+        });
+    }
+
+    function getDepth(parentElement) {
+        var depth = 0;
+        while (parentElement !== null && parentElement.tagName.toLowerCase() !== 'ul') {
+            depth++;
+            parentElement = parentElement.parentElement;
+        }
+        return depth;
+    }
+
+    function navItems() {
+        
+        var nestedListItems = document.querySelectorAll('nav nav li a');
+        return Array.from(nestedListItems).filter(listItem =>
+            listItem.href != null && listItem.hash.startsWith("#")
+        )
+    }
+
+    function lasItemInNavBarVisible() {
+        var lastItem = navItems().slice(-1)[0]
+        return isVisible(lastItem)
+    }
+
+
+    
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!enableTruncate) return;
+        var navBar = navItems()
+        console.log(navBar)
+        if (!lasItemInNavBarVisible()) {
+            filterDepth = true;
+            
+            navBar.forEach(function (listItem) {
+                var depth = getDepth(listItem.parentElement);
+
+                if (depth > MAX_DEPTH) {
+                    listItem.parentElement.classList.add('depth-nested');
+                }
+            });
+        }
+
+    });
+
+</script>
+
+	
+</body>
+
+</html>

@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>100 Go Mistakes and How to Avoid Them - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="100 Go Mistakes and How to Avoid Them">
+<meta itemprop="description" content="罗列了100个go开发中容易犯的错误、如何避免这些错误并深入分析其背后的原理，包括一些常见的错误，比如rang loop、defer使用问题，也有一些优化建议，比如减少内存申请次数、理解内存对齐、理解CPU缓存 cache line原理等等，也有一些是凑数的诸如项目结构代码结构之类的。新手老司机都适宜，总体来说非常具有实践意义的一本小书。
+第二章 Code and project organizatiion 1. Unintended variable shadowing 当函数返回多个变量时，语句块内通过:=赋值的变量容易把外部的全局同名变量shadow掉。比如 var client *http.Client if xxx {[]() client, err := foo() } else { client, err := bar() } // use client shadow的问题可以通过golangci-lint来发现规避。
+2. Unnecessary nested code 没必要的嵌套主要是指我们在if else 分支的时候有时候可以提前返回，而不是一直深度嵌套下去，这样不好维护。如 func foo() { if xxx { if yyy { fxxx() } else { bbb return } } else { aaa return } } 上面的代码修改成下面的样子只有一层嵌套对于后续的维护会清晰很多，有时候也可以用continue来代替return。总之就是提前返回
+func foo() { if !">
+
+<meta itemprop="wordCount" content="3969">
+<meta itemprop="keywords" content="Go," /><meta property="og:title" content="100 Go Mistakes and How to Avoid Them" />
+<meta property="og:description" content="罗列了100个go开发中容易犯的错误、如何避免这些错误并深入分析其背后的原理，包括一些常见的错误，比如rang loop、defer使用问题，也有一些优化建议，比如减少内存申请次数、理解内存对齐、理解CPU缓存 cache line原理等等，也有一些是凑数的诸如项目结构代码结构之类的。新手老司机都适宜，总体来说非常具有实践意义的一本小书。
+第二章 Code and project organizatiion 1. Unintended variable shadowing 当函数返回多个变量时，语句块内通过:=赋值的变量容易把外部的全局同名变量shadow掉。比如 var client *http.Client if xxx {[]() client, err := foo() } else { client, err := bar() } // use client shadow的问题可以通过golangci-lint来发现规避。
+2. Unnecessary nested code 没必要的嵌套主要是指我们在if else 分支的时候有时候可以提前返回，而不是一直深度嵌套下去，这样不好维护。如 func foo() { if xxx { if yyy { fxxx() } else { bbb return } } else { aaa return } } 上面的代码修改成下面的样子只有一层嵌套对于后续的维护会清晰很多，有时候也可以用continue来代替return。总之就是提前返回
+func foo() { if !" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/1/01/100-go-mistakes-and-how-to-avoid-them/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="100 Go Mistakes and How to Avoid Them"/>
+<meta name="twitter:description" content="罗列了100个go开发中容易犯的错误、如何避免这些错误并深入分析其背后的原理，包括一些常见的错误，比如rang loop、defer使用问题，也有一些优化建议，比如减少内存申请次数、理解内存对齐、理解CPU缓存 cache line原理等等，也有一些是凑数的诸如项目结构代码结构之类的。新手老司机都适宜，总体来说非常具有实践意义的一本小书。
+第二章 Code and project organizatiion 1. Unintended variable shadowing 当函数返回多个变量时，语句块内通过:=赋值的变量容易把外部的全局同名变量shadow掉。比如 var client *http.Client if xxx {[]() client, err := foo() } else { client, err := bar() } // use client shadow的问题可以通过golangci-lint来发现规避。
+2. Unnecessary nested code 没必要的嵌套主要是指我们在if else 分支的时候有时候可以提前返回，而不是一直深度嵌套下去，这样不好维护。如 func foo() { if xxx { if yyy { fxxx() } else { bbb return } } else { aaa return } } 上面的代码修改成下面的样子只有一层嵌套对于后续的维护会清晰很多，有时候也可以用continue来代替return。总之就是提前返回
+func foo() { if !"/>
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
+
+	<script src="http://localhost:1313/js/feather.min.js"></script>
+	
+		<script src="http://localhost:1313/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container-wide wrapper">
+		<div class="header">
+	
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		
+<div class="article-nav" id="article-nav-id">
+    <div class="post">
+        <div class="post-header">
+    
+    <div class="matter">
+        <h1 class="title">100 Go Mistakes and How to Avoid Them</h1>
+    </div>
+</div>
+
+
+        
+        
+        <aside class="toc" id="static-toc">
+            <header>
+                <h3>Contents</h3>
+            </header>
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#第二章-code-and-project-organizatiion">第二章 Code and project organizatiion</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第三章-data-types">第三章 Data Types</a>
+      <ol>
+        <li></li>
+        <li><a href="#27--inefficient-map-initialization">27.  Inefficient map initialization</a></li>
+      </ol>
+    </li>
+    <li><a href="#第四章-control-structures">第四章 Control structures</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第五章-strings">第五章 Strings</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第六章-function-and-methods">第六章 Function and methods</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第七章-error-management">第七章 Error management</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第八章-concurrency-foundations">第八章 Concurrency: Foundations</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第九章-concurrency-practice">第九章 Concurrency: Practice</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第十章-标准库">第十章 标准库</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第十一章">第十一章</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第十二章-optimizations">第十二章 Optimizations</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </aside>
+        
+
+        <p>罗列了100个go开发中容易犯的错误、如何避免这些错误并深入分析其背后的原理，包括一些常见的错误，比如rang loop、defer使用问题，也有一些优化建议，比如减少内存申请次数、理解内存对齐、理解CPU缓存 cache line原理等等，也有一些是凑数的诸如项目结构代码结构之类的。新手老司机都适宜，总体来说非常具有实践意义的一本小书。</p>
+<h2 id="第二章-code-and-project-organizatiion">第二章 Code and project organizatiion</h2>
+<h4 id="1-unintended-variable-shadowing">1. Unintended variable shadowing</h4>
+<ul>
+<li>当函数返回多个变量时，语句块内通过:=赋值的变量容易把外部的全局同名变量shadow掉。比如</li>
+</ul>
+<pre tabindex="0"><code>	var client *http.Client
+	if xxx {[]()
+		client, err := foo()
+	} else {
+		client, err := bar()
+	}
+	// use client
+</code></pre><p>shadow的问题可以通过golangci-lint来发现规避。</p>
+<h4 id="2-unnecessary-nested-code">2. Unnecessary nested code</h4>
+<ul>
+<li>没必要的嵌套主要是指我们在if else 分支的时候有时候可以提前返回，而不是一直深度嵌套下去，这样不好维护。如</li>
+</ul>
+<pre tabindex="0"><code>func foo() {
+	if xxx {
+		if yyy {
+			fxxx()
+		} else {
+			bbb
+			return
+		}
+	} else {
+		aaa
+		return 
+	}
+}
+</code></pre><p>上面的代码修改成下面的样子只有一层嵌套对于后续的维护会清晰很多，有时候也可以用continue来代替return。总之就是提前返回</p>
+<pre tabindex="0"><code>func foo() {
+	if !xxx {
+		aaa
+		return
+	}
+	if !yyy {
+		bbb
+		return
+	}
+	fxxx()
+}
+</code></pre><p>作者在书中放了一张图，让符合预期的代码尽量靠前对齐
+
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230411223932.png" alt="Pasted image 20230411223932">
+
+</p>
+<h4 id="3-misusing-init-functions">3. Misusing init functions</h4>
+<ul>
+<li>我们知道，在go里面，init函数和全局变量是按照package import的顺序来执行的。如果滥用init的话可能会导致一些预期外的bug。</li>
+<li>建议init一般只做一些诸如DB Driver初始化之类的。</li>
+</ul>
+<h4 id="4-overusing-getters-and-setters">4. Overusing getters and setters</h4>
+<ul>
+<li>这应该是C++/Java之类面向对象语言带来的习惯，但是在go里面其实不怎么使用getter和setter，在必要的场景直接用全局变量即可。</li>
+</ul>
+<h4 id="5-interface-pollution">5. interface pollution</h4>
+<pre><code>![Pasted image 20221213124420](https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020221213124420.png)
+</code></pre>
+<ul>
+<li>概念
+interface 在开发中给我们带了极大的便利，比如io.Reader和io.Writer这两个interface，里面分别定义了Read和Write，不管Data source和Target是什么只要实现这两个接口就可以和上图意义读写字符串。</li>
+<li>什么时候用interface
+当然interface虽然很强大也不可滥用，作者建议在以下三种情况下去使用interface
+1. 有共同的行为，比如不管标准输入、从磁盘读数据、还是从网络IO读数据都有Read这个行为。这里其实就是行为的抽象。
+2. 解耦，这里是SOLID原则中L里氏替换原则的实现，即通过使用基类来替换子类，达到不依赖实现而依赖抽象的解耦。
+3. 限制行为，当我们单测的时候一些外部依赖无法在自动化流程正中执行，这时候可以通过interface来实现一个mock。</li>
+<li>interface 滥用
+<ul>
+<li>只有我们需要interface的时候才去创建它，而不是觉得以后会需要就创建它。滥用interface会增加代码的复杂度，增加一些没必要的层级。</li>
+<li>Don&rsquo;t design with interface, discover them. &ndash; Rob pike
+作者引用了一张图，interface中包含方法的个数占比，可以看到绝大部分都是1-3个。
+
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230411224244.png" alt="Pasted image 20230411224244">
+
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="6-interface-on-the-producer-side">6. interface on the producer side</h4>
+<pre><code>两种模式后
+</code></pre>
+<ul>
+<li>生产者模式，接口和实现放在一个包里
+
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020221213215506.png" alt="Pasted image 20221213215506">
+
+</li>
+<li>消费者模式，接口和使用者放在一个包里
+
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020221213215633.png" alt="Pasted image 20221213215633">
+
+
+作者建议应该采用消费者模式，即接口在使用端定义，可以更好地满足里氏替换原则。</li>
+</ul>
+<h4 id="7-returning-interface">7. returning interface</h4>
+<ul>
+<li>Be conservative in what you do, be liberal in what you accept from others.自己做的时候要谨慎，接受别人的时候开放。</li>
+<li>对于函数返回值，尽量返回结构体而不是接口。</li>
+<li>对于参数，可以接受接口。</li>
+</ul>
+<h4 id="8-any-says-nothing">8. any says nothing</h4>
+<ul>
+<li>即interface{}的使用要谨慎，会使代码失去可读性。</li>
+</ul>
+<h4 id="9-be-confused-about-when-to-use-generics">9. Be confused about when to use generics</h4>
+<ul>
+<li>1.18 带来了范性，但也不能滥用。</li>
+<li>推荐场景
+<ul>
+<li>数据结构，比如链表、二叉树等等数据结构的</li>
+<li>处理任意类型的slice、map、channel的函数</li>
+<li>所有类型在实现接口方法时都要做类似的实现逻辑，比如sort函数的Len/Less/Sort 函数</li>
+</ul>
+</li>
+<li>不推荐使用场景
+<ul>
+<li>使用范性不能带来任何价值，比如下面这段代码</li>
+</ul>
+</li>
+</ul>
+<pre tabindex="0"><code>func foo[T io.Writer](w T) {
+	b := getBytes()
+	-,_ = w.Write(b)
+}
+</code></pre><pre><code>- 使用范性会使得代码复杂化
+</code></pre>
+<h4 id="10-not-being-aware-of-the-possible-problems-with-type-embedding">10. Not being aware of the possible problems with type embedding</h4>
+<ul>
+<li>内嵌结构体会把父结构体的所有方法暴露，比如我们自定义一个结构体
+<pre tabindex="0"><code>type Biz struct {
+	sync.Mutex
+}
+</code></pre></li>
+<li>在上面的结构体中实际上mutex的Lock()和Unlock()方法都暴露出来了，Biz的对象也可以直接用。和其他面向对象语言还是不一样的。</li>
+<li>不能用面向对象语言继承的思路来理解go结构体的内嵌。</li>
+</ul>
+<h4 id="11-not-using-the-functional-options-pattern">11. Not using the functional options pattern</h4>
+<ul>
+<li>主要是针对Newxxx函数传参的问题，建议使用option。可以参考众多标准库或者开源代码的option使用。</li>
+</ul>
+<h4 id="12-project-misorganization">12. Project misorganization</h4>
+<ul>
+<li>这个是项目文件目录结构，其实是一条凑数的，文件结构看公司和个人习惯，只要团队内统一就OK。</li>
+</ul>
+<h4 id="13--creating-utility-packages">13.  Creating utility packages</h4>
+<ul>
+<li>不建议使用util, common, base这样的包，因为这些命名是不符合go的编程哲学，这种属于无意义的包命名，通过名字看不出这个包的功能。</li>
+<li>其实个人感觉是有一定道理的，common是个筐，啥都往里装，时间长了必定乱成一团。但对于业务代码，很难做到不设置一个这样的万能框。所以仁者见仁智者见智。</li>
+</ul>
+<h4 id="14-ignoring-package-name-collisions">14. Ignoring package name collisions</h4>
+<ul>
+<li>包命名冲突的问题，也是凑数，现代IDE会帮忙解决这个问题。</li>
+</ul>
+<h4 id="15-missing-code-documentation">15. Missing code documentation</h4>
+<ul>
+<li>完善代码文档，实际工作中貌似并没有使用过go docs，忽略。</li>
+</ul>
+<h4 id="16-not-using-linters">16. Not using linters</h4>
+<ul>
+<li>在CI中最好接入lint，目前使用最多的应该是<a href="https://github.com/golangci/golangci-lint">golangci-lint</a></li>
+</ul>
+<h2 id="第三章-data-types">第三章 Data Types</h2>
+<h4 id="17-creating-confusion-with-octal-literals-八进制">17. Creating confusion with octal literals (八进制)</h4>
+<ul>
+<li>字面数字0或者0o开头表示八进制</li>
+<li>同样的道理
+<ul>
+<li>二进制以0b或者0B开头，比如0b001</li>
+<li>16进制以0x或者0X开头，比如0xFF</li>
+<li>虚数以i结尾，比如3i，这个一般工作用不到吧？</li>
+</ul>
+</li>
+<li>go中支持在数字中间加<code>_</code>提高可读性，比如<code>100_000_000</code>，类似逗号提高数字可读性。</li>
+</ul>
+<h4 id="18-neglecting-integer-overflows">18. Neglecting integer overflows</h4>
+<ul>
+<li>注意整数溢出，go中提供了math.Maxxxx如math.MaxInt这样的最大数定义，如果超出则会溢出。在代码中有必要需要进行判断。</li>
+<li>如果有处理大数需求，可以用math/big这个package。</li>
+</ul>
+<h4 id="19-not-understanding-floating-points">19. Not understanding floating points</h4>
+<ul>
+<li>float32 使用最高位表示符号位，阶码8位，尾数23位。float64则是阶码11位，尾数52位，由于存储精度有限，无法存储完全准确的值，所以在使用时要注意。</li>
+<li>使用<code>==</code>比较两个浮点数时，只要能接受它们的偏差范围就可以。<a href="https://github.com/stretchr/testify">testify</a> 提供了InDalte函数来断言两个浮点类型的数字。</li>
+<li>为了提高精确率，在加减操作时，应该把接近数量级的数进行分组操作。书中提供了一段代码如下，f2的精确率会更高</li>
+</ul>
+<pre tabindex="0"><code>func f1(n int) float64 
+{ 
+	result := 10_000 
+	for i := 0; i &lt; n; i++ 
+	{ 
+		result += 1.0001 
+	} 
+	return result 
+} 
+
+func f2(n int) float64 
+{ 
+	result := 0 
+	for i := 0; i &lt; n; i++ 
+	{ 
+		result += 1.0001 
+	} 
+	return result + 10_000 
+}
+</code></pre><ul>
+<li>如果要加减乘除混合计算，先执行乘除可以提高精确率。</li>
+</ul>
+<h4 id="20-not-understanding-slice-length-and-capacity">20. Not understanding slice length and capacity</h4>
+<ul>
+<li>slice 的基本原理，看看slice的源码就知道了。</li>
+<li>slice扩增的时候，当元素小于 1024 时每次扩增 1 倍；之后每次扩增 1/4</li>
+</ul>
+<h4 id="21-inefficient-slice-initialization">21. Inefficient slice initialization</h4>
+<ul>
+<li>分析几种slice 初始化的效率，最好使用make并指定需要的length或capacity</li>
+</ul>
+<h4 id="22-being-confused-about-nil-vs-empty-slices">22. Being confused about nil vs. empty slices</h4>
+<pre tabindex="0"><code>var s []string      // s为empty同时也是nil
+s := []string{nil}  // 同上
+s := []string{}     // s为empty，但不为nil
+s := make([]string, 0) // 同上
+</code></pre><ul>
+<li>nil 和 empty 的区别是 nil slice不占用空间，empty的slice只是length为0</li>
+<li>上面四种风格最推崇第四种，除非要声明及初始化一些元素，否则第三种是不推荐的。前两种则需要nil slice的时候才用</li>
+</ul>
+<h4 id="23-not-properly-checking-if-a-slice-is-empty">23. Not properly checking if a slice is empty</h4>
+<ul>
+<li>对slice的判断使用<code>if len(s) == 0</code> 而不是 <code>if s == nil </code></li>
+<li>nil的slice <code>len()</code>也是0</li>
+<li>map也同样的道理</li>
+</ul>
+<h4 id="24-not-making-slice-copies-correctly">24. Not making slice copies correctly</h4>
+<ul>
+<li>需要拷贝slice时使用copy函数，需要注意的是copy函数第一个参数是dst 第二个参数是src。</li>
+<li>传进去的的dst slice不能为nil。</li>
+</ul>
+<h4 id="25-unexpected-side-effects-using-slice-append">25. Unexpected side effects using slice append</h4>
+<ul>
+<li>如果两个slice共享底层数组，对其中一个进行append可能会影响到另一个。</li>
+<li>因此如果需要修改，可以使用copy进行深拷贝。或者使用 full slice expression: <code>s[low:high:max]</code>，这样就限制了切片的cap</li>
+</ul>
+<h4 id="26-slices-and-memory-leaks">26 Slices and memory leaks</h4>
+<ul>
+<li>演示了几个slice造成内存泄漏的场景</li>
+<li>泄漏capacity</li>
+</ul>
+<pre tabindex="0"><code>
+func consumeMessages() {
+    for {
+    msg := receiveMessage()
+        // Do something with msg
+        storeMessageType(getMessageType(msg))
+    }
+}
+func getMessageType(msg []byte) []byte {
+    return msg[:5]
+}
+</code></pre><p>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230413213503.png" alt="Pasted image 20230413213503">
+
+
+上面的代码，如果 <code>receiveMessage()</code> 返回了数量 1000 的 msg 切片回来，由于 slice 后的数组和 GC 机制，<code>getMessageType</code> 取前 5 个元素的操作，剩下的995元素的内存暂时无法回收。会导致潜在的内存泄漏问题。如果要使用，可以使用copy来把需要的几个元素深拷贝出来。</p>
+<pre tabindex="0"><code>func getMessageType(msg []byte) []byte {
+    msgType := make([]byte, 5)
+	copy(msgType, msg)
+	return msgType
+}
+</code></pre><p>因为msgType的capacity只有5，所以只会copy5个字节出来。</p>
+<ul>
+<li>slice和指针</li>
+</ul>
+<pre tabindex="0"><code>type Foo struct {
+    v []byte
+}
+func main() {
+    foos := make([]Foo, 1_000)              
+    printAlloc()
+ 
+    for i := 0; i &lt; len(foos); i++ {        
+        foos[i] = Foo{
+            v: make([]byte, 1024*1024),
+        }
+    }
+    printAlloc()
+ 
+    two := keepFirstTwoElementsOnly(foos)   
+    runtime.GC()                            
+    printAlloc()
+    runtime.KeepAlive(two)                  
+}
+ 
+func keepFirstTwoElementsOnly(foos []Foo) []Foo {
+    return foos[:2]
+}
+</code></pre><ul>
+<li>这段代码中即使使用切片将foos只保留两位，所占用的内存也是不会变的，如果元素是指针或者struct，GC不会回收的。可以用两种方法来避免这个问题。</li>
+</ul>
+<pre tabindex="0"><code>func keepFirstTwoElementsOnly(foos []Foo) []Foo {
+    res := make([]Foo, 2)
+    copy(res, foos)
+    return res
+}
+</code></pre><ul>
+<li>采用copy，因为只copy前两个元素，GC知道其他998个元素是不需要了可以回收。</li>
+<li>另一种方法则是手动将其余998个元素设置为nil</li>
+</ul>
+<pre tabindex="0"><code>func keepFirstTwoElementsOnly(foos []Foo) []Foo {
+    for i := 2; i &lt; len(foos); i++ {
+        foos[i].v = nil
+    }
+    return foos[:2]
+}
+</code></pre><h3 id="27--inefficient-map-initialization">27.  Inefficient map initialization</h3>
+<ul>
+<li>根据map的实现原理，当map容量不足时会触发扩容，而频繁扩容导致数据迁移会造成效率降低。扩容时机有两个
+<ul>
+<li>装载因子超过阈值，源码里定义的阈值是 6.5。<code>loadFactor := count / (2^B)</code> count 就是 map 的元素个数，2^B 表示 bucket 数量。</li>
+<li>overflow 的 bucket 数量过多：当 B 小于 15，也就是 bucket 总数 2^B 小于 2^15 时，如果 overflow 的 bucket 数量超过 2^B；当 B &gt;= 15，也就是 bucket 总数 2^B 大于等于 2^15，如果 overflow 的 bucket 数量超过 2^15。</li>
+</ul>
+</li>
+<li>因此，map也和slice一样，尽量在初始化的时候提供map的长度，避免扩容操作。</li>
+</ul>
+<h4 id="28--maps-and-memory-leaks">28.  Maps and memory leaks</h4>
+<pre tabindex="0"><code>n := 1_000_000
+m := make(map[int][128]byte)
+printAlloc()
+ 
+for i := 0; i &lt; n; i++ {      
+    m[i] = randBytes()
+}
+printAlloc()
+ 
+for i := 0; i &lt; n; i++ {      
+    delete(m, i)
+}
+ 
+runtime.GC()                  
+printAlloc()
+runtime.KeepAlive(m)
+
+// 运行结果
+// 0 M
+// 461 M
+// 293 M
+</code></pre><ul>
+<li>上面这段代码将map中的元素挨个delete掉内存并不会恢复到0，原因是map中的bucket的数量不会缩减。即是时将元素删除也不会影响bucket的数量只不过是将bucket中的slot清零。而降低的内存应该是bmap中overflow指向的bucket，<code>map[int][128]byte</code>中的数组<code>[128]byte</code>空值就占用128字节。</li>
+<li>解决办法有两个
+<ul>
+<li>第一个方法是不断将map copy到一个新的map，这样如果数据变少了，老map就释放了，但这显然不是一个优雅的操作。</li>
+<li>另一个方法是将map中的value修改为指针，减少空value占用的空间</li>
+</ul>
+</li>
+<li>另外书中提到一个tips：如果key或value超过128字节，Go不会将其直接存储在映射存储桶中。相反，Go存储一个指针来引用这个key或value。</li>
+</ul>
+<h4 id="29-comparing-values-incorrectly">29. Comparing values incorrectly</h4>
+<ul>
+<li>slice和map是数据不可比较类型，<code>==</code> <code>!=</code> 等比较操作是无效的。</li>
+<li>如果一个struct中有不可比较类型的元素，那这个struct也是不可比较类型了。</li>
+<li>对于不可比较类型，可以使用<code>reflect.DeepEqual</code>来比较，但是由于性能不好，很多场景建议自己实现比较函数，比如for循环比较slice中的每个元素。</li>
+<li>标准库中也有一些比较函数，比如<code>bytes.Compare</code></li>
+</ul>
+<h2 id="第四章-control-structures">第四章 Control structures</h2>
+<h4 id="30-ignoring-the-fact-that-elements-are-copied-in-range-loops">30. Ignoring the fact that elements are copied in range loops</h4>
+<ul>
+<li>range loops里面的value是一个副本 &mdash;- 这很重要。</li>
+</ul>
+<pre tabindex="0"><code>type account struct {
+    balance float32
+}
+
+accounts := []account{
+    {balance: 100.},
+    {balance: 200.},
+    {balance: 300.},
+}
+
+for _, a := range accounts {
+    a.balance += 1000
+}
+
+// 结果是 [{100} {200} {300}]
+</code></pre><ul>
+<li>原因是 a 是一个副本。</li>
+<li>可以通过下面两种方式来解决这个问题，其实都是采用index来操作slice本身。</li>
+</ul>
+<pre tabindex="0"><code>for i := range accounts {                
+    accounts[i].balance += 1000
+}
+
+for i := 0; i &lt; len(accounts); i++ {    
+    accounts[i].balance += 1000
+}
+</code></pre><ul>
+<li>还有一种方法就是slice中存储指针</li>
+</ul>
+<pre tabindex="0"><code>accounts := []*account{       
+    {balance: 100.},
+    {balance: 200.},
+    {balance: 300.},
+}
+for _, a := range accounts {
+    a.balance += 1000         
+}
+</code></pre><h4 id="31-ignoring-how-arguments-are-evaluated-in-range-loops">31. Ignoring how arguments are evaluated in range loops</h4>
+<ul>
+<li><code>for i, v := range exp</code> range loop 的对象是一个表达式，这个表达式可以是 string, slice, map等，当执行循环的时候，exp只会被计算一次，对原始迭代值进行拷贝生成一个副本。</li>
+<li>对比下面两段代码哪个会有死循环</li>
+</ul>
+<pre tabindex="0"><code>s := []int{0, 1, 2} 
+
+for range s 
+{ 
+	s = append(s, 10) 
+} 
+
+for i := 0; i &lt; len(s); i++ 
+{ 
+	s = append(s, 10) 
+}
+</code></pre><ul>
+<li>很显然第二个for循环会是死循环，但第一个并不会，执行3次就结束了，因为迭代的是一个副本。</li>
+<li>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230413223259.png" alt="Pasted image 20230413223259">
+
+</li>
+<li>书中还举了一个channel的例子</li>
+</ul>
+<pre tabindex="0"><code>ch1 := make(chan int, 3)     
+go func() {
+    ch1 &lt;- 0
+    ch1 &lt;- 1
+    ch1 &lt;- 2
+    close(ch1)
+}()
+ 
+ch2 := make(chan int, 3)     
+go func() {
+    ch2 &lt;- 10
+    ch2 &lt;- 11
+    ch2 &lt;- 12
+    close(ch2)
+}()
+ 
+ch := ch1                    
+for v := range ch {          
+    fmt.Println(v)
+}
+
+// 输出 0 1 2， 因为ch是ch1的一个副本
+</code></pre><ul>
+<li>数组也是一样的道理</li>
+</ul>
+<h4 id="32-ignoring-the-impact-of-using-pointer-elements-in-range-loops">32. Ignoring the impact of using pointer elements in range loops</h4>
+<ul>
+<li>只可以说是最容易犯的错误，通过代码来说明这个问题</li>
+</ul>
+<pre tabindex="0"><code>type Customer struct {
+	ID      string
+	Balance float64
+}
+
+type Store struct {
+	m map[string]*Customer
+}
+
+func main() {
+	s := Store{
+		m: make(map[string]*Customer),
+	}
+	s.storeCustomers([]Customer{
+		{ID: &#34;1&#34;, Balance: 10},
+		{ID: &#34;2&#34;, Balance: -10},
+		{ID: &#34;3&#34;, Balance: 0},
+	})
+	print(s.m)
+}
+
+// 这里的结果会是
+// key=1, value=&amp;main.Customer{ID:&#34;3&#34;, Balance:0}
+// key=2, value=&amp;main.Customer{ID:&#34;3&#34;, Balance:0}
+// key=3, value=&amp;main.Customer{ID:&#34;3&#34;, Balance:0}”
+
+// 问题在于在这个循环中每次迭代的时候 customer 都是同一个对象，只是 customer 的值会不断被新的值覆盖
+func (s *Store) storeCustomers(customers []Customer) {
+	for _, customer := range customers {
+		s.m[customer.ID] = &amp;customer
+	}
+}
+
+func print(m map[string]*Customer) {
+	for k, v := range m {
+		fmt.Printf(&#34;key=%s, value=%#v\n&#34;, k, v)
+	}
+}
+</code></pre><ul>
+<li>问题解析
+<ul>
+<li>第一次循环<code>customer</code> 引用了第一个元素，我们存储了一个指向customer结构的指针。</li>
+<li>第二次循环<code>customer</code> 引用了第一个元素，我们也存储了一个指向customer结构的指针。</li>
+<li>第三次循环<code>customer</code> 引用了第一个元素，我们同样存储了一个指向customer结构的指针。</li>
+<li>最后我们存储了同一个指针三次，它最后只想最后一个元素。
+
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230413223812.png" alt="Pasted image 20230413223812">
+
+</li>
+</ul>
+</li>
+<li>解决方案有两个，第一个把每次迭代的值copy到一个新的临时变量</li>
+</ul>
+<pre tabindex="0"><code>func (s *Store) storeCustomers2(customers []Customer) {
+	for _, customer := range customers {
+		current := customer
+		s.m[current.ID] = &amp;current
+	}
+}
+</code></pre><ul>
+<li>第二个直接引用切片的元素，但这里有风险，如果slice出现扩容的时候，那原本地址还是被引用，可能出现内存泄露</li>
+</ul>
+<pre tabindex="0"><code>func (s *Store) storeCustomers3(customers []Customer) {
+	for i := range customers {
+		customer := &amp;customers[i]
+		s.m[customer.ID] = customer
+	}
+}
+</code></pre><h4 id="33-making-wrong-assumptions-during-map-iterations">33. Making wrong assumptions during map iterations</h4>
+<ul>
+<li>map是无序的，如果非要按序输出可以使用第三方库<a href="https://github.com/emirpasic/gods">gods</a>，这个库实现了很多go的数据结构其中包括有序的map，使用tree来实现可以做到有序，而标准库是hashmap。</li>
+<li>map在迭代中插入元素可能会带来不可预期的结果，比如插入的元素会被跳过不被迭代到。不能这做。</li>
+</ul>
+<h4 id="34-ignoring-how-the-break-statement-works">34. Ignoring how the break statement works</h4>
+<ul>
+<li>break只能跳出一层循环，尤其是for switch 嵌套使用时。比如下面的代码，break只能跳出switch这一层，如果非要跳出可以用label来控制</li>
+</ul>
+<pre tabindex="0"><code>for i := 0; i &lt; 5; i++ {
+    fmt.Printf(&#34;%d &#34;, i)
+ 
+    switch i {
+    default:
+    case 2:
+        break      
+    }
+}
+</code></pre><h4 id="35-using-defer-inside-a-loop">35. Using defer inside a loop</h4>
+<ul>
+<li>defer 只会在函数结束的时候执行</li>
+<li>下面这段代码在每次循环后并不会执行defer</li>
+</ul>
+<pre tabindex="0"><code>func readFiles(ch &lt;-chan string) error {
+    for path := range ch {                    
+        file, err := os.Open(path)            
+        if err != nil {
+            return err
+        }
+ 
+        defer file.Close()                    
+ 
+        // Do something with file
+    }
+    return nil
+}
+</code></pre><ul>
+<li>如果想要解决这个问题可以将循环中这段代码抽取出来作为一个函数，或者采用闭包。</li>
+</ul>
+<pre tabindex="0"><code>func readFiles(ch &lt;-chan string) error {
+    for path := range ch {
+        err := func() error {
+            // ...
+            defer file.Close()
+            // ...
+        }()                  
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
+</code></pre><h2 id="第五章-strings">第五章 Strings</h2>
+<h4 id="36-not-understanding-the-concept-of-a-rune">36. Not understanding the concept of a rune</h4>
+<ul>
+<li>go是采用UTF8来编码的，如果要使用Unicode则要用rune</li>
+<li>注意len函数返回的是字节长度，而不是rune的长度。一个rune字符可能占1-4个字节。</li>
+</ul>
+<h4 id="37-inaccurate-string-iteration">37. Inaccurate string iteration</h4>
+<ul>
+<li>当string中不全是utf8时，采用index迭代会按照字节输出。像下面这段代码第二个字符和len长度都不符合预期。</li>
+</ul>
+<pre tabindex="0"><code>s := &#34;hêllo&#34;            
+for i := range s {
+    fmt.Printf(&#34;position %d: %c\n&#34;, i, s[i])
+}
+fmt.Printf(&#34;len=%d\n&#34;, len(s))
+
+// 输出
+// position 0: h
+// position 1: Ã
+// position 3: l
+// position 4: l
+// position 5: o
+// len=6”
+</code></pre><ul>
+<li>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230413231237.png" alt="Pasted image 20230413231237">
+
+</li>
+<li>可以转成<code>[]rune</code>， 不过转rune会有内存copy操作，而且时间时间复杂度是O(n)。采用range loop来迭代，如下图也是正确的。</li>
+</ul>
+<pre tabindex="0"><code>s := &#34;hêllo&#34;
+for i, r := range s {
+    fmt.Printf(&#34;position %d: %c\n&#34;, i, r)
+}
+</code></pre><ul>
+<li><code>fmt.Println(utf8.RuneCountInString(s)) // 5</code> 这个方法可以计算string中rune的个数</li>
+</ul>
+<h4 id="38-misusing-trim-functions">38. Misusing trim functions</h4>
+<ul>
+<li>只是Trim的使用
+<ul>
+<li>TrimRight/TrimLeft removes the trailing/leading runes in a set.</li>
+<li>TrimSuffix/TrimPrefix removes a given suffix/prefix.</li>
+</ul>
+</li>
+</ul>
+<h4 id="39-under-optimized-string-concatenation">39. Under-optimized string concatenation</h4>
+<ul>
+<li>字符串拼接性能对比</li>
+<li>使用+=</li>
+</ul>
+<pre tabindex="0"><code>func concat(values []string) string {
+    s := &#34;&#34;
+    for _, value := range values {
+        s += value
+    }
+    return s
+}
+</code></pre><ul>
+<li>使用strings.Builder</li>
+</ul>
+<pre tabindex="0"><code>func concat(values []string) string {
+    sb := strings.Builder{}               
+    for _, value := range values {
+        _, _ = sb.WriteString(value)      
+    }
+    return sb.String() 
+}
+</code></pre><ul>
+<li>使用Grow提前分配内存</li>
+</ul>
+<pre tabindex="0"><code>func concat(values []string) string {
+    total := 0
+    for i := 0; i &lt; len(values); i++ {     
+        total += len(values[i])
+    }
+ 
+    sb := strings.Builder{}
+    sb.Grow(total)                         
+    for _, value := range values {
+        _, _ = sb.WriteString(value)
+    }
+    return sb.String()
+}
+</code></pre><ul>
+<li>性能对比
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230413232311.png" alt="Pasted image 20230413232311">
+
+</li>
+</ul>
+<h4 id="40-useless-string-conversions">40. Useless string conversions</h4>
+<ul>
+<li>bytes 包支持很多和strings包类似的方法，如果有直接使用的方法要避免将[]byte转化为string来操作，比如<strong>bytes.TrimSpace</strong> 方法。</li>
+</ul>
+<h4 id="41-substrings-and-memory-leaks">41. Substrings and memory leaks</h4>
+<ul>
+<li>和26条slice类似，子字符串引用一个较长父字符串的部分内容，会导致父字符串不能被GC，造成内存泄漏。</li>
+</ul>
+<h2 id="第六章-function-and-methods">第六章 Function and methods</h2>
+<h4 id="42-not-knowing-which-type-of-receiver-to-use">42. Not knowing which type of receiver to use</h4>
+<pre tabindex="0"><code>type customer struct {
+	balance float64
+}
+
+func (c customer)Add(v float64) {
+	c.balance += v
+}
+
+func (c *customer)Add(v float64) {
+	c.balance += v
+}
+</code></pre><ul>
+<li>
+<p>receiver选择指针还是值的选择，实际上receiver是作为一个隐式参数传递的，根据前面参数copy的介绍，应该知道该怎么选择了。书中总结了使用场景。</p>
+</li>
+<li>
+<p>必须要用指针类型的场景</p>
+<ul>
+<li>方法需要修改receiver的值</li>
+<li>如果receiver的成员不能被拷贝</li>
+</ul>
+</li>
+<li>
+<p>应该使用指针类型的场景</p>
+<ul>
+<li>如果receiver是一个大的对象，使用指针类型可以更高效的处理程序，这里大的具体数值不好界定，需要看实际的场景，这里可以使用benchmark来估计。</li>
+</ul>
+</li>
+<li>
+<p>必须要使用值类型的场景</p>
+<ul>
+<li>如果强制要求receiver是不可变的</li>
+<li>如果receiver是一个map、function、channel类型，否则会有编译错误</li>
+</ul>
+</li>
+<li>
+<p>应该使用值类型的场景</p>
+<ul>
+<li>receiver是一个slice，并且一定需要修改</li>
+<li>receiver是一个array或者是一个没有可变字段的struct，如time.Time</li>
+<li>receiver是基本类型，例如int、float64或string。</li>
+</ul>
+</li>
+</ul>
+<h4 id="43--never-using-named-result-parameters">43.  Never using named result parameters</h4>
+<ul>
+<li>接口定义的函数使用命名返回参数，可以提升可读性，尤其是返回多个同类型结果时。但如果函数太长也不太合适，一来可读性也不一定高，另外也容易出现变量被shadow。</li>
+</ul>
+<h4 id="44-unintended-side-effects-with-named-result-parameters">44. Unintended side effects with named result parameters</h4>
+<ul>
+<li>就是上面说的命名结果容易被shadow或者忘记赋值直接返回。特别是err。</li>
+</ul>
+<h4 id="45-returning-a-nil-receiver">45. Returning a nil receiver</h4>
+<pre tabindex="0"><code>type MultiError struct {
+    errs []string
+}
+func (m *MultiError) Add(err error) {
+    m.errs = append(m.errs, err.Error())
+}
+func (m *MultiError) Error() string {
+    return strings.Join(m.errs, &#34;;&#34;)
+}
+
+func (c Customer) validate() error {
+    var m *MultiError
+    if c.Age &lt; 0 {
+        m = &amp;MultiError{}
+        m.Add(errors.New(&#34;age is negative&#34;))
+    }
+    if c.Name == &#34;&#34; {
+        if m == nil {
+            m = &amp;MultiError{}
+		}
+        m.Add(errors.New(&#34;name is nil&#34;))
+    }
+
+	return m 
+}
+</code></pre><ul>
+<li>看看下面的调用方式有什么问题</li>
+</ul>
+<pre tabindex="0"><code>customer := Customer{Age: 33, Name: &#34;John&#34;}
+if err := customer.Validate(); err != nil {
+    log.Fatalf(&#34;customer is invalid: %v&#34;, err)
+}
+</code></pre><ul>
+<li>按照代码逻辑，这应该是一个合法的对象，所以这里err应该为nil的，但是实际上运行以后将会得到<code>customer is invalid: &lt;nil&gt;</code></li>
+<li>原因在于指针receiver允许为nil，我们想要返回的m 为 <code>nil</code>，但是其实现了 <code>Error</code> 接口。  返回的 <code>Error</code> 不为 <code>nil</code>。</li>
+<li>这是一个很容易犯的错误，当返回值指针实现了一个接口，即使这个指针为nil，函数返回的时候转化为接口也会被当成非nil的值。</li>
+<li>延伸阅读<a href="https://go.dev/doc/faq#nil_error">Why is my nil error value not equal to nil?</a> 及<a href="https://github.com/golang/go/issues/42663">Returned interface is never nil?</a></li>
+</ul>
+<h4 id="46-using-a-filename-as-a-function-input">46: Using a filename as a function input</h4>
+<pre tabindex="0"><code>func countEmptyLinesInFile(filename string) (int, error) {
+    file, err := os.Open(filename)       
+    if err != nil {
+        return 0, err
+    }
+    // Handle file closure
+ 
+    scanner := bufio.NewScanner(file)    
+    for scanner.Scan() {                 
+        // ...
+    }
+}
+</code></pre><ul>
+<li>这里入参如果是文件名的话这个函数就没什么扩展性，如果输入变成了HTTP或者socket等输入时就不适用了，同时也不方便测试，测试时还得先创建一个文件。更优雅的做法应该是将入参设置为io.Reader</li>
+</ul>
+<pre tabindex="0"><code>func countEmptyLines(reader io.Reader) (int, error) {     
+    scanner := bufio.NewScanner(reader)                   
+    for scanner.Scan() {
+        // ...
+    }
+}
+</code></pre><h4 id="47-ignoring-how-defer-arguments-and-receivers-are-evaluated">47. Ignoring how defer arguments and receivers are evaluated</h4>
+<pre tabindex="0"><code>const (
+    StatusSuccess  = &#34;success&#34;
+    StatusErrorFoo = &#34;error_foo&#34;
+    StatusErrorBar = &#34;error_bar&#34;
+)
+ 
+func f() error {
+    var status string
+    defer notify(status)               
+    defer incrementCounter(status)     
+ 
+    if err := foo(); err != nil {
+        status = StatusErrorFoo        
+        return err
+    }
+ 
+    if err := bar(); err != nil {
+        status = StatusErrorBar        
+        return err
+    }
+ 
+    status = StatusSuccess             
+    return nil
+}
+</code></pre><ul>
+<li>这里两个defer函数得到的都是空字符串，因为defer在定义的时候会把函数压栈保存，即使在后面赋值也没有用了。</li>
+<li>最佳解决方案是采用闭包，总之defer用闭包就对了</li>
+</ul>
+<pre tabindex="0"><code>func f() error {
+    var status string
+    defer func() {                   
+        notify(status)               
+        incrementCounter(status)     
+    }()
+ 
+    // The rest of the function is unchanged
+}
+</code></pre><h2 id="第七章-error-management">第七章 Error management</h2>
+<h5 id="48-panicking">48. Panicking</h5>
+<ul>
+<li>介绍panic，panic应该尽量少用，最好使用一个函数来处理错误。</li>
+</ul>
+<h4 id="49--ignoring-when-to-wrap-an-error">49.  Ignoring when to wrap an error</h4>
+<ul>
+<li>wrap指为一个错误添加额外的上下文和/或将一个错误标记为特定的类型。如果我们需要标记一个错误，我们应该创建一个自定义的错误类型。然而，如果我们只是想添加额外的上下文，可以使用带有<code>%w</code>指令的<code>fmt.Errorf</code>，因为它不需要创建一个新的错误类型。</li>
+<li>但是wrap error会产生潜在的耦合，因为它使源错误对调用者可用。如果我们想防止它，我们不应该使用错误包装，而应该使用错误转换，例如，使用<code>fmt.Errorf</code>与<code>%v</code>指令。
+
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230414231749.png" alt="Pasted image 20230414231749">
+
+</li>
+</ul>
+<h4 id="50-checking-an-error-type-inaccurately">50. Checking an error type inaccurately</h4>
+<ul>
+<li>当使用%w指令或者结构体封装的方式包装一个错误的时候，可以使用 errors.As 递归判断错误类型，<code>errors.As</code>函数需要传递一个目标错误类型的指针。</li>
+<li><code>errors.As</code> 的用法如下</li>
+</ul>
+<pre tabindex="0"><code>func handler(w http.ResponseWriter, r *http.Request) {
+    // Get transaction ID
+ 
+    amount, err := getTransactionAmount(transactionID)
+    if err != nil {
+        if errors.As(err, &amp;transientError{}) {      
+            http.Error(w, err.Error(),
+                http.StatusServiceUnavailable)      
+        } else {
+            http.Error(w, err.Error(),
+                http.StatusBadRequest)              
+        }
+        return
+    }
+ 
+    // Write response
+}
+</code></pre><h4 id="51-checking-an-error-value-inaccurately">51. Checking an error value inaccurately</h4>
+<ul>
+<li>有时候有一些error实际上是合法的，并不是错误，这种错误叫sentinel errors，比如DB操作的ErrRecordNotFound；这种错误一般是全局定义，以Err开头。</li>
+<li>当在业务上层去判断这种错误时，如果直接用<code>==</code> 可能会有问题，因为错误可能被包装。可以用<code>errors.Is</code>来获取这个error的值。</li>
+</ul>
+<h4 id="52-handling-an-error-twice">52. Handling an error twice</h4>
+<ul>
+<li>当调用链很长的时候，多次处理同一个错误，比如对同一个错误在内层和外层都打印日志。</li>
+<li>书中建议只对日志处理一次，比如在最外层打印日志，但为了防止上下文丢失，每次返回错误的时候都要wrap包一层，将该环节的上下文带上去。</li>
+</ul>
+<h4 id="53--not-handling-an-error">53.  Not handling an error</h4>
+<ul>
+<li>有时候被调用的函数是会返回error的，但我们调用层不需要去处理，最好注释不处理的原因。</li>
+</ul>
+<h4 id="54--not-handling-defer-errors">54.  Not handling defer errors</h4>
+<ul>
+<li>defer语句通常用于做收尾工作,有时候在defer中调用的函数会返回错误，如果不处理这些错误就会导致错误信息丢失，造成资源泄露等问题。书中建议，在defer的时候把错误值赋值给返回结果，向上传递错误。</li>
+<li>但是如果直接给返回出去的err赋值，可能会覆盖原来的err，因此可以按照下面代码的方式来处理。</li>
+</ul>
+<pre tabindex="0"><code>defer func() {
+    closeErr := rows.Close()     
+    if err != nil {              
+        if closeErr != nil {
+            log.Printf(&#34;failed to close rows: %v&#34;, err)
+        }
+        return
+    }
+    err = closeErr               
+}()
+</code></pre><h2 id="第八章-concurrency-foundations">第八章 Concurrency: Foundations</h2>
+<h4 id="55-mixing-up-concurrency-and-parallelism">55. Mixing up concurrency and parallelism</h4>
+<ul>
+<li>并发和并行的区别，更多解释可以自行搜索，书中用顾客和咖啡机的例子来解释
+<ul>
+<li>并行
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230415120702.png" alt="Pasted image 20230415120702">
+
+</li>
+<li>并发
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230415120745.png" alt="Pasted image 20230415120745">
+
+</li>
+</ul>
+</li>
+<li>Concurrency is about dealing with lots of things at once. Parallelism is about doing lots of things at once. —Rob Pike</li>
+</ul>
+<h4 id="56--thinking-concurrency-is-always-faster">56.  Thinking concurrency is always faster</h4>
+<ul>
+<li>介绍go调度 GMP 实现原理，这方面个人觉得写得最好的资料来自<a href="https://golang.design/under-the-hood/zh-cn/part2runtime/ch06sched/mpg/">go语言原本</a>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230415214752.png" alt="Pasted image 20230415214752">
+
+</li>
+<li>书中强调并发并不一定是快的，通过一个归并排序的例子说明</li>
+<li>普通递归版本</li>
+</ul>
+<pre tabindex="0"><code>func sequentialMergesort(s []int) {
+    if len(s) &lt;= 1 {
+        return
+    }
+ 
+    middle := len(s) / 2
+    sequentialMergesort(s[:middle])     
+    sequentialMergesort(s[middle:])     
+    merge(s, middle)                    
+}
+</code></pre><ul>
+<li>并行版本</li>
+</ul>
+<pre tabindex="0"><code>func parallelMergesortV1(s []int) {
+    if len(s) &lt;= 1 {
+        return
+    }
+ 
+    middle := len(s) / 2
+ 
+    var wg sync.WaitGroup
+    wg.Add(2)
+ 
+    go func() {             
+        defer wg.Done()
+        parallelMergesortV1(s[:middle])
+    }()
+ 
+    go func() {             
+        defer wg.Done()
+        parallelMergesortV1(s[middle:])
+    }()
+ 
+    wg.Wait()
+    merge(s, middle)        
+}
+</code></pre><ul>
+<li>测10000个元素的benchmark结果</li>
+</ul>
+<pre tabindex="0"><code>Benchmark_sequentialMergesort-4       2278993555 ns/op
+Benchmark_parallelMergesortV1-4      17525998709 ns/op
+</code></pre><ul>
+<li>主要是需要一直go下去，每个goroutine的负载非常小，得不偿失。</li>
+<li>最后书中也给出了一个最优解，当元素小于某个值时用串行，大于某个值时用并行方式。</li>
+</ul>
+<h4 id="57-being-puzzled-about-when-to-use-channels-or-mutexes">57. Being puzzled about when to use channels or mutexes</h4>
+<p>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230415220215.png" alt="Pasted image 20230415220215">
+
+</p>
+<ul>
+<li>并行的goroutine当他们要访问或者改变一个共享变量时得用mutex。比如上面的G1 G2</li>
+<li>并发的goroutine需要协调，比如上面G3 要汇总G1 G2 的结果，可以通过channel来向G3发信号。</li>
+<li>更多延伸阅读<a href="https://golang.design/go-questions/channel/csp/">CSP</a> <a href="https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-sync-primitives/">同步原语与锁</a></li>
+</ul>
+<h4 id="58--not-understanding-race-problems">58.  Not understanding race problems</h4>
+<ul>
+<li>数据竞争指的是两个以上goroutine，同时访问一个内存位置，其中至少一个是写。</li>
+<li>解决数据竞争
+<ul>
+<li>使用atomic包</li>
+<li>使用mutex保护临界区</li>
+<li>使用channel来传递数据</li>
+</ul>
+</li>
+<li>内存一致性模型，<a href="https://golang.design/under-the-hood/zh-cn/part1basic/ch05sync/mem/">延伸阅读</a>。书中通过一些例子来讲解go的内模型，其中下面两个例子分享buffered channel和unbuffered channel需要注意，其他都是比较简单的例子。</li>
+<li>有数据竞争</li>
+<li>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230415225723.png" alt="Pasted image 20230415225723">
+
+</li>
+</ul>
+<pre tabindex="0"><code>i := 0
+ch := make(chan struct{}, 1)
+go func() {
+    i = 1
+    &lt;-ch
+}()
+ch &lt;- struct{}{}
+fmt.Println(i)
+</code></pre><ul>
+<li>没有数据竞争</li>
+<li>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230415225734.png" alt="Pasted image 20230415225734">
+
+</li>
+</ul>
+<pre tabindex="0"><code>i := 0
+ch := make(chan struct{}) 
+go func() {
+    i = 1
+    &lt;-ch
+}()
+ch &lt;- struct{}{}
+fmt.Println(i)
+</code></pre><h4 id="59-not-understanding-the-concurrency-impacts-of-a-workload-type">59. Not understanding the concurrency impacts of a workload type</h4>
+<ul>
+<li>为了提高效率，我们经常会使用协程池模式来并发处理，这个池子大小或者说并发数该怎么选择呢。需要根据任务是CPU密集还是IO密集来决定</li>
+<li>如果是IO密集型任务，则取决于外部系统，比如DB。</li>
+<li>如果是CPU密集型任务，则取决于<code>runtime.GOMAXPROCS</code>，也就是让每个 M都在同时运行。</li>
+</ul>
+<h4 id="60-misunderstanding-go-contexts">60. Misunderstanding Go contexts</h4>
+<ul>
+<li>这条主要是介绍了一下context，官方定义“A Context carries a deadline, a cancellation signal, and other values across API boundaries.”</li>
+</ul>
+<h2 id="第九章-concurrency-practice">第九章 Concurrency: Practice</h2>
+<h4 id="61-propagating-an-inappropriate-context">61. Propagating an inappropriate context</h4>
+<ul>
+<li>随意传播context也会带来危险</li>
+</ul>
+<pre tabindex="0"><code>func handler(w http.ResponseWriter, r *http.Request) {
+    response, err := doSomeTask(r.Context(), r)         
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+ 
+    go func() {                                         
+        err := publish(r.Context(), response)
+        // Do something with err
+    }()
+ 
+    writeResponse(response)                             
+}
+</code></pre><ul>
+<li>考虑上面这段代码，如果http在publish执行完成之前返回来，context被cancel，publish可能就失败了。</li>
+<li>第个解决方案很简单，将context替换成一个空context <code>err := publish(context.Background(), response)</code></li>
+<li>但如果context带有用信息，则可以选择定制一个custom context 来继承context</li>
+</ul>
+<pre tabindex="0"><code>type detach struct {                  
+    ctx context.Context
+}
+ 
+func (d detach) Deadline() (time.Time, bool) {
+    return time.Time{}, false
+}
+ 
+func (d detach) Done() &lt;-chan struct{} {
+    return nil
+}
+ 
+func (d detach) Err() error {
+    return nil
+}
+ 
+func (d detach) Value(key any) any {
+    return d.ctx.Value(key)           
+}
+
+// 使用
+err := publish(detach{ctx: r.Context()}, response)
+</code></pre><h4 id="62--starting-a-goroutine-without-knowing-when-to-stop-it">62.  Starting a goroutine without knowing when to stop it</h4>
+<ul>
+<li>goroutine 泄漏指的是goroutine没有得到回收，导致它本身的内存以及一些goroutine中运行的网络连接、DB连接等资源的泄漏。</li>
+</ul>
+<h4 id="63-not-being-careful-with-goroutines-and-loop-variables">63. Not being careful with goroutines and loop variables</h4>
+<ul>
+<li>这是一个非常容易犯的错误，本质上还是range loop的问题，参考第30条。</li>
+</ul>
+<pre tabindex="0"><code>s := []int{1, 2, 3}
+ 
+for _, i := range s {      
+    go func() {
+        fmt.Print(i)       
+    }()
+}
+</code></pre><ul>
+<li>上面的代码得不到预期的<code>1 2 3</code>，而是会得到一个不稳定的输出，比如<code>2 3 3</code> ,<code>3 3 3</code> 。原因在于闭包是一个函数值，它引用其主体之外的变量：这里是i变量。当一个闭包的goroutine被执行时，它并没有捕捉到goroutine被创建时的值。相反，所有的goroutine都引用了完全相同的变量。当一个goroutine运行时，它打印的是执行fmt.Print时的i的值。因此，自从goroutine启动以来，i可能已经被修改了。</li>
+<li>这是对输出2 3 3 结果的一个示意图。
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416084950.png" alt="Pasted image 20230416084950">
+
+</li>
+<li>如何解决呢？采用一个临时变量，将i copy一份</li>
+</ul>
+<pre tabindex="0"><code>for _, i := range s {
+    val := i            
+    go func() {
+        fmt.Print(val)
+    }()
+}
+</code></pre><ul>
+<li>第二种方案采用对闭包传参的方式，</li>
+</ul>
+<pre tabindex="0"><code>for _, i := range s {
+    go func(val int) {     
+        fmt.Print(val)
+    }(i)                   
+}
+</code></pre><h4 id="64-expecting-deterministic-behavior-using-select-and-channels">64. Expecting deterministic behavior using select and channels</h4>
+<ul>
+<li>这条主要是要说明select中的case执行顺序是随机的</li>
+</ul>
+<pre tabindex="0"><code>for {
+    select {                         
+    case v := &lt;-messageCh:           
+        fmt.Println(v)
+    case &lt;-disconnectCh:             
+        fmt.Println(&#34;disconnection, return&#34;)
+        return
+    }
+}
+
+for i := 0; i &lt; 10; i++ {
+    messageCh &lt;- i
+}
+disconnectCh &lt;- struct{}{}
+</code></pre><ul>
+<li>这段代码的预期是往messageCh写入10个数，然后关闭。但实际可能打到5就关闭了。原因就是messageCh、disconnectCh 这两个ch是随机执行的。解决方法是再加一层for-select</li>
+</ul>
+<pre tabindex="0"><code>for {
+    select {
+    case v := &lt;-messageCh:
+        fmt.Println(v)
+    case &lt;-disconnectCh:
+        for {                          
+            select {
+            case v := &lt;-messageCh:     
+                fmt.Println(v)
+            default:                   
+                fmt.Println(&#34;disconnection, return&#34;)
+                return
+            }
+        }
+    }
+}
+</code></pre><h4 id="65-not-using-notification-channels">65. Not using notification channels</h4>
+<ul>
+<li>chan struct{} 可以用于通知事件</li>
+</ul>
+<h4 id="66-not-using-nil-channels">66. Not using nil channels</h4>
+<pre tabindex="0"><code>func merge(ch1, ch2 &lt;-chan int) &lt;-chan int {
+    ch := make(chan int, 1)
+ 
+    go func() {
+        for {
+            select {          
+            case v := &lt;-ch1:
+                ch &lt;- v
+            case v := &lt;-ch2:
+                ch &lt;- v
+            }
+        }
+        close(ch)
+    }()
+ 
+    return ch
+}
+</code></pre><ul>
+<li>上面这段merge两个channel的代码，存在一个问题，<code>close(ch)</code> 没有起到效果，当ch1 或者ch2 close掉以后ch依然会持续收到0值。是go对于close的channel依然会receive 0值。</li>
+</ul>
+<pre tabindex="0"><code>received: 0
+received: 0
+received: 0
+received: 0
+received: 0
+...
+</code></pre><ul>
+<li>修改版本</li>
+</ul>
+<pre tabindex="0"><code>func merge(ch1, ch2 &lt;-chan int) &lt;-chan int {
+    ch := make(chan int, 1)
+    ch1Closed := false
+    ch2Closed := false
+ 
+    go func() {
+        for {
+            select {
+            case v, open := &lt;-ch1:
+                if !open {               ❶
+                    ch1Closed = true
+                    break
+                }
+                ch &lt;- v
+            case v, open := &lt;-ch2:
+                if !open {               ❷
+                    ch2Closed = true
+                    break
+                }
+                ch &lt;- v
+            }
+ 
+            if ch1Closed &amp;&amp; ch2Closed {  ❸
+                close(ch)
+                return
+            }
+        }
+    }()
+ 
+    return ch
+}
+</code></pre><ul>
+<li>上面这段代码解决了ch无法close的问题，但是还是不够完美，当ch1 或者ch2 任意一个先close，另一个依然会继续循环，浪费CPU资源。可以继续优化，因为接受或者发送nil channel是一个阻塞行为，所以将已经close的channel设置为nil可以阻塞避免CPU白用功。</li>
+</ul>
+<pre tabindex="0"><code>func merge(ch1, ch2 &lt;-chan int) &lt;-chan int {
+    ch := make(chan int, 1)
+ 
+    go func() {
+        for ch1 != nil || ch2 != nil {    ❶
+            select {
+            case v, open := &lt;-ch1:
+                if !open {
+                    ch1 = nil             ❷
+                    break
+                }
+                ch &lt;- v
+            case v, open := &lt;-ch2:
+                if !open {
+                    ch2 = nil             ❸
+                    break
+                }
+                ch &lt;- v
+            }
+        }
+        close(ch)
+    }()
+ 
+    return ch
+}
+</code></pre><ul>
+<li>最终的一个示意图
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416094531.png" alt="Pasted image 20230416094531">
+
+</li>
+</ul>
+<h4 id="67-being-puzzled-about-channel-size">67. Being puzzled about channel size</h4>
+<ul>
+<li>无buffer的channel 没有任何空间，<code>ch1 := make(chan int)</code> / <code>ch1 := make(chan int, 0)</code>, sender会一直阻塞直到receiver把数据读出。一般用于同步场景。</li>
+<li>相反有buffer的channel 长度必须大于等于1，当channel满了以后sender会一直阻塞直到receiver把数据读出。一般用于消息传递、控制goroutine数量协程池等等。</li>
+</ul>
+<h4 id="68-forgetting-about-possible-side-effects-with-string-formatting">68. Forgetting about possible side effects with string formatting</h4>
+<pre tabindex="0"><code>type Customer struct {
+    mutex sync.RWMutex                                    ❶
+    id    string
+    age   int
+}
+ 
+func (c *Customer) UpdateAge(age int) error {
+    c.mutex.Lock()  
+    defer c.mutex.Unlock()
+ 
+    if age &lt; 0 {                                          ❸
+        return fmt.Errorf(&#34;age should be positive for customer %v&#34;, c)
+    }
+ 
+    c.age = age
+    return nil
+}
+ 
+func (c *Customer) String() string {
+    c.mutex.RLock()                                       ❹
+    defer c.mutex.RUnlock()
+    return fmt.Sprintf(&#34;id %s, age %d&#34;, c.id, c.age)
+}
+</code></pre><ul>
+<li>上面这段代码会带来死锁，因为在<code>age  &lt; 0 </code>的时候，对customer 结构体 <code>%v</code> 格式化的时候会调用String函数，因为UpdateAge还没释放，所以String函数就无法获得。</li>
+<li>这里要么缩小锁的粒度，要么不使用String函数</li>
+</ul>
+<pre tabindex="0"><code>func (c *Customer) UpdateAge(age int) error {
+	if age &lt; 0 { 
+        return fmt.Errorf(&#34;age should be positive for customer %v&#34;, c)
+    }
+ 
+    c.mutex.Lock()           // 将锁粒度变小
+    defer c.mutex.Unlock()
+ 
+    c.age = age
+    return nil
+}
+
+func (c *Customer) UpdateAge(age int) error {
+    c.mutex.Lock()
+    defer c.mutex.Unlock()
+ 
+    if age &lt; 0 {
+        return fmt.Errorf(&#34;age should be positive for customer id %s&#34;, c.id) // 只对c.id进行打印就不会使用到String 方法了
+    }
+ 
+    c.age = age
+    return nil
+}
+</code></pre><ul>
+<li>书中还列了etcd因为这个问题出现的<a href="https://github.com/etcd-io/etcd/pull/7816">issue</a></li>
+</ul>
+<h4 id="69-creating-data-races-with-append">69. Creating data races with append</h4>
+<ul>
+<li>重点是append操作不是线程安全</li>
+</ul>
+<pre tabindex="0"><code>s := make([]int, 1)
+ 
+go func() {                
+    s1 := append(s, 1)
+    fmt.Println(s1)
+}()
+ 
+go func() {                
+    s2 := append(s, 1)
+    fmt.Println(s2)
+}()
+</code></pre><ul>
+<li>上面这段代码并不会出现数据竞争，因为s的len和capacity相等，都是1。两个goroutine append的时候都会扩容创建新的底层数组。但如果将s初始化换成<code>s := make([]int, 0, 1)</code> 那就会有数据竞争了。</li>
+<li>关于slice和map的数据竞争
+<ul>
+<li>当多个goroutine访问同一个index的slice时，如果至少有一个goroutine修改数据，那么是数据竞争，因为它们访问的是同一片内存。无论读写，访问不同的index的slice都不是数据竞争，因为不是同块内存。</li>
+<li>当多个goroutine访问一个map至少有一个写入时，无论是否相同的key都是数据竞争，因为map是一个桶的数组，hash算法具有随机性，一次操作可能会涉及到相同的数组index，所以不管会不会数据竞争，race处理都会告警。</li>
+</ul>
+</li>
+</ul>
+<h4 id="70-using-mutexes-inaccurately-with-slices-and-maps">70. Using mutexes inaccurately with slices and maps</h4>
+<ul>
+<li>对map和slice的赋值只是拷贝引用，实际底层都是同一个数据集</li>
+</ul>
+<pre tabindex="0"><code>type Cache struct {
+    mu       sync.RWMutex
+    balances map[string]float64
+}
+func (c *Cache) AddBalance(id string, balance float64) {
+    c.mu.Lock()
+    c.balances[id] = balance
+    c.mu.Unlock()
+}
+func (c *Cache) AverageBalance() float64 {
+    c.mu.RLock()
+    balances := c.balances                  // 问题出在这里，balances只是c.balances只是拷贝引用
+    c.mu.RUnlock()
+ 
+    sum := 0.
+    for _, balance := range balances {      
+        sum += balance
+    }
+    return sum / float64(len(balances))
+}
+</code></pre><ul>
+<li>解决方法是要么在AverageBalance里面放大锁的粒度，要么将c.balances深拷贝。</li>
+</ul>
+<h4 id="71-misusing-syncwaitgroup">71. Misusing sync.WaitGroup</h4>
+<pre tabindex="0"><code>wg := sync.WaitGroup{}
+var v uint64
+ 
+for i := 0; i &lt; 3; i++ {
+    go func() {                     
+        wg.Add(1)                   
+        atomic.AddUint64(&amp;v, 1)     
+        wg.Done()                   
+    }()
+}
+ 
+wg.Wait()                           
+fmt.Println(v)
+</code></pre><ul>
+<li>上面这段代码预期是打印3，但实际上会得到0-3中的任意值。问题在于，wg.Add(1)是在新创建的goroutine中调用的，而不是在父goroutine中。因此，不能保证我们在调用wg.Wait()之前已经向waitgroup表明我们要等待三个goroutine。</li>
+<li>这是这些协程的执行示意图
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416115143.png" alt="Pasted image 20230416115143">
+
+</li>
+<li>解决方法有两个</li>
+</ul>
+<pre tabindex="0"><code>// 方案一，直接在父goroutine中Add 3
+wg := sync.WaitGroup{}
+var v uint64
+ 
+wg.Add(3)
+for i := 0; i &lt; 3; i++ {
+    go func() {
+        // ...
+    }()
+}
+
+// 方案二，将Add放在协程外
+wg := sync.WaitGroup{}
+var v uint64
+ 
+for i := 0; i &lt; 3; i++ {
+    wg.Add(1)
+    go func() {
+        // ...
+    }()
+}
+ 
+// ...
+</code></pre><h4 id="72-forgetting-about-synccond">72. Forgetting about sync.Cond</h4>
+<ul>
+<li>Go中可以通过channel来实现信号传递。多个goroutine能够捕捉到的唯一事件是通道关闭，但这只可能发生一次。因此，如果我们反复向多个goroutine发送通知时，sync.Cond是一个解决方案。使用sync.Cond，我们可以广播信号，唤醒所有等待一个条件的goroutine。</li>
+</ul>
+<h4 id="73-not-using-errgroup">73. Not using errgroup</h4>
+<ul>
+<li>errgroup的用法，可以收集多个goroutine的错误。不过有一个限制函数签名必须是`func() error {}</li>
+<li>k8s 提供了一个聚合error的<a href="https://github.com/kubernetes/apimachinery/blob/master/pkg/util/errors/errors.go">方法</a> 可以参考。</li>
+</ul>
+<h4 id="74-copying-a-sync-type">74. Copying a sync type</h4>
+<pre tabindex="0"><code>type Counter struct {
+    mu       sync.Mutex
+    counters map[string]int
+}
+ 
+func NewCounter() Counter {                    ❶
+    return Counter{counters: map[string]int{}}
+}
+
+// receiver是value类型
+func (c Counter) Increment(name string) {
+    c.mu.Lock()                                ❷
+    defer c.mu.Unlock()
+    c.counters[name]++
+}
+
+// 两个goroutine调用Increment
+go func() {
+    counter.Increment(&#34;foo&#34;)
+}()
+go func() {
+    counter.Increment(&#34;bar&#34;)
+}()
+</code></pre><ul>
+<li>上面这段代码依然会出现数据竞争，原因是Increment实现的receiver是值类型，根据前面所说我们知道这种情况每次调用Increment counter都会做一次copy，mutex在copy之后就没有意义了。</li>
+<li>sync包里的 Mutex、Cond、Map、RWMutex、Once、Pool、WaitGroup都是不能被拷贝的。</li>
+</ul>
+<h2 id="第十章-标准库">第十章 标准库</h2>
+<h4 id="75-providing-a-wrong-time-duration">75. Providing a wrong time duration</h4>
+<ul>
+<li>time 包中的函数参数类型一般是time.Duration，不要直接用数字。</li>
+</ul>
+<h4 id="76-timeafter-and-memory-leaks">76. time.After and memory leaks</h4>
+<ul>
+<li>一次调用 <code>time.After</code> 会使用大约200字节的内存。但是只有在指定的时间到达的时候才会GC，如果在1小时内，频繁的调用 <code>time.After</code> 会导致内存持续上涨。</li>
+</ul>
+<h4 id="77-common-json-handling-mistakes">77. Common JSON-handling mistakes</h4>
+<h5 id="unexpected-behavior-due-to-type-embedding">Unexpected behavior due to type embedding</h5>
+<pre tabindex="0"><code>type Event struct {
+    ID int
+    time.Time       
+}
+
+event := Event{
+    ID:   1234,
+    Time: time.Now(),       
+}
+ 
+b, err := json.Marshal(event)
+if err != nil {
+    return err
+}
+ 
+fmt.Println(string(b))
+</code></pre><ul>
+<li>在这个例子中，ID字段将不会输出，原因有两个
+<ul>
+<li>如错误10中所说，如果一个嵌入式字段类型实现了一个接口，那么包含嵌入式字段的结构也将实现这个接口。</li>
+<li>我们可以通过让一个类型实现json.Marshaler接口来改变默认的Marshaling行为。这个接口包含一个单一的 MarshalJSON 函数</li>
+</ul>
+</li>
+<li>解决方法有两个，首先不必说，不适用嵌入式字段，为time指定一个名字 <code>Time time.Time</code>。另一个方法则是为Event实现Marshal方法</li>
+</ul>
+<pre tabindex="0"><code>func (e Event) MarshalJSON() ([]byte, error) {
+    return json.Marshal(
+        struct {            
+            ID   int
+            Time time.Time
+        }{
+            ID:   e.ID,
+            Time: e.Time,
+        },
+    )
+}
+</code></pre><h5 id="json-and-the-monotonic-clock">JSON and the monotonic clock</h5>
+<ul>
+<li>在go中，时间分为墙上时钟和单调时种，墙上时钟指的是当前的时钟，单调时钟则是永远向前的。当我们打印时间时，它同时包含着两种时间
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416141447.png" alt="Pasted image 20230416141447">
+
+</li>
+<li>在json处理中，unmarshal会丢失单调时钟。看下面的例子</li>
+</ul>
+<pre tabindex="0"><code>type Event struct {
+    Time time.Time
+}
+
+t := time.Now()                    
+event1 := Event{                   
+    Time: t,
+}
+ 
+b, err := json.Marshal(event1)     
+if err != nil {
+    return err
+}
+ 
+var event2 Event
+err = json.Unmarshal(b, &amp;event2)   
+if err != nil {
+    return err
+}
+ 
+fmt.Println(event1.Time)
+fmt.Println(event2.Time)
+
+// 输出结果
+// 2021-01-10 17:13:08.852061 +0100 CET m=+0.000338660
+// 2021-01-10 17:13:08.852061 +0100 CET
+</code></pre><ul>
+<li>可以看到event2的时间比event1少了单调时钟。因此也不能直接<code>event1 == event2</code>来判断两个时间是否相等。可以使用<code>event1.Time.Equal(event2.Time)</code>来比较。另一种处理方法则是在event1定义时调用<code>t.Truncate(0)</code>将单调时间剥离，这样就可以用<code>==</code>来比较了。</li>
+</ul>
+<h5 id="map-of-any">map of any</h5>
+<ul>
+<li>当把json解析到 <code>map[string]any</code> 类型，会出现数字类型解析错误的情况。解决方法可以使用 json.Decoder 来代替 json.Unmarshal 方法。</li>
+<li>延伸阅读<a href="https://zhuanlan.zhihu.com/p/53125839">go json 实践中遇到的坑</a></li>
+</ul>
+<h4 id="78-common-sql-mistakes">78. Common SQL mistakes</h4>
+<h5 id="forgetting-that-sqlopen-doesnt-necessarily-establish-connections-to-a-database">Forgetting that sql.Open doesn’t necessarily establish connections to a database</h5>
+<ul>
+<li>sql.Open 可能只是验证其参数而不创建与数据库的连接，如果要检测与数据库的连接，得调用ping。</li>
+</ul>
+<h5 id="forgetting-about-connections-pooling">Forgetting about connections pooling</h5>
+<ul>
+<li>sql.Open 返回一个sql.DB结构。这个结构不表示单个数据库连接，而是表示连接池。</li>
+<li>一些参数解释
+<ul>
+<li>SetMaxOpenConns：最大连接数，默认无限。应该设置到一个合理值以确保它符合底层数据库可以处理的情况</li>
+<li>SetMaxIdleConns： 最大空闲连接数，默认2。如果应用有大量的并发请求应该加大一些，否则应用程序可能会遇到频繁的重新连接。</li>
+<li>SetConnMaxIdleTime：一个连接在被关闭之前可以空闲的最大时间，默认无限。需要设置为一个合理值，当应用属于有突发流量类型，有时候需要创建大量连接，而大部分时候属于低流量时要确保创建的连接最终被释放。</li>
+<li>SetConnMaxLifetime：一个连接在被关闭之前可以保持开放的最大时间。为了使得数据库负载均衡，需要设置一个合理值，使应用程序永远不会使用一个连接太长时间。
+
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416143313.png" alt="Pasted image 20230416143313">
+
+</li>
+</ul>
+</li>
+</ul>
+<h5 id="not-using-prepared-statements">Not using prepared statements</h5>
+<ul>
+<li>使用Prepare可以提高性能和安全性</li>
+<li>延伸阅读：<a href="https://manjusaka.itscoder.com/posts/2020/01/05/simple-introdution-about-sql-prepared/">简单聊聊 SQL 中的 Prepared Statements</a></li>
+</ul>
+<h5 id="mishandling-null-values">Mishandling null values</h5>
+<ul>
+<li>对于一个可能为空的字段，最好使用指针或者sql.Nullxxx来处理。</li>
+</ul>
+<pre tabindex="0"><code>rows, err := db.Query(&#34;SELECT DEP, AGE FROM EMP WHERE ID = ?&#34;, id)    ❶
+if err != nil {
+    return err
+}
+// Defer closing rows
+ 
+var (
+    department string
+    age int
+)
+for rows.Next() {
+    err := rows.Scan(&amp;department, &amp;age)                               ❷
+    if err != nil {
+        return err
+    }
+    // ...
+}
+
+// 当department为空时，会得到错误：sql: Scan error on column index 0, name &#34;DEPARTMENT&#34;:
+converting NULL to string is unsupported
+// 解决方法一
+department *string // 定义为指针
+// 解决方法二
+department sql.NullString // 定义为sql.NullString
+</code></pre><h5 id="not-handling-row-iteration-errors">Not handling row iteration errors</h5>
+<ul>
+<li><code>for rows .Next() {}</code> 循环可能会因为没有查询到值或者遇到错误退出，退出后要调用 <code>rows.Err()</code> 看是否是正常退出。</li>
+</ul>
+<h4 id="79-not-closing-transient-resources">79. Not closing transient resources</h4>
+<h5 id="http-body">HTTP body</h5>
+<ul>
+<li>要记得调用<code>resp.Body.Close()</code>关闭body，否则GC不会主动回收内存和描述符，可能会导致TCP被占满。不过如果没有读body，那默认的 http transport 会直接关闭连接。</li>
+<li>在高并发场景下，如果要使用长连接，可以使用<code>io.Copy(io.Discard, resp.Body)</code> 读取Body的内容。</li>
+</ul>
+<h5 id="sqlrows">sql.Rows</h5>
+<ul>
+<li>前面说了sql库会维护一个连接池，只有及时<code>rows.Close</code>才会把连接放回链接池。</li>
+</ul>
+<h5 id="osfile">os.File</h5>
+<ul>
+<li>写文件操作是异步的，对写入的文件进行close操作，可能会遇到在buffer内的数据没有完全刷到磁盘的错误，所以在close的时候如果遇到错误要处理。</li>
+<li>不过可以调用Sync来将数据刷入磁盘，这时候可以忽略Close的错误。</li>
+</ul>
+<h4 id="80-forgetting-the-return-statement-after-replying-to-an-http-request">80. Forgetting the return statement after replying to an HTTP request</h4>
+<pre tabindex="0"><code>unc handler(w http.ResponseWriter, req *http.Request) {
+    err := foo(req)
+    if err != nil {
+        http.Error(w, &#34;foo&#34;, http.StatusInternalServerError)
+        return    // 这个return至关重要，因为虽然给客户端返回了500，但是handler还是会继续执行。
+    }
+ 
+    // ...
+}
+</code></pre><h4 id="81-using-the-default-http-client-and-server">81. Using the default HTTP client and server</h4>
+<h5 id="client">client</h5>
+<ul>
+<li>直接使用标准库的里的client和server可能会存在问题，因为他们没有合理的配置项，比如使用 <code>http.Client</code> 发送请求，没有配置超时可能会带来问题。下图是一个http请求的几个步骤和时间消耗。
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416151126.png" alt="Pasted image 20230416151126">
+
+</li>
+<li>上图种几个超时时间的配置方法</li>
+</ul>
+<pre tabindex="0"><code>lient := &amp;http.Client{
+    Timeout: 5 * time.Second,                  // 全局的超时时间
+    Transport: &amp;http.Transport{
+        DialContext: (&amp;net.Dialer{
+            Timeout: time.Second,              // Dial的超时时间
+        }).DialContext,
+        TLSHandshakeTimeout:   time.Second,    // TLS握手的超时时间
+        ResponseHeaderTimeout: time.Second,    // 读取header的超时时间
+    },
+}
+</code></pre><ul>
+<li>关于默认HTTP Client 还要知道它是如何处理连接的。
+<ul>
+<li>默认情况下，HTTP Client 会维持一个连接池。客户端在请求的时候可以重用连接(也可以通过设置 <code>http.Transport.DisableKeepAlives</code> 为 <code>true</code> 来禁用)。</li>
+<li>有一个额外的超时来指定空闲连接在连接池中保留多长时间：<code>http.Transfer.IdleConnTimeout</code>默认值为90s，意味着这个连接在90s内都能给其他请求复用。</li>
+<li><code>http.Transport.MaxIdleConns</code> 用于配置连接池的最大数量，默认为100。</li>
+<li><code>http.Transport.MaxIdleConnsPerHost</code> 用于限制每个host的连接池数量，默认为2，表示如果我们对同一个host触发100次请求，只用2个请求保留在连接池中，如果我们再触发100次请求，那么我们还要再重新创建98次新的连接，这个配置对请求响应的影响也极大。</li>
+</ul>
+</li>
+</ul>
+<h5 id="server">server</h5>
+<ul>
+<li>服务端配置超时是为了保护自己的资源不被消耗殆尽。一个http server接收请求的步骤和的时间消耗
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416151902.png" alt="Pasted image 20230416151902">
+
+</li>
+<li>服务端设置长连接的方法是配置长连接的最长超时时间 <code>IdleTimeout</code> , 如果 <code>http.Server.IdleTimeout</code> 没有配置就会和 <code>http.Server.ReadTimeout</code> 保持一致，会在结束请求后就立马结束连接。</li>
+</ul>
+<h2 id="第十一章">第十一章</h2>
+<h4 id="82-not-categorizing-tests">82. Not categorizing tests</h4>
+<ul>
+<li>可以根据测试金字塔将测试分类，并独立执行
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416152316.png" alt="Pasted image 20230416152316">
+
+</li>
+<li>几种区分的方法</li>
+<li>通过test build tag来区分，tag是在文件级别。延伸阅读<a href="https://clivern.com/separate-test-cases-in-golang-with-build-tags/">Separate Test Cases in Golang With Build Tags</a></li>
+<li>通过在不同环境机器上获取环境变量来区分</li>
+</ul>
+<pre tabindex="0"><code>func TestInsert(t *testing.T) {
+    if os.Getenv(&#34;INTEGRATION&#34;) != &#34;true&#34; {
+        t.Skip(&#34;skipping integration test&#34;)
+    }
+ 
+    // ...
+}
+</code></pre><ul>
+<li>Short mode，使用<code>go test -short -v .</code>选项来跳过执行时间长的test。延伸阅读<a href="https://studygolang.com/articles/12587">Go test 少为人知的特性</a></li>
+</ul>
+<pre tabindex="0"><code>func TestLongRunning(t *testing.T) {
+    if testing.Short() {                        ❶
+        t.Skip(&#34;skipping long-running test&#34;)
+    }
+    // ...
+}
+</code></pre><h4 id="83-not-enabling-the--race-flag">83. Not enabling the -race flag</h4>
+<ul>
+<li>对于有并发处理的代码，建议开启-race来测试，可以检测出数据竞争。不过启用时对内存和性能有很大的影响，所以必须在特定的条件下使用，如本地测试或CI。</li>
+</ul>
+<h4 id="84-not-using-test-execution-modes">84. Not using test execution modes</h4>
+<ul>
+<li>使用-parallel 开启并行测试</li>
+<li>使用-shuffle 开启随机化测试，来自1.17的特性，延伸阅读<a href="https://polarisxu.studygolang.com/posts/go/dynamic/go1.17-testing-shuffle-flag/">Go 1.17 新特性提前学之测试执行随机化</a></li>
+</ul>
+<h4 id="85-not-using-table-driven-tests">85. Not using table-driven tests</h4>
+<ul>
+<li>建议使用表驱动来实现测试用例，goland生成的test默认就是table-driven</li>
+</ul>
+<h4 id="86-sleeping-in-unit-tests">86. Sleeping in unit tests</h4>
+<ul>
+<li>有时候一些测试需要等待一段时间，才能执行其他逻辑，可以通过指定多次重试或者使用同步的方法来避免直接调用 time.sleep 来等待。</li>
+<li>更推荐的方法是采用testify 或者<a href="http://onsi.github.io/gomega/">Gomega</a>提供的Eventually方法，延伸阅读<a href="https://stackoverflow.com/questions/30427013/testing-for-asynchronous-results-without-sleep-in-go">Testing for asynchronous results without sleep in Go</a>。</li>
+</ul>
+<h4 id="87-not-dealing-with-the-time-api-efficiently">87. Not dealing with the time API efficiently</h4>
+<ul>
+<li>一些依赖time.Now()获取时间的测试，没有考虑函数本身的执行时间或者其他请求的时间导致得不到预期结果。</li>
+</ul>
+<h4 id="88-not-using-testing-utility-packages">88. Not using testing utility packages</h4>
+<ul>
+<li>主要是介绍<a href="https://pkg.go.dev/net/http/httptest">httptest</a> 和<a href="https://pkg.go.dev/testing/iotest">iotest</a>的使用，采用mock来代替真实的http和io操作。</li>
+</ul>
+<h4 id="89-writing-inaccurate-benchmarks">89. Writing inaccurate benchmarks</h4>
+<h5 id="not-resetting-or-pausing-the-timer">Not resetting or pausing the timer</h5>
+<ul>
+<li>去掉和性能无关的测试</li>
+</ul>
+<pre tabindex="0"><code>func BenchmarkFoo(b *testing.B) {
+	expensiveSetup()              // 测试之前需要做一些setup工作消耗一些时间
+    b.ResetTimer()                // 在真正性能测试之前先resettime
+    for i := 0; i &lt; b.N; i++ {
+        functionUnderTest()
+    }
+}
+</code></pre><ul>
+<li>循环中需要处理与性能无关的处理</li>
+</ul>
+<pre tabindex="0"><code>func BenchmarkFoo(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        b.StopTimer()                // 先停止计时
+        expensiveSetup()
+        b.StartTimer()               // 处理完再开启重新计时
+        functionUnderTest()
+    }
+}
+</code></pre><h5 id="making-wrong-assumptions-about-micro-benchmarks">Making wrong assumptions about micro-benchmarks</h5>
+<ul>
+<li>micro-benchmarks最好多运行几次，只执行一次可能会得到错误的结论。利用count执行多次将结果重定向到文件中，然后采用benchstat来计算均值</li>
+<li>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416180430.png" alt="Pasted image 20230416180430">
+
+</li>
+</ul>
+<h5 id="not-being-careful-about-compiler-optimizations">Not being careful about compiler optimizations</h5>
+<ul>
+<li>go的内联优化会导致测试函数被优化，执行结果不符合我们的预期，即比实际效果要好。参考这个issue <a href="https://github.com/golang/go/issues/14813">cmd/compile: SSA compiler removes code in benchmarks #14813</a>。可以在<code>go test</code>增加<code>-gcflags=&quot;-m&quot;</code>参数，<code>-m</code>表示打印编译器做出的优化决定。可以看到是否做了内联优化，如果有 <code>inlining call to xxx 函数</code> 的就是做了优化。</li>
+</ul>
+<pre tabindex="0"><code>func popcnt(x uint64) uint64 {
+    x -= (x &gt;&gt; 1) &amp; m1
+    x = (x &amp; m2) + ((x &gt;&gt; 2) &amp; m2)
+    x = (x + (x &gt;&gt; 4)) &amp; m4
+    return (x * h01) &gt;&gt; 56
+}
+
+// 原始函数
+func BenchmarkPopcnt1(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        popcnt(uint64(i))  // 内联优化会影响到这行代码
+    }
+}
+
+// 优化后的函数
+func BenchmarkPopcnt1(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        // Empty          // 直接使用函数主体代替了函数调用
+    }
+}
+</code></pre><ul>
+<li>可以通过以下方式避免被优化，当然更合理的方式一是加上<code>-gcfloags=&quot;-l&quot;</code>,-l 表示禁止内联优化。另外也可以在代码中加上<code>//go:noinline</code>避免被优化。</li>
+</ul>
+<pre tabindex="0"><code>var global uint64                         
+ 
+func BenchmarkPopcnt2(b *testing.B) {
+    var v uint64                          
+    for i := 0; i &lt; b.N; i++ {
+        v = popcnt(uint64(i))             // 加上一个赋值，避免被优化
+    }
+    global = v                            
+}
+</code></pre><ul>
+<li>延伸阅读 <a href="https://dave.cheney.net/2013/06/30/how-to-write-benchmarks-in-go">How to write benchmarks in Go</a> <a href="https://tonybai.com/2022/10/17/understand-go-inlining-optimisations-by-example/">通过实例理解Go内联优化</a></li>
+</ul>
+<h5 id="being-fooled-by-the-observer-effect">Being fooled by the observer effect</h5>
+<ul>
+<li>利用CPU cache可以提高性能</li>
+</ul>
+<h4 id="90-not-exploring-all-the-go-testing-features">90. Not exploring all the Go testing features</h4>
+<ul>
+<li>使用<code>go test -coverprofile=coverage.out</code> 来查看覆盖率</li>
+<li>测试文件可以和实现代码放在同一个包中，测试文件也可以放在<code>_test</code>包中</li>
+<li>使用Setup 和 teardown 初始化和清理环境。</li>
+<li>可以调用 <code>t.Cleanup</code> 注册一个闭包函数做清理工作，在测试结束后清理环境。</li>
+</ul>
+<h2 id="第十二章-optimizations">第十二章 Optimizations</h2>
+<h4 id="91-not-understanding-cpu-caches">91. Not understanding CPU caches</h4>
+<ul>
+<li>实际上和go无关，主要是说CPU三级缓存、cache line。</li>
+<li>参考阅读<a href="https://zhuanlan.zhihu.com/p/31875174">细说Cache-L1/L2/L3/TLB</a> <a href="https://coolshell.cn/articles/20793.html">与程序员相关的CPU缓存知识</a> <a href="https://coolshell.cn/articles/10249.html">7个示例科普CPU CACHE</a> <a href="https://zhuanlan.zhihu.com/p/31859105">Cache是怎么组织和工作的？</a></li>
+</ul>
+<h4 id="92-writing-concurrent-code-that-leads-to-false-sharing">92. Writing concurrent code that leads to false sharing</h4>
+<pre tabindex="0"><code>type Input struct {
+    a int64
+    b int64
+}
+ 
+type Result struct {
+    sumA int64
+    sumB int64
+}
+
+func count(inputs []Input) Result {
+    wg := sync.WaitGroup{}
+    wg.Add(2)
+ 
+    result := Result{}                        
+ 
+    go func() {
+        for i := 0; i &lt; len(inputs); i++ {
+            result.sumA += inputs[i].a        
+        }
+        wg.Done()
+    }()
+ 
+    go func() {
+        for i := 0; i &lt; len(inputs); i++ {
+            result.sumB += inputs[i].b        
+        }
+        wg.Done()
+    }()
+ 
+    wg.Wait
+</code></pre><ul>
+<li>上面的代码是用两个goroutine分别将一个struct中两个数组进行累加，并将结果赋值给另一个struct的两个字段。按照理解，都是独立的内存，不会出现同步写。</li>
+<li>在内存中，因为每个cache line是64字节，所以sumA和sumB在同一个内存块，假设每个goroutine都在独立的CPU上运算，L1D会加载同一行内存到Cache Line中，CPU运算时候也是先写回到Cache Line中，所以每个CPU在运算时候为了保证内存一致性，在写入时是使用同步写的模式。</li>
+<li>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416202023.png" alt="Pasted image 20230416202023">
+
+</li>
+<li>解决办法就是把sumA和sumB分到两个不同的cache line中可以明显提高性能。</li>
+</ul>
+<pre tabindex="0"><code>type Result struct {
+    sumA int64
+    _    [56]byte     // 增加56字节是为了确保sumB可以到另一个cache line
+    sumB int64
+}
+</code></pre><p>
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416202607.png" alt="Pasted image 20230416202607">
+
+</p>
+<ul>
+<li>必须记住，跨goroutine共享内存在最低的内存水平上是一种假象。当至少有一个goroutine是写程序的时候，一个cache line在两个核之间共享，就会出现假共享。如果我们需要优化一个依赖并发的应用程序，我们应该检查假共享是否适用，因为这种模式已知会降低应用程序的性能。我们可以通过填充或通信来防止虚假共享。</li>
+</ul>
+<h4 id="93-not-taking-into-account-instruction-level-parallelism">93. Not taking into account instruction-level parallelism</h4>
+<ul>
+<li>CPU指令级并行优化，待继续研究</li>
+</ul>
+<h4 id="94-not-being-aware-of-data-alignment">94. Not being aware of data alignment</h4>
+<ul>
+<li>关于内存对齐，struct中不同的顺序占用的内存也不一样
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416232141.png" alt="Pasted image 20230416232141">
+
+</li>
+<li>除了优化内存也能优化计算速度，因为压缩存储以后每个cache line会有更多数据，带来更高的缓存命中率
+  <img src="https://raw.githubusercontent.com/zhiqli/imgs/main/Pasted%20image%2020230416232236.png" alt="Pasted image 20230416232236">
+
+</li>
+</ul>
+<h4 id="95-not-understanding-stack-vs-heap">95. Not understanding stack vs. heap</h4>
+<ul>
+<li>go逃逸分析，网上很多分析文章。文中总结一些逃逸的变量
+<ul>
+<li>全局变量，因为所有goroutine可以访问它们</li>
+<li>发送到channel的指针</li>
+<li>被发送到通道的指针引用的变量</li>
+<li>如果局部变量太大而无法放入栈</li>
+<li>如果局部变量的大小未知。例如，<code>s := make([]int, 10)</code> 不会逃逸到堆，但<code>s := make([]int, n)</code> 会，因为它的大小基于一个变量</li>
+<li>如果slice的底层数据因为调用append被重新分配</li>
+<li>函数的形参是<code>any</code>类型，那么形参也会逃逸</li>
+</ul>
+</li>
+</ul>
+<h4 id="96-not-knowing-how-to-reduce-allocations">96. Not knowing how to reduce allocations</h4>
+<ul>
+<li>减少内存分配的一些思路
+<ul>
+<li>使用strings.Builder来代替+来拼接字符串</li>
+<li>避免不必要的string和[]byte转换，尽量使用原生函数</li>
+<li>slice和map预先分配内存，减少底层扩容</li>
+<li>可以使用sync.Pool来复用内存</li>
+</ul>
+</li>
+</ul>
+<h4 id="97-not-relying-on-inlining">97. Not relying on inlining</h4>
+<ul>
+<li>使用内联优化，可以带来两个好处
+<ul>
+<li>减少了函数调用的开销</li>
+<li>允许编译器进一步优化，比如可以把一些逃逸的变量放到堆上。</li>
+</ul>
+</li>
+<li>介绍<a href="https://dave.cheney.net/2020/05/02/mid-stack-inlining-in-go">Mid-stack inlining</a> 技术</li>
+</ul>
+<h4 id="98-not-using-go-diagnostics-tooling">98. Not using Go diagnostics tooling</h4>
+<ul>
+<li>介绍profle和tracer</li>
+</ul>
+<h4 id="99-not-understanding-how-the-gc-works">99. Not understanding how the GC works</h4>
+<ul>
+<li>介绍GC原理</li>
+</ul>
+<h4 id="100-not-understanding-the-impacts-of-running-go-in-docker-and-kubernetes">100. Not understanding the impacts of running Go in Docker and Kubernetes</h4>
+<ul>
+<li>主要提到要注意如果k8s运行的环境不是安全容器，进程读到的全局CPU核数和宿主机一致，会导致错误配置了GOMAXPROCS的值和宿主机一样，GO默认开启的协程个数就会远超容器实际运行环境提供的CPU个数，导致协程频繁的调度切换程序运行时间被拖慢。建议使用 <a href="https://github.com/uber-go/automaxprocs">automaxprocs</a> 包来配置GOMAXPROCS。</li>
+</ul>
+
+
+    </div>
+    <nav class="hide-on-mobile section-nav">
+        <nav id="TableOfContents">
+  <ol>
+    <li><a href="#第二章-code-and-project-organizatiion">第二章 Code and project organizatiion</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第三章-data-types">第三章 Data Types</a>
+      <ol>
+        <li></li>
+        <li><a href="#27--inefficient-map-initialization">27.  Inefficient map initialization</a></li>
+      </ol>
+    </li>
+    <li><a href="#第四章-control-structures">第四章 Control structures</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第五章-strings">第五章 Strings</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第六章-function-and-methods">第六章 Function and methods</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第七章-error-management">第七章 Error management</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第八章-concurrency-foundations">第八章 Concurrency: Foundations</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第九章-concurrency-practice">第九章 Concurrency: Practice</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第十章-标准库">第十章 标准库</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第十一章">第十一章</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+    <li><a href="#第十二章-optimizations">第十二章 Optimizations</a>
+      <ol>
+        <li></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+    </nav>
+</div>
+<div class="post">
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/go">Go</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2024-01-24-100-go-mistakes-and-how-to-avoid-them.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+    
+    Next time, we'll talk about <i>"What Tiger King can teach us about x86 Assembly"</i>
+    
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>1  © Copyright notice </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+	<script>
+    var enableTruncate =  true 
+    var filterDepth = false;
+    const MAX_DEPTH = 9; 
+
+    
+    window.addEventListener('DOMContentLoaded', () => {
+        const observerForTableOfContentActiveState = new IntersectionObserver(entries => {
+            entries.reverse().forEach(entry => {
+                const id = entry.target.getAttribute('id');
+                if (entry.intersectionRatio > 0) {
+                    var selected = document.querySelectorAll(`nav li a[href="#${id}"]`)
+                    if (selected != null) {
+                        selected.forEach(s => {
+                            if (s != null) {
+                                var depth = getDepth(s.parentElement);
+                                if (filterDepth && depth <= MAX_DEPTH) {
+                                    clearActiveStatesInTableOfContents();
+                                    s.parentElement.classList.add('active')
+                                }
+                            } else if (!filterDepth) {
+                                clearActiveStatesInTableOfContents();
+                                s.parentElement.classList.add('active');
+                            }
+                        }
+                        )
+                    }
+
+                }
+            });
+        });
+        document.querySelectorAll('h1[id],h2[id],h3[id],h4[id]').forEach((section) => {
+            observerForTableOfContentActiveState.observe(section);
+        });
+
+    });
+
+    
+    function isVisible(elem) {
+        if (!(elem instanceof Element)) return false; 
+        const style = getComputedStyle(elem);
+        if (style.display === 'none') return false;
+        if (style.visibility !== 'visible') return false;
+        if (style.opacity < 0.1) return false;
+        if (elem.offsetWidth + elem.offsetHeight + elem.getBoundingClientRect().height +
+            elem.getBoundingClientRect().width === 0) {
+            return false;
+        }
+        const elemCenter = {
+            x: elem.getBoundingClientRect().left + elem.offsetWidth / 2,
+            y: elem.getBoundingClientRect().top + elem.offsetHeight / 2
+        };
+        if (elemCenter.x < 0) return false;
+        if (elemCenter.x > (document.documentElement.clientWidth || window.innerWidth)) return false;
+        if (elemCenter.y < 0) return false;
+        if (elemCenter.y > (document.documentElement.clientHeight || window.innerHeight)) return false;
+        let pointContainer = document.elementFromPoint(elemCenter.x, elemCenter.y);
+        do {
+            if (pointContainer === elem) return true;
+        } while (pointContainer = pointContainer.parentNode);
+        return false;
+    }
+
+
+    function clearActiveStatesInTableOfContents() {
+        document.querySelectorAll('nav li').forEach((section) => {
+            section.classList.remove('active');
+        });
+    }
+
+    function getDepth(parentElement) {
+        var depth = 0;
+        while (parentElement !== null && parentElement.tagName.toLowerCase() !== 'ul') {
+            depth++;
+            parentElement = parentElement.parentElement;
+        }
+        return depth;
+    }
+
+    function navItems() {
+        
+        var nestedListItems = document.querySelectorAll('nav nav li a');
+        return Array.from(nestedListItems).filter(listItem =>
+            listItem.href != null && listItem.hash.startsWith("#")
+        )
+    }
+
+    function lasItemInNavBarVisible() {
+        var lastItem = navItems().slice(-1)[0]
+        return isVisible(lastItem)
+    }
+
+
+    
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!enableTruncate) return;
+        var navBar = navItems()
+        console.log(navBar)
+        if (!lasItemInNavBarVisible()) {
+            filterDepth = true;
+            
+            navBar.forEach(function (listItem) {
+                var depth = getDepth(listItem.parentElement);
+
+                if (depth > MAX_DEPTH) {
+                    listItem.parentElement.classList.add('depth-nested');
+                }
+            });
+        }
+
+    });
+
+</script>
+
+	
+</body>
+
+</html>

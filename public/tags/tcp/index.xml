@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tcp on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/tags/tcp/</link>
+    <description>Recent content in Tcp on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Sat, 24 Mar 2018 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/tags/tcp/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>一些TCP基础笔记</title>
+      <link>https://zhiqli.github.io/2018/03/%E4%B8%80%E4%BA%9Btcp%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/</link>
+      <pubDate>Sat, 24 Mar 2018 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2018/03/%E4%B8%80%E4%BA%9Btcp%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/</guid>
+      <description>本文主要是看书看文章时做的笔记，记录一些TCP相关的基本概念。引用文章来自补充阅读，点击可到原文链接。&#xA;概念 MTU：maximum transmission unit最大传输单元 每种网络都不一样，以太网是1500。最小46字节。当数据块大于MTU时，将在发送端IP层进行分片，接收端IP层进行重组。IP分组在网络中传输中出现丢包时，由于IP层没有重传机制，TCP将重传整个报文段而不是丢失的IP分组&#xA;PS: 以太网最小数据帧长度为，最小64字节，其中6字节目的地址 、字节6源地址、2字节类型、46字节数据、4字节校验和.&#xA;MSS：maximum segment size最大分段大小 MSS是TCP数据包每次能够传输的最大数据分段。为了达到最佳的传输效能TCP协议在建立连接的时候通常要协商双方的MSS值，这个值TCP协议在实现的时候往往用MTU值代替（需要减去IP数据包包头的大小20Bytes和TCP数据段的包头20Bytes）所以往往MSS为1460。通讯双方会根据双方提供的MSS值得最小值确定为这次连接的最大MSS值。&#xA;MSL：Maximum Segment Lifetime报文最大生存时间 报文在网络上存在的最长时间，超过这个时间报文将被丢弃。在RFC793指出MSL为2分钟，实际应用中常用的是30秒（linux），1分钟和2分钟等。&#xA;TTL：Time To Live生存时间 生存时间是由源主机设置初始值但不是存的具体时间，而是存储了一个ip数据报可以经过的最大路由数，每经过一个处理他的路由器此值就减1，当此值为0则数据报将被丢弃，同时发送ICMP报文通知源主机。&#xA;RTT：round-trip time客户到服务器往返所花时间 RTT由三部分组成：链路的传播时间（propagation delay）、末端系统的处理时间、 路由器缓存中的排队和处理时间（queuing delay）。 其中，前两个部分的值对于一个TCP连接相对固定，路由器缓存中的排队和处理时间会随着整个网络拥塞程度 的变化而变化。所以RTT的变化在一定程度上反应了网络的拥塞程度。&#xA;RTO：Retransmission TimeOut重传超时时间 重传机制依赖于RTT（Round Trip Time）的测量，从而计算RTO（Retransmission Timeout）。&#xA;TSO：TCP Segment Offload 是一种利用网卡的处理能力，降低CPU发送数据包负载的技术。对于支持TSO的网卡，TCP协议栈在封包的时候会逐渐尝试增大MSS，网卡接收到TCP向下递交的数据后，按照MTU进行分片、复制TCP头且重新计算校验和，这样在网卡上完成了对大块数据的TCP分段，缓解了CPU的计算压力。&#xA;查看是否开启TSO&#xA;sudo ethtool -k eth0 关闭和打开TSO&#xA;$ sudo ethtool -K eth0 tso off // 关闭tso&#xA;$ sudo ethtool -K eth0 tso on // 开启tso&#xA;TCP协议结构 source port destination port:源端口和目标端口，注意不包括IP是因为这是上一层IP层的事情，这一层（传输层）只负责找到对应的端口，即应用程序。 sequence number：用来标记包的顺序。一个TCP包最多能传1460字节，对于超出的包，需要分片，为了保证对端收到的包是顺序完整的，需要通过seq num来重新组装数据包。值是本报文段所发送的数据的第一个字节的序号。 acknowledgment number：由于tcp是可靠的传输，发送端需要确认对端是否收到包，所以需要ack num来确认，如果没有收到，则会启动重传机制。ack num是期望收到对方的下一个报文段的数据的第一个字节的序号 header：由于tcp header有可选字段，所以长度不定。所以需要这个值作为offset来表示tcp头有多大。 reserved：保留字段，应填为0.</description>
+    </item>
+  </channel>
+</rss>

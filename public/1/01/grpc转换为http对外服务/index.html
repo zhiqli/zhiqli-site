@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>grpc转换为http对外服务 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="grpc转换为http对外服务">
+<meta itemprop="description" content="grpc转换为http对外服务 grpc支持将协议转换成http对外服务，数据通过post json提交 相对于普通的grpc服务，只需要在定义pb时稍作修改即可
+syntax = &#34;proto3&#34;; package helloworld; import &#34;google/api/annotations.proto&#34;; service srv { rpc Say(HelloReq) returns (HelloResp){ option (google.api.http) = { post: &#34;/say/hello&#34; body: &#34;*&#34; }; } } 调用:curl -X POST http://127.0.0.1:8080/say/hello -d {} 相对于普通pb多了 import &quot;google/api/annotations.proto&quot;;
+option (google.api.http) = { post: &#34;/say/hello&#34; body: &#34;*&#34; }; ">
+
+<meta itemprop="wordCount" content="47">
+<meta itemprop="keywords" content="go,grpc," /><meta property="og:title" content="grpc转换为http对外服务" />
+<meta property="og:description" content="grpc转换为http对外服务 grpc支持将协议转换成http对外服务，数据通过post json提交 相对于普通的grpc服务，只需要在定义pb时稍作修改即可
+syntax = &#34;proto3&#34;; package helloworld; import &#34;google/api/annotations.proto&#34;; service srv { rpc Say(HelloReq) returns (HelloResp){ option (google.api.http) = { post: &#34;/say/hello&#34; body: &#34;*&#34; }; } } 调用:curl -X POST http://127.0.0.1:8080/say/hello -d {} 相对于普通pb多了 import &quot;google/api/annotations.proto&quot;;
+option (google.api.http) = { post: &#34;/say/hello&#34; body: &#34;*&#34; }; " />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/1/01/grpc%E8%BD%AC%E6%8D%A2%E4%B8%BAhttp%E5%AF%B9%E5%A4%96%E6%9C%8D%E5%8A%A1/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="grpc转换为http对外服务"/>
+<meta name="twitter:description" content="grpc转换为http对外服务 grpc支持将协议转换成http对外服务，数据通过post json提交 相对于普通的grpc服务，只需要在定义pb时稍作修改即可
+syntax = &#34;proto3&#34;; package helloworld; import &#34;google/api/annotations.proto&#34;; service srv { rpc Say(HelloReq) returns (HelloResp){ option (google.api.http) = { post: &#34;/say/hello&#34; body: &#34;*&#34; }; } } 调用:curl -X POST http://127.0.0.1:8080/say/hello -d {} 相对于普通pb多了 import &quot;google/api/annotations.proto&quot;;
+option (google.api.http) = { post: &#34;/say/hello&#34; body: &#34;*&#34; }; "/>
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
+
+	<script src="http://localhost:1313/js/feather.min.js"></script>
+	
+		<script src="http://localhost:1313/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="matter">
+        <h1 class="title">grpc转换为http对外服务</h1>
+    </div>
+</div>
+
+
+    
+    
+    <h1 id="grpc转换为http对外服务">grpc转换为http对外服务</h1>
+<p>grpc支持将协议转换成http对外服务，数据通过post json提交
+相对于普通的grpc服务，只需要在定义pb时稍作修改即可</p>
+<pre tabindex="0"><code>syntax = &#34;proto3&#34;;
+
+package helloworld;
+import &#34;google/api/annotations.proto&#34;;
+
+service srv {
+    rpc Say(HelloReq) returns (HelloResp){
+        option (google.api.http) = {
+            post: &#34;/say/hello&#34;                  
+            body: &#34;*&#34;
+        };
+    }
+}
+</code></pre><p>调用:<code>curl -X POST http://127.0.0.1:8080/say/hello -d {}</code>
+相对于普通pb多了
+<code>import &quot;google/api/annotations.proto&quot;;</code></p>
+<pre tabindex="0"><code>option (google.api.http) = {
+            post: &#34;/say/hello&#34;                  
+            body: &#34;*&#34;
+        };
+</code></pre>
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/go">go</a>
+        </li>
+        
+        
+        <li class="tag-li"><a href="/tags/grpc">grpc</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2018-07-30-grpc-http-json.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+    
+    Next time, we'll talk about <i>"What Tiger King can teach us about x86 Assembly"</i>
+    
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>1  © Copyright notice </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

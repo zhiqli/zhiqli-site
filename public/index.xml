@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/</link>
+    <description>Recent content on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Sun, 03 Mar 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>2024-03-03 第九周：把手弄脏</title>
+      <link>https://zhiqli.github.io/weekly/2024-03-03-w9/</link>
+      <pubDate>Sun, 03 Mar 2024 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/weekly/2024-03-03-w9/</guid>
+      <description>生活流水账 自从不怎么管大娃学习，换成我带小娃，确实轻松了不少，和两个娃的亲子关系也变好了。 房市大幅度回暖，身边的人又开始讨论房子了？ 又降温了，好冷啊。但下周又回南天，还不如冷一点呢。 最近踢球状态很差，天气回暖，每次五六个队大家玩得认真压迫感很强，越是怕丢球就越丢球，唉，得好好调整。年纪大了护具也不能偷懒，也就一次没带护膝，膝盖已经开始疼了。 换新手机了，说来惭愧，第一次用当年最新款的iPhone，确实丝滑。 阅读 《股票大作手回忆录》 群里炒股的群友们多次聊过的书，因为不炒股，也不太懂书中写的那些做空手法。就觉得很厉害，毕竟赚了那么多钱，但也不知道厉害在哪。作为人物传记来看，确实很传奇。 《Web性能权威指南》 书有点老了，不过内容也不算太过时尤其是前面几章关于TCP/UDP/TLS的内容。作为一个不懂前端的后端，后面几张关于浏览器性能优化的内容收获比较多，当然前端技术变化更快，也许已经过时了，但对我来说也是扩展了视野。 一点想法 纸上得来终觉浅，绝知此事要躬行 ，这两天深得这句话的含义。又在折腾博客，打算采用hugo替换掉原来的jekyII，对比下来感觉hugo更简单，毕竟我完全不懂前端。而且对比评价，hugo因为是编译好的二进制，网页生成速度要快得多。&#xA;看了两篇文章和官方文档，觉得也太简单了。直接 hugo new site 生成，然后 hugo server 跑起来就可以了。&#xA;然而实际操作的时候，却花了我几个小时时间，首先是一个网络问题，虽然我已经开启了科学上网，但在执行的时候还是无法从twitter这个域名成功连接。看到错误的时候当然是考虑从网络方面去解决，来来回回折腾了好久也没解决。后来一想，这些报错页面都是theme中例子的文件，删掉不就好了。果然删掉无用的那些示例 markdown 就好了。&#xA;第二个问题则是部署以后 css 和 js 资源下载失败，导致页面无法正常显示。问题我倒一眼看出来了，虽然我不懂前端，但我也会 F12 进入debug模式查看。&#xA;后面发现是由于配置的baseURL，本应是https错写成http&#xA;所以说，想要学会一门技能，必须先把手弄脏，实践才能出真知。&#xA;好了，现在我的blog可以运行起来了，以后要多多写文章，先从每周周记开始。</description>
+    </item>
+    <item>
+      <title>go 1.14.1 timer bug</title>
+      <link>https://zhiqli.github.io/2024/02/go-1.14.1-timer-bug/</link>
+      <pubDate>Thu, 29 Feb 2024 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2024/02/go-1.14.1-timer-bug/</guid>
+      <description>go 1.14.1 的timer 包存在bug，会导致服务hang死，问题发生在两年前，而go目前的版本也已经迭代到1.22，还是整理出来以记录当时定位问题的思路。&#xA;问题描述 有个服务在压测时发现多容器压测，每次必有一台容器出现CPU跑满的现象。&#xA;定位 尝试进入该容器使用 pprof 抓火焰图进行分析，但进入容器后却发现 pprof 监听的端口根本连不上，只能另想办法。使用 delve 来试试。 首先执行 top 找到 cpu 跑满的线程。&#xA;容器设置是4 core，这里看到也是前面4个线程占满了所有CPU。 接着执行 dlv attach &amp;lt;PID&amp;gt; 进入线程，看到以下信息&#xA;这里看到看起来与redis相关，刚好这次修改有一处redis连接处的变更，猜测与此有关于是回退这个变更再次压测，很遗憾，很快问题又出现了。 继续进入上图中的goroutine，看到下图&#xA;这里漏了一个关键的堆栈，因为总结时现场已经破坏，正是通过这个堆栈在github找到这个issue，堆栈内容与issue中描述相同，可以参考issue。&#xA;为了验证是否因为这个timer 的bug导致，将go升级为14.2，再次压测，问题没有重现，基本上可以确定解决。&#xA;原因分析 简单来说就是&#xA;go 1.14对timer重新设计，将timer挂在P上的一个小根堆上，每一次调度会去查看是否有到期的timer，即调用runtimer这个方法，如果有则执行。 另外timer中还有一个状态机，如果要修改timer的状态会先将状态置为modifying状态。在runtimer这个函数中如果状态为modifying会调用runtime.osyield() 自旋等待，直到timer的modifying状态解除。 而modifying状态正是这个线程自己设置的，所以永远都等不到了，进入死锁。 如何解决 对于我们服务来说，直接升级go版本即可，现在我们团队在选择go版本的时候有一个原则，Golang社区发布的倒数第二个大版本的最后一个小版本。 比如当前已发布go 1.22.x，那么应该选择1.21.7。&#xA;go 社区解决方案在这个issue中说得很清楚。从修复diff来看，在修改timer状态的时候加了一个锁。&#xA;附 golang 基于 netpoll 优化 timer 定时器实现原理 </description>
+    </item>
+    <item>
+      <title>100 Go Mistakes and How to Avoid Them</title>
+      <link>https://zhiqli.github.io/2024/02/100-go-mistakes-and-how-to-avoid-them/</link>
+      <pubDate>Sat, 24 Feb 2024 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2024/02/100-go-mistakes-and-how-to-avoid-them/</guid>
+      <description>罗列了100个go开发中容易犯的错误、如何避免这些错误并深入分析其背后的原理，包括一些常见的错误，比如rang loop、defer使用问题，也有一些优化建议，比如减少内存申请次数、理解内存对齐、理解CPU缓存 cache line原理等等，也有一些是凑数的诸如项目结构代码结构之类的。新手老司机都适宜，总体来说非常具有实践意义的一本小书。&#xA;第二章 Code and project organizatiion 1. Unintended variable shadowing 当函数返回多个变量时，语句块内通过:=赋值的变量容易把外部的全局同名变量shadow掉。比如 1 2 3 4 5 6 7 var client *http.Client if xxx {[]() client, err := foo() } else { client, err := bar() } // use client shadow的问题可以通过golangci-lint来发现规避。&#xA;2. Unnecessary nested code 没必要的嵌套主要是指我们在if else 分支的时候有时候可以提前返回，而不是一直深度嵌套下去，这样不好维护。如 1 2 3 4 5 6 7 8 9 10 11 12 13 func foo() { if xxx { if yyy { fxxx() } else { bbb return } } else { aaa return } } 上面的代码修改成下面的样子只有一层嵌套对于后续的维护会清晰很多，有时候也可以用continue来代替return。总之就是提前返回</description>
+    </item>
+    <item>
+      <title>Unit Test Best Practices </title>
+      <link>https://zhiqli.github.io/2023/03/unit-test-best-practices/</link>
+      <pubDate>Sat, 18 Mar 2023 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2023/03/unit-test-best-practices/</guid>
+      <description>前言 在传统的观念中，认为开发工程师的主要职责是编写代码，首先因为自测容易产生思维盲区，其次在紧迫的业务需求下，开发工程师可能会把测试工作放在次要位置。&#xA;实际上，开发工程师的职责应该跟随整个开发周期，包括开发、测试、持续集成和交付，而不仅仅是编写代码并简单地跑通流程进行提测。当然，专业领域需要专业人员，测试工程师拥有比开发工程师更专业的能力和手段来提高软件质量，但是开发工程师也具备独特的优势。&#xA;开发工程师通过测试能够快速反馈代码的正确性，这不仅能确保代码一直走在正确的道路上，也是遵循测试驱动开发（TDD）的一种实践。 通过编写测试，开发人员可以成为自己代码的第一个客户，并且能够及时发现代码中可能存在的接口设计不合理之处，从而进行重构，避免在最后交付测试之后再进行大规模的修改。&#xA;关于测试 本书主要讲如何在企业级应用当中单元测试的实践经验。首先企业级应用的特点:&#xA;复杂的业务逻辑 很长的生命周期 中等规模的数据 性能要求不高 如下图所示，一个没有测试的项目可能在初期增长迅速，但到了后期却很难再有进展，甚至无法增长。而在有测试的情况下，测试又分为好的测试和坏的测试两种情况。坏的测试最终会导致与没有测试一样的困境，这种现象称为“软件熵”，即系统的无序程度会随着代码修改的次数而增加。如果不对代码进行清理和重构，最终代码将变得不可靠。&#xA;因此，单元测试的目标是确保软件的可持续发展，即在长期的开发过程中，仍然可以持续演进。&#xA;如何衡量测试的质量 测试覆盖率是一个衡量测试质量的指标。指被执行的代码行数与代码总函数数之比。还有一个更准确的指标是分支覆盖率，即被测试的分支数与总分支数之比。&#xA;然而，并不是说测试覆盖率越高就越好。高覆盖率的代码并不一定就是无可挑剔、没有bug的代码，低覆盖率的代码也不一定质量很差。测试覆盖率是一个好的逆向指标，它可以帮助我们判断测试用例是否充分，但并不是一个好的正向指标。如果我们只是一味地追求高覆盖率，可能会产生反效果。因此，测试覆盖率只是测试质量的一个衡量指标而不是目标，需要结合其他测试指标和质量评估方法来综合评价测试的好坏。&#xA;测试也是有成本的，包括：&#xA;需要重构测试时的成本 每次修改代码时运行测试所需的时间成本 处理由测试引起的误报所需的成本 在试图了解代码的行为时需要阅读测试代码所需的时间成本。 因此，我们需要权衡测试的价值和成本，确保测试数量和质量达到一个合理的平衡点。&#xA;什么是一个成功的测试 一个成功的测试具有3个特征&#xA;它跟随整个开发周期 它只专注于最重要的那部分代码（一般是业务逻辑代码即领域模型），基础架构和外部库是不需要运行单测的。 用最小的维护成本来提供最大价值，所以需要程序员识别有价值的测试，并编写有价值的测试 什么是单元测试 单元测试一般指一个自动化的测试，核心条件包括&#xA;验证一小块代码 快速执行 以隔离的方式运行 关于隔离的不同理解形成了两种风格，伦敦派和经典派。&#xA;伦敦派认为单元测试通常是针对代码中的一个单元（通常是一个类）进行测试。在进行测试时，应该专注于被测试的代码，并使用测试替身来隔离与其交互的依赖项。这样做的好处包括提供更细粒度的测试、定位问题更容易以及测试速度更快。&#xA;然而，这种方法的问题在于，它并不合理地将单元定义为代码中的单个功能。相反，一个测试用例应当是对系统功能的内聚且有意义的描述。通过以类的角度进行拆分，测试用例可能会变得支离破碎，难以理解。此外，如果由于类之间的复杂关系而难以测试，则这是设计问题，使用测试替身只是隐藏问题而非解决问题。最后，对于单元测试来说，定位问题总是相对简单的，因此这种方法和关注单个功能的方法之间的差距很小。&#xA;经典派则认为一个单元应该是一个单一功能。相比之下，经典学派并不认为单元代码需要被隔离测试，而是认为单元测试本身应该在相互隔离的情况下执行，以确保各个测试在运行中互不影响。 在进行单元测试时，只有在共享依赖的情况下才需要使用mock。本书的观点偏向于经典学派。&#xA;关于依赖分类，可以分为以下几种&#xA;共享的依赖是指会对测试之间的结果产生影响的依赖，比如静态变量和数据库。在这里，共享指的是单元测试之间的共享，而不是单元内部类之间的共享。 私有的依赖是不共享的依赖。 进程外的依赖是指应用程序之外的依赖，比如数据库、文件系统和第三方程序。数据库既可以是共享依赖，也可以是进程外依赖。例如，如果每次使用docker重新启动数据库，那么它就不是共享的依赖。 下图展示两种风格是怎么处理依赖的&#xA;在TDD和过度规范的问题上，伦敦派和经典派之间也有所不同。伦敦派采用自上而下的TDD方式，通过mock掉交互方，可以先编写高层次的测试来为整个功能设定目标，然后逐步细化具体实现。相比之下，经典派则更倾向于使用自下而上的TDD流程，先建立核心的领域模型，再逐步添加周边功能。&#xA;两个流派最重要的区别在于过度规范的问题，即测试用例与系统实现细节的耦合。伦敦派更容易产生这种耦合，这也是本书对伦敦派和滥用mock最反对的地方。&#xA;如何组织一个单元测试 一般提倡AAA测试范式，所谓AAA测试范式指的是&#xA;Arrange： 组织初始化一些参数和依赖。 Act： 执行被测试函数。 Assert：对输出结构断言，包括返回值、SUT的状态、交互方的状态以及预期交互行为 还有一个对应的Given-When-Then范式。在编写单元测试时，最好从Arrange开始，逐步完成测试。避免一个测试中多个Arrange、Act、Assert。&#xA;单元测试最好遵循单一职责原则，确保测试简单、快速、易于理解，以下是一些实践建议：&#xA;如果一个测试包含多个行为，请重构成多个单独的测试。 避免在测试中使用if语句，保证测试步骤简单、串行。 Arrange部分通常是最大的，但过大也会影响可读性，可以将比较复杂的对象初始化和数据构造抽取为函数。 Act部分通常只有一行代码，即被测试函数的调用。 Assert部分应该针对被测试函数的每个行为进行断言，因为单元测试是测试行为而不是代码，而一个函数可能有多个行为，所以Assert可能会有多个。 如果存在第三方资源（如数据库）的依赖，可以在集成测试中使用Teardown阶段释放资源，单元测试一般不需要考虑此类情况，因为单元测试不会有太多第三方依赖。 单元测试的四大支柱特性 这是本书中最核心的内容，一个好的单元测试应该具备以下四个特性，Protection against regressions（防止回归），Resistance to refactoring（抵御重构），Fast feedback（快速反馈），Maintainability（可维护性）。&#xA;快速反馈意味着只有测试足够快，才能够鼓励开发人员编写更多的测试，并且更经常地运行它们。 可维护性则包括测试代码的可理解性和测试代码运行的易用性 。 防止回归指的是当代码中出现bug的时候，能够被测试所发现。通常情况下，当修改代码后导致原有功能失效时，这些问题只有通过测试才能被发现。因此，测试应该覆盖尽可能多的代码，以确保代码的稳定性和质量。代码不是资产，而是负债，因此代码越多，越容易出现问题。 抵御重构，当你这是重构了一些代码（主要指非功能性修改，比如rename，调整代码结构等），测试却失败了。这种情形叫false positive也就是误报，即测试失败，但实际上被测试代码的功能却一切正常。 而false positive的干扰会带来两个问题： 如果测试失败的原因不充分，就会削弱你对代码中问题做出反应的能力和意愿。随着时间的推移，你可能会忽略本来应该出现的错误。 如果false positive太多，你会对测试失去信任，这种信任会导致更少的重构。 那么是什么导致了false positive呢？</description>
+    </item>
+    <item>
+      <title>Google Code review 指南</title>
+      <link>https://zhiqli.github.io/2022/09/google-code-review-%E6%8C%87%E5%8D%97/</link>
+      <pubDate>Wed, 21 Sep 2022 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2022/09/google-code-review-%E6%8C%87%E5%8D%97/</guid>
+      <description>Google 拥有许多覆盖所有语言和所有项目的通用工程实践。这些文档是Google长期以来形成的各种最佳做法的集体经验。&#xA;名词解释 Nit: nitpick 意思鸡蛋里挑骨头 CL: changelist LGTM: “Looks Good to Me”. 一般Code reviewer approve 一个CL的时候的回复。 1. Code Reviewer指南 1.1 Code Review的标准 Code review的目的是确保随着时间的推移，代码质量能够保持良好。为了实现这个目标，需要做一些权衡和取舍。&#xA;首先，开发人员必须能够在他们的任务上取得进展。如果您从未向代码库提交改进，那么代码库就永远不会改进。此外，如果reviewer使得任何更改都很难进行，那么开发人员就没有动力在将来进行改进。 另一方面，reviewer有责任确保每个 CL 的质量都没问题，以至于其代码库的总体代码质量不会随着时间的推移而下降。这可能很棘手，因为通常情况下，代码库会随着时间的推移而逐渐退化，特别是当团队受到严重的时间限制，并且他们觉得必须走捷径才能完成目标的时候。&#xA;此外，reviewer对他们正在review的代码拥有所有权和责任。他们希望确保代码库保持一致、可维护等等。&#xA;因此，我们得到以下规则作为我们在codereview中的标准:&#xA;一般来说，即使 CL 并不完美，reviewer也应该支持批准 CL，因为它处于肯定能够改善正在处理的系统的整体代码健康状况的状态。 这是所有代码审查指南中的高级原则。&#xA;当然，这也有局限性。 比如，如果 CL 添加了reviewer不希望在其系统中使用的特性，即使代码设计良好，也是可以拒绝批准的。 这里的一个关键点是，没有所谓的“完美”代码ーー只有更好的代码。reviewer应该要求作者在批准之前解决 CL 的每一个细小部分。相反，reviewer应该平衡取得进展的需要与他们所建议的变更的重要性之间的关系。与其追求完美，reviewer应该追求的是持续的改进。作为一个整体，改进系统的可维护性、可读性和可理解性的 CL 不应该因为它不“完美”而被推迟数天或数周 reviewer应该随时留下评论，表示有些东西可以做得更好，但如果不是很重要，可以加上“ Nit:”这样的前缀，让作者知道这只是一个他们可以选择忽略的润色点。&#xA;1.2 指导 code review对于教会开发人员一些关于语言、框架或通用软件设计原则的新知识具有重要作用。留下有助于开发人员学习新东西的评论总是可以的。随着时间的推移，共享知识是提高系统代码健康性的一部分。请记住，如果您的评论纯粹是教育性的，但对于满足本文档中描述的标准并不重要，请在评论前加上“ Nit:”，或者以其他方式表明作者并不必须在本 CL 中解决这个问题。&#xA;1.3 原则 技术事实和数据否定观点和个人偏好。 在风格问题上，风格指南是绝对的权威。任何不在样式指南中的纯样式点(空格等)都是个人偏好的问题。风格应该与现有的一致。如果没有以前的风格，接受作者的。 软件设计的各个方面几乎从来不是一个纯粹的风格问题或者只是个人偏好。它们是基于基本原则的，应该根据这些原则来衡量，而不仅仅是根据个人意见。有时候有一些有效的选择。如果作者能够(通过数据或基于可靠的工程原理)证明几种方法同样有效，那么评论者应该接受作者的偏好。否则，选择将由软件设计的标准原则决定。 如果没有其他规则适用，那么reviewer可能会要求作者与当前代码库中的代码保持一致，只要这不会恶化系统的整体代码质量。 1.4 解决冲突 如果在code review中出现任何冲突，第一步应该是开发人员和reviewer根据本文档的内容以及 CL 作者指南和评审人员指南中的其他文档，努力达成共识。 当达成共识变得特别困难时，reviewer和作者之间应该举行一次面对面的会议或视频会议来讨论，而不仅仅是试图通过注释来解决冲突。(但是，如果您这样做，请确保将讨论结果记录为 CL 上的评论，以便将来的读者使用。)&#xA;2. Code review应该看什么 2.</description>
+    </item>
+    <item>
+      <title>openrestry body_bytes_sent = 0</title>
+      <link>https://zhiqli.github.io/2019/12/openrestry-body_bytes_sent-0/</link>
+      <pubDate>Tue, 17 Dec 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/12/openrestry-body_bytes_sent-0/</guid>
+      <description>这是服务从IDC迁移上阿里云过程中遇到的一个问题，虽然定位完成以后发现其实很简单，但也算一个典型的案例。服务是一个openrestry。&#xA;现象 服务在阿里云部署完以后内部测试通过，切域名。后来收到一个新接入客户端反馈，服务请求失败，也没说具体错误。在服务端这边查看lua中代码逻辑正常执行，但是在nginx access.log中发现很多请求状态返回200，但body_bytes_sent为0。&#xA;很奇怪，因为这是一个跑了多年的老服务，且让用户请求回IDC机房的服务一切正常。因此感觉可以排除服务问题，猜测是阿里云的问题。&#xA;抓包分析 首先从服务端抓包 223.xxx 是客户端 139.xxx 是服务端 可以看到三次握手以后，客户端发送一个post请求，客户端回复ACK。然后就连续收到RST包，由于前面分析了，服务本身没有问题，客户端请求到IDC也正常，所以这个RST是哪里发的呢？&#xA;如果能结合客户端一起抓包也许就可以看出这个RST从哪里来的，但协调很麻烦。 还是自力更生先点开客户端POST的数据包看看&#xA;等等，Host: www.iav98.xyz这是什么？正常请求的header都需要加密的，这肯定是客户端瞎填的。是否和这个奇怪的header有关呢？&#xA;验证猜测 在本地验证，发包时header加上这个奇怪的host，并抓包&#xA;可以看到三次握手后post请求，收到一个403，WTF？[黑人问号.jpg]，貌似和前面服务端看到的数据包不一样啊？连接也不是客户端断的啊。&#xA;点开看个究竟&#xA;里面有一个阿里云的域名http://batit.aliyun.com/alww.html&#xA;至此，问题比较清楚了&#xA;请求header的host是未备案的域名，连接被阿里云断了。 nginx在回包的时候，如果客户端把socket关闭了，就不需要返回包给客户端，body_bytes_sent自然就是0了。 其实这个问题也是客户端懒，如果客户端愿意去看看具体错误，一眼就能看出问题。</description>
+    </item>
+    <item>
+      <title>基于argocd&#43;kustomize实现金丝雀上线</title>
+      <link>https://zhiqli.github.io/2019/11/%E5%9F%BA%E4%BA%8Eargocd-kustomize%E5%AE%9E%E7%8E%B0%E9%87%91%E4%B8%9D%E9%9B%80%E4%B8%8A%E7%BA%BF/</link>
+      <pubDate>Fri, 22 Nov 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/11/%E5%9F%BA%E4%BA%8Eargocd-kustomize%E5%AE%9E%E7%8E%B0%E9%87%91%E4%B8%9D%E9%9B%80%E4%B8%8A%E7%BA%BF/</guid>
+      <description>最近研究了一些CI/CD开源工具，目前项目CI依赖gitlab，但gitlab的CD功能太弱，所以调研其他一些工具看看能不能在生产应用。&#xA;spinnaker 可谓功能最全最为成熟支持多云，也相对复杂，是java栈，所以不予考虑。 gitlab 也有CD能力，但是太简单，本质上还是依赖.gitlab.yml，不方便控制。网上有很多如何配置gitlab cicd的文章。 tekton 云原生，版本还比较低，没部署使用。 argocd 和git仓库能紧密结合，即gitops。目前一定迭代到1.3版本，界面简洁清晰。 部署 argoCD部署非常简单，两行代码搞定。&#xA;1 2 kubectl create namespace argocd kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml 部署客户端，有些操作在UI无法实现，需要通过客户端命令行来操作，&#xA;为了方便外部访问，增加一个ingress来提供外部访问，参考文档&#xA;配置完成以后便可通过浏览器访问页面，argocd自身只提供一个admin用户，密码为第一次启动时argo-server的pod name。这里要注意，尽快通过argocd-cli account update-password 修改密码。否则pod重启以后就丢失了密码。&#xA;配置 部署成功登录以后，会发现页面非常简单，左侧有应用、设置和帮助三个选项。&#xA;首先进入设置页面，配置Repositories，也可以通过客户端命令行添加。具体步骤参考文档 添加项目，这一步比较简单，直接进去选择即可，至此可以回到应用页面去创建应用了。&#xA;添加clusters，在网页上目前只能查看cluster，不能添加，添加需要有两种方式，默认有当前argocd所在的k8s集群，即in-cluster。&#xA;一种是直接在后台试用argocd-cli cluster add 命令，这种方式需要依赖本地的kubeconfig文件，且有执行kube-system的权限，因为cluster add需要在kube-system中添加secret。 另外一种是通过添加一个argocd-cluster-cm config的方式，configmap中有一个baertoken不知为何物，所以没搞定。 回到应用页面，添加应用，这个非常简单，添加选择完成点击create即可 kustomize kustomize是sig-cli的一个子项目，它的设计目的是给kubernetes的用户提供一种可以重复使用同一套配置的声明式应用管理，从而在配置工作中用户只需要管理和维护kubernetes的API对象，而不需要学习或安装其它的配置管理工具，也不需要通过复制粘贴来得到新的环境的配置。&#xA;在目前常用的kubectl版本中，子命令已经包含kustomiz，更多参考官方文档。提供中文文档，且有详细列子，具体不写了。&#xA;灰度发布 argopro还有一个项目argo-rollouts是支持蓝绿、金丝雀发布的，是基于helm来实现的。不过目前该项目版本比较低，且需要安装kubectl子命令来后台控制，所以暂不考虑。 可以配合kustomize一起来实现一个简单的灰度发布系统，当然也可以配合helm一起，不过helm的学习成本要高一点，先通过kustomize，后续可以再考虑helm。&#xA;在代码仓库中提供如下结构的kustomize目录。&#xA;1 2 3 4 5 6 7 8 9 10 ├── kustomize │ ├── base │ │ ├── deployment.yaml │ │ ├── kustomization.</description>
+    </item>
+    <item>
+      <title>一次mysql锁问题排查</title>
+      <link>https://zhiqli.github.io/2019/11/%E4%B8%80%E6%AC%A1mysql%E9%94%81%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/</link>
+      <pubDate>Fri, 15 Nov 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/11/%E4%B8%80%E6%AC%A1mysql%E9%94%81%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/</guid>
+      <description>查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误&#xA;背景 线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。&#xA;服务对表的操作流程如下 收到客户端请求，新建任务，insert数据到db。 内部多个服务处理完update state task where id = &amp;lsquo;xxx&amp;rsquo;，每个任务大概会有2-3次update。 表结构如下 1 2 3 4 5 6 7 8 CREATE TABLE IF NOT EXISTS `task` ( `auto_id` int(11) NOT NULL auto_increment, `id` varchar(60) NOT NULL, `state` int(11) NOT NULL, `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`auto_id`), ) ENGINE=InnoDB DEFAULT CHARSET=utf8; 数据迁移脚本如下 1 2 3 4 movesql=&amp;#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &amp;lt; &amp;#39;${monthago}&amp;#39;; &amp;#34; echo ${movesql} | $mysql deletesql=&amp;#34;delete from task where update_time &amp;lt; &amp;#39;${monthago}&amp;#39;;&amp;#34; echo ${deletesql} | $mysql 迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。</description>
+    </item>
+    <item>
+      <title>envoy 代理http1.1</title>
+      <link>https://zhiqli.github.io/2019/09/envoy-%E4%BB%A3%E7%90%86http1.1/</link>
+      <pubDate>Tue, 10 Sep 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/09/envoy-%E4%BB%A3%E7%90%86http1.1/</guid>
+      <description>最近处理了一个envoy代理http1.1的问题，先简单介绍一下背景&#xA;背景 我们有一个长连接通道的项目，原来是通过http2.0连接。后来因为要做扫码登录的业务，所以使用 socket.io 支持了http1.1的连接，这是同事当时支持http1.1以后的博客。 代理当初用的envoy是1.6 v1 API ，现在由于其他问题想升级envoy到新版本，而新版本已经不支持v1 API，在升级的过程中遇到一些问题，也花了不少时间，搞定以后以此文作为笔记。&#xA;服务部署结构 front-envoy 这是一个网关。需要处理客户端http1.1的请求，在envoy API v1的时候非常简单，只需要在Route中加上use_websocket=true即可，参考文档。 但是在API v2，这个配置修改了，参考文档，在http_connection_mananger中加upgrade_configs配置。&#xA;envoy1 这实际上是k8s ingress，本来其实这个envoy就可以直接对外了，由于在阿里云slb的连接数有限制，所以才有在前面加了frontenvoy，有了frontenvoy连接会收敛，虽然front-envoy有一百多万连接，但到这里的连接数就很少了。&#xA;envoy2 看得出来这是sidecar envoy。只需要加上sio的upstream cluster即可。&#xA;问题 背景已经交代清楚了，这里再说下问题。&#xA;envoy升级以后，按照配置设置了upgrade_configs，请求发现front-envoy一直报错，503 UR，即upstream reset。 再跟踪envoy1的trace日志，发现有一行日志invalid frame: Invalid HTTP header field was received。&#xA;查了好久都没找到答案，上github提了一个issue，后来回复，由于envoy之间是http2连接，需要设置allow_connect=true才行，参考文档描述。 由于之前文档没有描述allow_connect，现在看到的是我提了issue才加上的描述。所以自己查了很久也没搞定。 设置上allow_connect以后，frontenvoy的日志从503 UR变成503了。 查看envoy1的日志，503 UR 以及invalid frame: Invalid HTTP header field was received。和刚才envoy1一样的。&#xA;而envoy2已经设置了allow_connect啊。后来查明原来我是在cluster里面的http2_protocol_options中设置了allow_connect=true，需要在http_connection_mananger中的http2_protocol_options中设置。&#xA;设置完成，envoy2又出现以下日志 1 2 [2019-09-10 07:14:56.094][000057][info][client] [source/common/http/codec_client.cc:118] [C3693] protocol error: The user callback function failed [2019-09-10T07:14:55.632Z] &amp;#34;GET /xlchannel.app2amlogic/sio/?EIO=3&amp;amp;transport=websocket HTTP/2&amp;#34; 503 UC 0 57 1 - &amp;#34;192.</description>
+    </item>
+    <item>
+      <title>istio/envoy流量控制问题</title>
+      <link>https://zhiqli.github.io/2019/05/istio/envoy%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6%E9%97%AE%E9%A2%98/</link>
+      <pubDate>Fri, 10 May 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/05/istio/envoy%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6%E9%97%AE%E9%A2%98/</guid>
+      <description>最近在调研istio，很重要的一点是想利用istio金丝雀发布时精细的流量控制。我们知道在k8s的金丝雀发布一般是通过label来控制，如果需要灰度1%的流量，那么总共需要100个pod。具体可以参考这篇文章。而istio则可以通过VirtualService来做流量控制，具体可以参考官方文档。&#xA;结论是暂时istio无法满足我们的需求，还是在这里记录一下调研过程。&#xA;背景 先说下我们的服务架构，api-gateway和服务之间是采用grpc长连接，想要控制api-gatewasy与服务之间的流量。 服务的架构如下&#xA;istio流量控制 流量拆分具体案例参考官方例子采用istio部署以后，部署VirutalService配置如下&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 apiVersion: networking.istio.io/v1alpha3 kind: VirtualService metadata: name: reporter-vs namespace: istio spec: hosts: - reporter http: - route: - destination: host: reporter subset: v1 weight: 90 - destination: host: reporter subset: v2 weight: 10 --- apiVersion: networking.</description>
+    </item>
+    <item>
+      <title>istio 抓取应用程序的metric</title>
+      <link>https://zhiqli.github.io/2019/05/istio-%E6%8A%93%E5%8F%96%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E7%9A%84metric/</link>
+      <pubDate>Tue, 07 May 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/05/istio-%E6%8A%93%E5%8F%96%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E7%9A%84metric/</guid>
+      <description>istio中会对网格内数据的metric数据收集，也可以自定义一些新的metric。通过这些数据有助于了解流量如何在集群中流动的。但这些数据不包括应用程序业务层的数据。 我们的应用中都有调用prometheus的go client api统计一些业务层的数据，由应用服务暴露一个端口。这些应用层的数据抓取当然可以起一个独立的prometheus服务，在istio1.1中，也可以使用istio的prometheus来收集。 本文主要记录采用istio prometheus抓取数据的配置。&#xA;配置 在文档中没有提及抓取收集应用程序metrics，这个描述是在FAQ中，Istio / Metrics and Logs FAQ。在install/kubernetes/istio-demo.yaml或install/kubernetes/istio-demo-auth.yaml的prometheus ConfigMap配置中有两个job&#xA;1 2 3 4 5 6 7 - job_name: &amp;#39;kubernetes-pods&amp;#39; kubernetes_sd_configs: - role: pod ..... - job_name: &amp;#39;kubernetes-pods-istio-secure&amp;#39; scheme: https 在没有启用mutual TLS 的环境中，job kubernetes-pods会从 Pod 中收集应用的metric。如果 Istio 启用了mutual TLS，就由job kubernetes-pods-istio-secure完成应用metric的收集工作。 这两个job都需要在pod yaml中添加annotations&#xA;1 2 3 prometheus.io/scrape: &amp;#34;true&amp;#34; prometheus.io/path: &amp;#34;&amp;lt;metrics path&amp;gt;&amp;#34; prometheus.io/port: &amp;#34;&amp;lt;metrics port&amp;gt;&amp;#34; 应用 OK，查完文档，开始实践。我的环境没有开启mutual TLS 。 服务起来以后查看prometheus target，奇怪的事情发生了&#xA;我的服务在kubernetes-pods-istio-secure job下，而在这个job下指定了scheme为https。由于没有配置https，访问不通。 经过一番google还是没有找到问题，后面看到kubernetes-pods的配置里面有一个source_labels: [__meta_kubernetes_pod_annotation_sidecar_istio_io_status, __meta_kubernetes_pod_annotation_prometheus_io_scheme]于是在pod yaml annotations增加Prometheus.io/scheme: &amp;quot;http&amp;quot; 再次刷新网页，我的3个应用出现在kubernetes-pods，状态也为UP。</description>
+    </item>
+    <item>
+      <title>shell脚本变量作用域</title>
+      <link>https://zhiqli.github.io/2019/04/shell%E8%84%9A%E6%9C%AC%E5%8F%98%E9%87%8F%E4%BD%9C%E7%94%A8%E5%9F%9F/</link>
+      <pubDate>Fri, 26 Apr 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/04/shell%E8%84%9A%E6%9C%AC%E5%8F%98%E9%87%8F%E4%BD%9C%E7%94%A8%E5%9F%9F/</guid>
+      <description>今天写一个shell脚本遇到一个问题，脚本为实现从文件中按行读取，拼接成一个字符串。大概代码如下&#xA;1 2 3 4 5 6 7 content=&amp;#34;&amp;#34; cat ./file | while read line do content=$content&amp;#34;-&amp;#34;$line echo $content done echo $content 执行发现打印出来循环中打印了正确结果，而最后一个echo结果却是空。按道理content是全局变量，不会存在作用域的问题。在网上搜了一下发现其中奇妙之处。 关键在这句cat ./file | while read line这里用了管道符，管道符非linux内建命令，shell执行非内建命令时会重建子进程来运行，而shell中即使全局变量的作用域也是在本进程中。所以运行完while read line content的修改对于父进程无效。 解决这个问题可以采用另外一种循环读取文本内容的方法，即&#xA;1 2 3 4 5 6 7 content=&amp;#34;&amp;#34; while read line do content=$content&amp;#34;-&amp;#34;$line echo $content done &amp;lt; ./file echo $content 使用内置命令重定向符，完美解决问题。 以后对于其他非内建命令的使用也要注意，别踩坑。</description>
+    </item>
+    <item>
+      <title>cgo笔记</title>
+      <link>https://zhiqli.github.io/2019/03/cgo%E7%AC%94%E8%AE%B0/</link>
+      <pubDate>Sun, 24 Mar 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/03/cgo%E7%AC%94%E8%AE%B0/</guid>
+      <description>看了下上一次提交还是去年刚搭建这个博客的时候，之前在博客园维护过一个博客，三天打鱼半年晒网写过几篇，后面打算转战到此争取能多写几篇，没想到还是没做到。今天难得有时间，先总结一篇cgo相关的吧。&#xA;目前公司的技术栈已经全面转go，而一些业务还需要依赖到一些老的C\C++ so，或者一些项目必须调用C/C++的so，比如ffmpeg。所以工作中经常会使用到cgo来调用这些C\C++ so，把cgo调用方法和遇到的问题简单记录下来。&#xA;cgo简单调用 在go中如果要调用C接口，要采用cgo来实现。比如下面的代码。&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 package main /* #include &amp;lt;stdio.h&amp;gt; int add(int a, int b) { return a + b } #cgo CFLAGS: -g */ import &amp;#34;C&amp;#34; func main() { sum := C.add(C.int(1), C.int(1)) } 如果要使用cgo，在go源文件中必须加入import &amp;ldquo;C&amp;quot;来标识，用于导入C实现的代码，而C源码则在import “C”上面以注释的方式加入。导入以后C源码可以在go代码中直接调用只要在函数、类型以C.开头即可。这里需要注意的一点是C代码和import “C”之间不能有空行&#xA;调用so 在实际应用中，一般会把C实现封装成so提供cgo调用，通过LDFLAGS指定lib即可。&#xA;1 2 3 4 5 6 7 8 9 package main /* #cgo CFLAGS: -I .</description>
+    </item>
+    <item>
+      <title>grpc established问题</title>
+      <link>https://zhiqli.github.io/2018/07/grpc-established%E9%97%AE%E9%A2%98/</link>
+      <pubDate>Mon, 30 Jul 2018 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2018/07/grpc-established%E9%97%AE%E9%A2%98/</guid>
+      <description>问题起因 QA同事问我为什么服务建立连接以后，关闭防火墙过了一天netstat查看端口还是established状态。当时我也回答不出，但我觉得这是个好问题，于是花了点时间goole。&#xA;定位 首先找到一句话The default value for the “TCP Established timeout” on a Linux server is 5 days. 当时觉得不对啊，难道grpc没有heatch check的吗？ 于是查看grpc的代码&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 14 // ClientParameters is used to set keepalive parameters on the client-side. // These configure how the client will actively probe to notice when a connection is broken // and send pings so intermediaries will be aware of the liveness of the connection.</description>
+    </item>
+    <item>
+      <title>grpc转换为http对外服务</title>
+      <link>https://zhiqli.github.io/2018/07/grpc%E8%BD%AC%E6%8D%A2%E4%B8%BAhttp%E5%AF%B9%E5%A4%96%E6%9C%8D%E5%8A%A1/</link>
+      <pubDate>Mon, 30 Jul 2018 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2018/07/grpc%E8%BD%AC%E6%8D%A2%E4%B8%BAhttp%E5%AF%B9%E5%A4%96%E6%9C%8D%E5%8A%A1/</guid>
+      <description>grpc转换为http对外服务 grpc支持将协议转换成http对外服务，数据通过post json提交 相对于普通的grpc服务，只需要在定义pb时稍作修改即可&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 syntax = &amp;#34;proto3&amp;#34;; package helloworld; import &amp;#34;google/api/annotations.proto&amp;#34;; service srv { rpc Say(HelloReq) returns (HelloResp){ option (google.api.http) = { post: &amp;#34;/say/hello&amp;#34; body: &amp;#34;*&amp;#34; }; } } 调用:curl -X POST http://127.0.0.1:8080/say/hello -d {} 相对于普通pb多了 import &amp;quot;google/api/annotations.proto&amp;quot;;&#xA;1 2 3 4 option (google.api.http) = { post: &amp;#34;/say/hello&amp;#34; body: &amp;#34;*&amp;#34; }; </description>
+    </item>
+    <item>
+      <title>一道C&#43;&#43;绑定面试题展开</title>
+      <link>https://zhiqli.github.io/2018/07/%E4%B8%80%E9%81%93c-%E7%BB%91%E5%AE%9A%E9%9D%A2%E8%AF%95%E9%A2%98%E5%B1%95%E5%BC%80/</link>
+      <pubDate>Mon, 30 Jul 2018 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2018/07/%E4%B8%80%E9%81%93c-%E7%BB%91%E5%AE%9A%E9%9D%A2%E8%AF%95%E9%A2%98%E5%B1%95%E5%BC%80/</guid>
+      <description>早上排队进地铁时候看到一个面试题，据说校招社招从来没人做对过。被肉贴肉的人流中看了一眼，不是选B吗。后面细思不对，既然没人做对，必有蹊跷，肯定是一个下意识中一定错的答案。 来到公司，运行一遍。果然选C。&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 #include &amp;lt;stdio.h&amp;gt; class Test { public: Test(){} ~Test(){} void f(){ printf(&amp;#34;hello world\n&amp;#34;); } }; int main() { Test *p = NULL; printf(&amp;#34;%d\n&amp;#34;, p); p-&amp;gt;f(); return 0; } 以上代码运行结果： A 编译不过 B coredump C hello world D 以上都不对 仔细分析一下这题目。 在C++中，对于非虚成员函数，是静态绑定的，编译时期绑定函数地址。并且在函数中，没有对this解引用，所以this即使是NULL也不会有问题。 那么还有一个问题来了，既然对象指针都为NULL，那么函数存在哪里呢？ C++里面成员函数，不依赖对象，存储在代码区。在编译期就确定了，调用者空不空都无所谓。&#xA;这里涉及到C++中的静态绑定和动态绑定。相关分析有很多文章分析得非常好比如这篇</description>
+    </item>
+    <item>
+      <title>一道C语言面试题</title>
+      <link>https://zhiqli.github.io/2018/07/%E4%B8%80%E9%81%93c%E8%AF%AD%E8%A8%80%E9%9D%A2%E8%AF%95%E9%A2%98/</link>
+      <pubDate>Mon, 30 Jul 2018 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2018/07/%E4%B8%80%E9%81%93c%E8%AF%AD%E8%A8%80%E9%9D%A2%E8%AF%95%E9%A2%98/</guid>
+      <description>今天在群里的兄弟分享了一道考察sizeof和strlen的面试题，看似很简单，其实却不然，分析过后，还是有一些不解之处。&#xA;题目，写出下面代码打印结果 1 2 3 4 5 6 7 8 9 10 char str1[] = &amp;#34;hello&amp;#34;; char str2[5] = {&amp;#39;h&amp;#39;,&amp;#39;e&amp;#39;,&amp;#39;l&amp;#39;,&amp;#39;l&amp;#39;,&amp;#39;o&amp;#39;}; char str3[6] = {&amp;#39;h&amp;#39;,&amp;#39;e&amp;#39;,&amp;#39;l&amp;#39;,&amp;#39;l&amp;#39;,&amp;#39;o&amp;#39;,&amp;#39;\0&amp;#39;}; printf(&amp;#34;sizeof(str1) %d\n&amp;#34;, (int)sizeof(str1)); printf(&amp;#34;strlen(str1) %d\n&amp;#34;, (int)strlen(str1)); printf(&amp;#34;sizeof(str2) %d\n&amp;#34;, (int)sizeof(str2)); printf(&amp;#34;strlen(str2) %d\n&amp;#34;, (int)strlen(str2)); printf(&amp;#34;sizeof(str3) %d\n&amp;#34;, (int)sizeof(str3)); printf(&amp;#34;strlen(str3) %d\n&amp;#34;, (int)strlen(str3)); 第一眼看，不就是考察sizeof和strlen吗？简单，答案应该是6，5，5，？，6，5。strlen(str2)，what the fuck？ 赶紧打开电脑验证一下，结果输出是6，5，5，10，6，5，呐尼？怎么会是10呢？ 好吧，既然长度是10，那我就加上一行代码，看看到底是10个什么鬼。&#xA;1 2 for(int i = 0; i &amp;lt; 10; i++) printf(&amp;#34; %c&amp;#34;, str2[i]); 这回打印的结果是h e l l o h e l l o，于是猜想是不是越界到其它变量去了，于是将str1改成&amp;quot;abcde&amp;quot;，再次运行结果是h e l l o a b c d e。 再把str1 str2 str3的内存地址打印出来，依次是504f28a5 504f28a0 504f289a 这回明白了，因为c语言的压栈顺序先定义的变量存在高地址，后定义的在低地址。所以strlen(str2)的时候，实际上是从504f28a0－504f28aa，所以长度为10。 你因为这个问题到这里就结束了吗？其实并没有。刚才是在mac上验证的，gcc的版本是4.</description>
+    </item>
+    <item>
+      <title>一些TCP基础笔记</title>
+      <link>https://zhiqli.github.io/2018/03/%E4%B8%80%E4%BA%9Btcp%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/</link>
+      <pubDate>Sat, 24 Mar 2018 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2018/03/%E4%B8%80%E4%BA%9Btcp%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/</guid>
+      <description>本文主要是看书看文章时做的笔记，记录一些TCP相关的基本概念。引用文章来自补充阅读，点击可到原文链接。&#xA;概念 MTU：maximum transmission unit最大传输单元 每种网络都不一样，以太网是1500。最小46字节。当数据块大于MTU时，将在发送端IP层进行分片，接收端IP层进行重组。IP分组在网络中传输中出现丢包时，由于IP层没有重传机制，TCP将重传整个报文段而不是丢失的IP分组&#xA;PS: 以太网最小数据帧长度为，最小64字节，其中6字节目的地址 、字节6源地址、2字节类型、46字节数据、4字节校验和.&#xA;MSS：maximum segment size最大分段大小 MSS是TCP数据包每次能够传输的最大数据分段。为了达到最佳的传输效能TCP协议在建立连接的时候通常要协商双方的MSS值，这个值TCP协议在实现的时候往往用MTU值代替（需要减去IP数据包包头的大小20Bytes和TCP数据段的包头20Bytes）所以往往MSS为1460。通讯双方会根据双方提供的MSS值得最小值确定为这次连接的最大MSS值。&#xA;MSL：Maximum Segment Lifetime报文最大生存时间 报文在网络上存在的最长时间，超过这个时间报文将被丢弃。在RFC793指出MSL为2分钟，实际应用中常用的是30秒（linux），1分钟和2分钟等。&#xA;TTL：Time To Live生存时间 生存时间是由源主机设置初始值但不是存的具体时间，而是存储了一个ip数据报可以经过的最大路由数，每经过一个处理他的路由器此值就减1，当此值为0则数据报将被丢弃，同时发送ICMP报文通知源主机。&#xA;RTT：round-trip time客户到服务器往返所花时间 RTT由三部分组成：链路的传播时间（propagation delay）、末端系统的处理时间、 路由器缓存中的排队和处理时间（queuing delay）。 其中，前两个部分的值对于一个TCP连接相对固定，路由器缓存中的排队和处理时间会随着整个网络拥塞程度 的变化而变化。所以RTT的变化在一定程度上反应了网络的拥塞程度。&#xA;RTO：Retransmission TimeOut重传超时时间 重传机制依赖于RTT（Round Trip Time）的测量，从而计算RTO（Retransmission Timeout）。&#xA;TSO：TCP Segment Offload 是一种利用网卡的处理能力，降低CPU发送数据包负载的技术。对于支持TSO的网卡，TCP协议栈在封包的时候会逐渐尝试增大MSS，网卡接收到TCP向下递交的数据后，按照MTU进行分片、复制TCP头且重新计算校验和，这样在网卡上完成了对大块数据的TCP分段，缓解了CPU的计算压力。&#xA;查看是否开启TSO&#xA;sudo ethtool -k eth0 关闭和打开TSO&#xA;$ sudo ethtool -K eth0 tso off // 关闭tso&#xA;$ sudo ethtool -K eth0 tso on // 开启tso&#xA;TCP协议结构 source port destination port:源端口和目标端口，注意不包括IP是因为这是上一层IP层的事情，这一层（传输层）只负责找到对应的端口，即应用程序。 sequence number：用来标记包的顺序。一个TCP包最多能传1460字节，对于超出的包，需要分片，为了保证对端收到的包是顺序完整的，需要通过seq num来重新组装数据包。值是本报文段所发送的数据的第一个字节的序号。 acknowledgment number：由于tcp是可靠的传输，发送端需要确认对端是否收到包，所以需要ack num来确认，如果没有收到，则会启动重传机制。ack num是期望收到对方的下一个报文段的数据的第一个字节的序号 header：由于tcp header有可选字段，所以长度不定。所以需要这个值作为offset来表示tcp头有多大。 reserved：保留字段，应填为0.</description>
+    </item>
+    <item>
+      <title>About</title>
+      <link>https://zhiqli.github.io/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/about/</guid>
+      <description> 中年奶爸脾气暴躁 一枚瘦子厨艺还行 痴迷阅读泛而不精 热爱踢球人菜瘾大 </description>
+    </item>
+    <item>
+      <title>envoy ratelimit技术验证</title>
+      <link>https://zhiqli.github.io/1/01/envoy-ratelimit%E6%8A%80%E6%9C%AF%E9%AA%8C%E8%AF%81/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/1/01/envoy-ratelimit%E6%8A%80%E6%9C%AF%E9%AA%8C%E8%AF%81/</guid>
+      <description>nginx大法好啊，nginx5分钟解决了一个envoy带来两周的伤害。&#xA;背景 具体情况是这样的，我这边有个服务大概结构是这样的。&#xA;高峰时大概承接了150w的grpc长连接，以及小于1000的websocket长连接。 上个月底由于已发版的客户端有个bug，会在后台不停发websocket建立连接请求，导致在一个周日下午5点半线上服务频繁重启，还好k8s会自动拉起服务。在超市买菜做晚饭的我赶紧冲回去，这时候能咋办呢。&#xA;扩容，把pod数增加一倍，然而并没有卵用，还是秒挂。由于前端envoy有5个实例，跟领导报备，先做服务降级，把其中4个envoy关闭websocket，先保证这100来万grpc连接能正常啊。 挺过一晚上，周一去到公司，讨论了一上午，最后的方案是隔离，把最前面的envoy分离，websocket的域名只走单独的两个envoy。慢慢的服务平稳了一周。服务变成这样子&#xA;第二周，同样的周日下午5:30，k8s ingress 又出现大面积重启，还是老方法，扩容，周一ingress也隔离。于是服务又变成这样子&#xA;同时调研envoy ratelimit，这又是一个悲伤的故事。由于我们用的还是envoy1.6或者1.7（别问为什么，问就是以前团队留下的坑），试了ratelimt发现，grpc和http都能有效限制remote_address的请求次数，就是websocket无效。又验证最新的envoy，发现没有问题。&#xA;这时候升级envoy就完事了吧，领导觉得动作太大，因为从网关到服务，实际上有三个envoy（包括sidecar里面的envoy），都得升级，否则websocket请求全部是503 UR，还不保证服务里面的socket io相关代码不需要修改。&#xA;最后祭出nginx大法。昨晚下班前5分钟在测试环境配置nginx，验证通过。 今天早上业务验证通过，上线，持续观察了几天，再也没有重启过，业务同学也再也没找过我了。&#xA;总结 总结一下这次解决问题的过程 envoy提供ratelimit的api，可以接入一个全局的速率限制服务，lyft已经提供了一个ratelimt服务可以参考甚至直接用。关于限速配置，readme中有详细说明。&#xA;关于envoy配置，官方文档中也有描述，不过各版本之间略有差异，需要针对各版本进行配置，最新版，网上有一个 envoy_ratelimit_example 可以参考，而低版本则可以通过官文文档进行配置。&#xA;虽然这次折腾没有用上envoy ratelimit，不过也算是一次技术调研，在后面的服务中可能可以用上，特以此文作为笔记。</description>
+    </item>
+  </channel>
+</rss>

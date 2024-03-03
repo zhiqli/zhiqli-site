@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>shell脚本变量作用域 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="shell脚本变量作用域">
+<meta itemprop="description" content="记 今天写一个shell脚本遇到一个问题，脚本为实现从文件中按行读取，拼接成一个字符串。大概代码如下
+content=&#34;&#34; cat ./file | while read line do content=$content&#34;-&#34;$line echo $content done echo $content 执行发现打印出来循环中打印了正确结果，而最后一个echo结果却是空。按道理content是全局变量，不会存在作用域的问题。在网上搜了一下发现其中奇妙之处。 关键在这句cat ./file | while read line这里用了管道符，管道符非linux内建命令，shell执行非内建命令时会重建子进程来运行，而shell中即使全局变量的作用域也是在本进程中。所以运行完while read line content的修改对于父进程无效。 解决这个问题可以采用另外一种循环读取文本内容的方法，即
+content=&#34;&#34; while read line do content=$content&#34;-&#34;$line echo $content done &lt; ./file echo $content 使用内置命令重定向符，完美解决问题。 以后对于其他非内建命令的使用也要注意，别�">
+
+<meta itemprop="wordCount" content="42">
+<meta itemprop="keywords" content="shell,笔记," /><meta property="og:title" content="shell脚本变量作用域" />
+<meta property="og:description" content="记 今天写一个shell脚本遇到一个问题，脚本为实现从文件中按行读取，拼接成一个字符串。大概代码如下
+content=&#34;&#34; cat ./file | while read line do content=$content&#34;-&#34;$line echo $content done echo $content 执行发现打印出来循环中打印了正确结果，而最后一个echo结果却是空。按道理content是全局变量，不会存在作用域的问题。在网上搜了一下发现其中奇妙之处。 关键在这句cat ./file | while read line这里用了管道符，管道符非linux内建命令，shell执行非内建命令时会重建子进程来运行，而shell中即使全局变量的作用域也是在本进程中。所以运行完while read line content的修改对于父进程无效。 解决这个问题可以采用另外一种循环读取文本内容的方法，即
+content=&#34;&#34; while read line do content=$content&#34;-&#34;$line echo $content done &lt; ./file echo $content 使用内置命令重定向符，完美解决问题。 以后对于其他非内建命令的使用也要注意，别�" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/1/01/shell%E8%84%9A%E6%9C%AC%E5%8F%98%E9%87%8F%E4%BD%9C%E7%94%A8%E5%9F%9F/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="shell脚本变量作用域"/>
+<meta name="twitter:description" content="记 今天写一个shell脚本遇到一个问题，脚本为实现从文件中按行读取，拼接成一个字符串。大概代码如下
+content=&#34;&#34; cat ./file | while read line do content=$content&#34;-&#34;$line echo $content done echo $content 执行发现打印出来循环中打印了正确结果，而最后一个echo结果却是空。按道理content是全局变量，不会存在作用域的问题。在网上搜了一下发现其中奇妙之处。 关键在这句cat ./file | while read line这里用了管道符，管道符非linux内建命令，shell执行非内建命令时会重建子进程来运行，而shell中即使全局变量的作用域也是在本进程中。所以运行完while read line content的修改对于父进程无效。 解决这个问题可以采用另外一种循环读取文本内容的方法，即
+content=&#34;&#34; while read line do content=$content&#34;-&#34;$line echo $content done &lt; ./file echo $content 使用内置命令重定向符，完美解决问题。 以后对于其他非内建命令的使用也要注意，别�"/>
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
+
+	<script src="http://localhost:1313/js/feather.min.js"></script>
+	
+		<script src="http://localhost:1313/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="matter">
+        <h1 class="title">shell脚本变量作用域</h1>
+    </div>
+</div>
+
+
+    
+    
+    <h2 id="记">记</h2>
+<p>今天写一个shell脚本遇到一个问题，脚本为实现从文件中按行读取，拼接成一个字符串。大概代码如下</p>
+<pre tabindex="0"><code>content=&#34;&#34;
+cat ./file | while read line
+do
+    content=$content&#34;-&#34;$line
+    echo $content
+done
+echo $content
+</code></pre><p>执行发现打印出来循环中打印了正确结果，而最后一个echo结果却是空。按道理content是全局变量，不会存在作用域的问题。在网上搜了一下发现其中奇妙之处。
+关键在这句<code>cat ./file | while read line</code>这里用了管道符，管道符非linux内建命令，shell执行非内建命令时会重建子进程来运行，而shell中即使全局变量的作用域也是在本进程中。所以运行完while read line content的修改对于父进程无效。
+解决这个问题可以采用另外一种循环读取文本内容的方法，即</p>
+<pre tabindex="0"><code>content=&#34;&#34;
+while read line
+do
+    content=$content&#34;-&#34;$line
+    echo $content
+done &lt; ./file
+echo $content
+</code></pre><p>使用内置命令重定向符，完美解决问题。
+以后对于其他非内建命令的使用也要注意，别�</p>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/shell">shell</a>
+        </li>
+        
+        
+        <li class="tag-li"><a href="/tags/%E7%AC%94%E8%AE%B0">笔记</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2019-04-26-shell-variable.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+    
+    Next time, we'll talk about <i>"What Tiger King can teach us about x86 Assembly"</i>
+    
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>1  © Copyright notice </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

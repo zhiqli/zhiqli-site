@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>cgo笔记 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="cgo笔记">
+<meta itemprop="description" content="笔记 看了下上一次提交还是去年刚搭建这个博客的时候，之前在博客园维护过一个博客，三天打鱼半年晒网写过几篇，后面打算转战到此争取能多写几篇，没想到还是没做到。今天难得有时间，先总结一篇cgo相关的吧。
+目前公司的技术栈已经全面转go，而一些业务还需要依赖到一些老的C\C&#43;&#43; so，或者一些项目必须调用C/C&#43;&#43;的so，比如ffmpeg。所以工作中经常会使用到cgo来调用这些C\C&#43;&#43; so，把cgo调用方法和遇到的问题简单记录下来。
+cgo简单调用 在go中如果要调用C接口，要采用cgo来实现。比如下面的代码。
+package main /* #include &lt;stdio.h&gt; int add(int a, int b) { return a &#43; b } #cgo CFLAGS: -g */ import &#34;C&#34; func main() { sum := C.add(C.int(1), C.int(1)) } 如果要使用cgo，在go源文件中必须加入import &ldquo;C&quot;来标识，用于导入C实现的代码，而C源码则在import “C”上面以注释的方式加入。导入以后C源码可以在go代码中直接调用只要在函数、类型以C.开头即可。这里需要注意的一点是C代码和import “C”之间不能有空行
+调用so 在实际应用中，一般会把C实现封装成so提供cgo调用，通过LDFLAGS指定lib即可。
+package main /* #cgo CFLAGS: -I ../lib #cgo LDFLAGS: -L ${SRCDIR}/../lib -lxl_stat -lxl_thunder_sdk #include &#34;call_so_interface.h&#34; #include &lt;stdlib.h&gt; */ import &#34;C&#34; 注意，在编译时指定lib或者include的路径，不能直接使用相对路径，但可以使用一个变量${SRCDIR}，这个变量指的是源码路径。
+类型转换 对于字符串，提供了CString、GoString两个函数进行转换，看下面的代码
+package main import ( &#34;fmt&#34; &#34;unsafe&#34; ) /* #include &lt;stdio.">
+
+<meta itemprop="wordCount" content="255">
+<meta itemprop="keywords" content="golang,笔记," /><meta property="og:title" content="cgo笔记" />
+<meta property="og:description" content="笔记 看了下上一次提交还是去年刚搭建这个博客的时候，之前在博客园维护过一个博客，三天打鱼半年晒网写过几篇，后面打算转战到此争取能多写几篇，没想到还是没做到。今天难得有时间，先总结一篇cgo相关的吧。
+目前公司的技术栈已经全面转go，而一些业务还需要依赖到一些老的C\C&#43;&#43; so，或者一些项目必须调用C/C&#43;&#43;的so，比如ffmpeg。所以工作中经常会使用到cgo来调用这些C\C&#43;&#43; so，把cgo调用方法和遇到的问题简单记录下来。
+cgo简单调用 在go中如果要调用C接口，要采用cgo来实现。比如下面的代码。
+package main /* #include &lt;stdio.h&gt; int add(int a, int b) { return a &#43; b } #cgo CFLAGS: -g */ import &#34;C&#34; func main() { sum := C.add(C.int(1), C.int(1)) } 如果要使用cgo，在go源文件中必须加入import &ldquo;C&quot;来标识，用于导入C实现的代码，而C源码则在import “C”上面以注释的方式加入。导入以后C源码可以在go代码中直接调用只要在函数、类型以C.开头即可。这里需要注意的一点是C代码和import “C”之间不能有空行
+调用so 在实际应用中，一般会把C实现封装成so提供cgo调用，通过LDFLAGS指定lib即可。
+package main /* #cgo CFLAGS: -I ../lib #cgo LDFLAGS: -L ${SRCDIR}/../lib -lxl_stat -lxl_thunder_sdk #include &#34;call_so_interface.h&#34; #include &lt;stdlib.h&gt; */ import &#34;C&#34; 注意，在编译时指定lib或者include的路径，不能直接使用相对路径，但可以使用一个变量${SRCDIR}，这个变量指的是源码路径。
+类型转换 对于字符串，提供了CString、GoString两个函数进行转换，看下面的代码
+package main import ( &#34;fmt&#34; &#34;unsafe&#34; ) /* #include &lt;stdio." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/1/01/cgo%E7%AC%94%E8%AE%B0/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="cgo笔记"/>
+<meta name="twitter:description" content="笔记 看了下上一次提交还是去年刚搭建这个博客的时候，之前在博客园维护过一个博客，三天打鱼半年晒网写过几篇，后面打算转战到此争取能多写几篇，没想到还是没做到。今天难得有时间，先总结一篇cgo相关的吧。
+目前公司的技术栈已经全面转go，而一些业务还需要依赖到一些老的C\C&#43;&#43; so，或者一些项目必须调用C/C&#43;&#43;的so，比如ffmpeg。所以工作中经常会使用到cgo来调用这些C\C&#43;&#43; so，把cgo调用方法和遇到的问题简单记录下来。
+cgo简单调用 在go中如果要调用C接口，要采用cgo来实现。比如下面的代码。
+package main /* #include &lt;stdio.h&gt; int add(int a, int b) { return a &#43; b } #cgo CFLAGS: -g */ import &#34;C&#34; func main() { sum := C.add(C.int(1), C.int(1)) } 如果要使用cgo，在go源文件中必须加入import &ldquo;C&quot;来标识，用于导入C实现的代码，而C源码则在import “C”上面以注释的方式加入。导入以后C源码可以在go代码中直接调用只要在函数、类型以C.开头即可。这里需要注意的一点是C代码和import “C”之间不能有空行
+调用so 在实际应用中，一般会把C实现封装成so提供cgo调用，通过LDFLAGS指定lib即可。
+package main /* #cgo CFLAGS: -I ../lib #cgo LDFLAGS: -L ${SRCDIR}/../lib -lxl_stat -lxl_thunder_sdk #include &#34;call_so_interface.h&#34; #include &lt;stdlib.h&gt; */ import &#34;C&#34; 注意，在编译时指定lib或者include的路径，不能直接使用相对路径，但可以使用一个变量${SRCDIR}，这个变量指的是源码路径。
+类型转换 对于字符串，提供了CString、GoString两个函数进行转换，看下面的代码
+package main import ( &#34;fmt&#34; &#34;unsafe&#34; ) /* #include &lt;stdio."/>
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
+
+	<script src="http://localhost:1313/js/feather.min.js"></script>
+	
+		<script src="http://localhost:1313/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="matter">
+        <h1 class="title">cgo笔记</h1>
+    </div>
+</div>
+
+
+    
+    
+    <ul>
+<li>笔记</li>
+</ul>
+<hr>
+<blockquote>
+<p>看了下上一次提交还是去年刚搭建这个博客的时候，之前在博客园维护过一个博客，三天打鱼半年晒网写过几篇，后面打算转战到此争取能多写几篇，没想到还是没做到。今天难得有时间，先总结一篇cgo相关的吧。</p>
+<p>目前公司的技术栈已经全面转go，而一些业务还需要依赖到一些老的C\C++ so，或者一些项目必须调用C/C++的so，比如ffmpeg。所以工作中经常会使用到cgo来调用这些C\C++ so，把cgo调用方法和遇到的问题简单记录下来。</p>
+</blockquote>
+<h3 id="cgo简单调用">cgo简单调用</h3>
+<p>在go中如果要调用C接口，要采用cgo来实现。比如下面的代码。</p>
+<pre tabindex="0"><code>package main
+
+/*
+#include &lt;stdio.h&gt;
+
+int add(int a, int b) {
+ 	return a + b
+}
+#cgo CFLAGS: -g
+*/
+import &#34;C&#34;
+
+func main() {
+    sum := C.add(C.int(1), C.int(1))
+}
+</code></pre><p>如果要使用cgo，在go源文件中必须加入import &ldquo;C&quot;来标识，用于导入C实现的代码，而C源码则在import “C”上面以注释的方式加入。导入以后C源码可以在go代码中直接调用只要在函数、类型以C.开头即可。这里需要注意的一点是<strong>C代码和import “C”之间不能有空行</strong></p>
+<h3 id="调用so">调用so</h3>
+<p>在实际应用中，一般会把C实现封装成so提供cgo调用，通过LDFLAGS指定lib即可。</p>
+<pre tabindex="0"><code>package main
+
+/*
+#cgo CFLAGS: -I ../lib
+#cgo LDFLAGS: -L ${SRCDIR}/../lib -lxl_stat -lxl_thunder_sdk
+#include &#34;call_so_interface.h&#34;
+#include &lt;stdlib.h&gt;
+*/
+import &#34;C&#34;
+</code></pre><p>注意，<strong>在编译时指定lib或者include的路径，不能直接使用相对路径，但可以使用一个变量${SRCDIR}，这个变量指的是源码路径。</strong></p>
+<h3 id="类型转换">类型转换</h3>
+<p>对于字符串，提供了CString、GoString两个函数进行转换，看下面的代码</p>
+<pre tabindex="0"><code>package main
+
+import (
+	&#34;fmt&#34;
+	&#34;unsafe&#34;
+)
+
+/*
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+char* pass_char_array(char* in) {
+	printf(&#34;print in c is %s\n&#34;,in);
+	char* out = malloc(64);
+	sprintf(out, &#34;%s&#34;, &#34;hello world return from c&#34;);
+	return out;
+}
+#cgo CFLAGS: -g
+*/
+import &#34;C&#34;
+
+func main() {
+	str := &#34;hello world pass from go&#34;
+	in := C.CString(str)
+	out := C.pass_char_array(in)
+	outStr := C.GoString(out)
+	C.free(unsafe.Pointer(in))    //注意需要手动调用free
+	C.free(unsafe.Pointer(out))   //注意需要手动调用free
+	fmt.Println(&#34;print in go &#34;, outStr)
+}
+</code></pre><p>运行结果为</p>
+<pre tabindex="0"><code>print in c is hello world pass from go
+print in go  hello world return from c
+</code></pre><p>唯一需要注意的是，<strong>对于C类型的字符串要记得手动调用C.free防止内存泄漏</strong>。</p>
+<p>对于其他数组类型的转换，最近在工作中遇到一个问题，先看我的代码。</p>
+<pre tabindex="0"><code>package main
+
+import &#34;unsafe&#34;
+
+/*
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int pass_int_array(int* in, int len) {
+	int i = 0;
+	for (i = 0; i &lt; len; i++) {
+		printf(&#34;%d &#34;, in[i]);
+	}
+	return 0;
+}
+#cgo CFLAGS: -g
+*/
+import &#34;C&#34;
+
+func main() {
+	a := []int{1, 2, 3, 4}
+	C.pass_int_array((*C.int)(unsafe.Pointer(&amp;a[0])), 4)
+}
+</code></pre><p>我们可以看到，对于数组的转换是采用<code>unsafe.Pointer</code>取go数组a的首地址显式转换成C int指针类型。OK，运行一下，看看打印结果是什么。
+<code>1 0 2 0</code></p>
+<p>这是什么情况，没毛病啊，说好的1 2 3 4呢？我猜想是不是两边int占用的内存大小不一致呢？go int 8个字节，C int 4个字节，通过一段代码来验证一下吧。</p>
+<pre tabindex="0"><code>g := 1
+c := C.int(1)
+fmt.Println(&#34;sizeof go int&#34;, unsafe.Sizeof(g))
+fmt.Println(&#34;sizeof c int&#34;, unsafe.Sizeof(c))
+</code></pre><p>运行结果</p>
+<pre tabindex="0"><code>sizeof go int 8
+sizeof c int 4
+</code></pre><p>果然有毛病啊老铁，于是把go中数组改成<code>a := []int32{1, 2, 3, 4}</code>再次运行，完美通过。</p>
+<p>所以要注意，<strong>在这种跨语言调用中，对于int、double等类型的传递一定要明确指定字节大小</strong></p>
+<h3 id="调用c代码">调用C++代码</h3>
+<p>无法直接调用C++代码，需要再封装一层，导出为C类型</p>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/golang">golang</a>
+        </li>
+        
+        
+        <li class="tag-li"><a href="/tags/%E7%AC%94%E8%AE%B0">笔记</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2019-03-24-cgo-note.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+    
+    Next time, we'll talk about <i>"10 Reasons why gcc SHOULD be re-written in JavaScript - You won&#39;t believe #8!"</i>
+    
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>1  © Copyright notice </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

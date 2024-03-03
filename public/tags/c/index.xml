@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>C on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/tags/c/</link>
+    <description>Recent content in C on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Mon, 30 Jul 2018 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/tags/c/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>一道C语言面试题</title>
+      <link>https://zhiqli.github.io/2018/07/%E4%B8%80%E9%81%93c%E8%AF%AD%E8%A8%80%E9%9D%A2%E8%AF%95%E9%A2%98/</link>
+      <pubDate>Mon, 30 Jul 2018 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2018/07/%E4%B8%80%E9%81%93c%E8%AF%AD%E8%A8%80%E9%9D%A2%E8%AF%95%E9%A2%98/</guid>
+      <description>今天在群里的兄弟分享了一道考察sizeof和strlen的面试题，看似很简单，其实却不然，分析过后，还是有一些不解之处。&#xA;题目，写出下面代码打印结果 1 2 3 4 5 6 7 8 9 10 char str1[] = &amp;#34;hello&amp;#34;; char str2[5] = {&amp;#39;h&amp;#39;,&amp;#39;e&amp;#39;,&amp;#39;l&amp;#39;,&amp;#39;l&amp;#39;,&amp;#39;o&amp;#39;}; char str3[6] = {&amp;#39;h&amp;#39;,&amp;#39;e&amp;#39;,&amp;#39;l&amp;#39;,&amp;#39;l&amp;#39;,&amp;#39;o&amp;#39;,&amp;#39;\0&amp;#39;}; printf(&amp;#34;sizeof(str1) %d\n&amp;#34;, (int)sizeof(str1)); printf(&amp;#34;strlen(str1) %d\n&amp;#34;, (int)strlen(str1)); printf(&amp;#34;sizeof(str2) %d\n&amp;#34;, (int)sizeof(str2)); printf(&amp;#34;strlen(str2) %d\n&amp;#34;, (int)strlen(str2)); printf(&amp;#34;sizeof(str3) %d\n&amp;#34;, (int)sizeof(str3)); printf(&amp;#34;strlen(str3) %d\n&amp;#34;, (int)strlen(str3)); 第一眼看，不就是考察sizeof和strlen吗？简单，答案应该是6，5，5，？，6，5。strlen(str2)，what the fuck？ 赶紧打开电脑验证一下，结果输出是6，5，5，10，6，5，呐尼？怎么会是10呢？ 好吧，既然长度是10，那我就加上一行代码，看看到底是10个什么鬼。&#xA;1 2 for(int i = 0; i &amp;lt; 10; i++) printf(&amp;#34; %c&amp;#34;, str2[i]); 这回打印的结果是h e l l o h e l l o，于是猜想是不是越界到其它变量去了，于是将str1改成&amp;quot;abcde&amp;quot;，再次运行结果是h e l l o a b c d e。 再把str1 str2 str3的内存地址打印出来，依次是504f28a5 504f28a0 504f289a 这回明白了，因为c语言的压栈顺序先定义的变量存在高地址，后定义的在低地址。所以strlen(str2)的时候，实际上是从504f28a0－504f28aa，所以长度为10。 你因为这个问题到这里就结束了吗？其实并没有。刚才是在mac上验证的，gcc的版本是4.</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>envoy ratelimit技术验证 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="envoy ratelimit技术验证">
+<meta itemprop="description" content="nginx大法好啊，nginx5分钟解决了一个envoy带来两周的伤害。
+背景 具体情况是这样的，我这边有个服务大概结构是这样的。
+高峰时大概承接了150w的grpc长连接，以及小于1000的websocket长连接。 上个月底由于已发版的客户端有个bug，会在后台不停发websocket建立连接请求，导致在一个周日下午5点半线上服务频繁重启，还好k8s会自动拉起服务。在超市买菜做晚饭的我赶紧冲回去，这时候能咋办呢。
+扩容，把pod数增加一倍，然而并没有卵用，还是秒挂。由于前端envoy有5个实例，跟领导报备，先做服务降级，把其中4个envoy关闭websocket，先保证这100来万grpc连接能正常啊。 挺过一晚上，周一去到公司，讨论了一上午，最后的方案是隔离，把最前面的envoy分离，websocket的域名只走单独的两个envoy。慢慢的服务平稳了一周。服务变成这样子
+第二周，同样的周日下午5:30，k8s ingress 又出现大面积重启，还是老方法，扩容，周一ingress也隔离。于是服务又变成这样子
+同时调研envoy ratelimit，这又是一个悲伤的故事。由于我们用的还是envoy1.6或者1.7（别问为什么，问就是以前团队留下的坑），试了ratelimt发现，grpc和http都能有效限制remote_address的请求次数，就是websocket无效。又验证最新的envoy，发现没有问题。
+这时候升级envoy就完事了吧，领导觉得动作太大，因为从网关到服务，实际上有三个envoy（包括sidecar里面的envoy），都得升级，否则websocket请求全部是503 UR，还不保证服务里面的socket io相关代码不需要修改。
+最后祭出nginx大法。昨晚下班前5分钟在测试环境配置nginx，验证通过。 今天早上业务验证通过，上线，持续观察了几天，再也没有重启过，业务同学也再也没找过我了。
+总结 总结一下这次解决问题的过程 envoy提供ratelimit的api，可以接入一个全局的速率限制服务，lyft已经提供了一个ratelimt服务可以参考甚至直接用。关于限速配置，readme中有详细说明。
+关于envoy配置，官方文档中也有描述，不过各版本之间略有差异，需要针对各版本进行配置，最新版，网上有一个 envoy_ratelimit_example 可以参考，而低版本则可以通过官文文档进行配置。
+虽然这次折腾没有用上envoy ratelimit，不过也算是一次技术调研，在后面的服务中可能可以用上，特以此文作为笔记。">
+
+<meta itemprop="wordCount" content="25">
+<meta itemprop="keywords" content="envoy,笔记," /><meta property="og:title" content="envoy ratelimit技术验证" />
+<meta property="og:description" content="nginx大法好啊，nginx5分钟解决了一个envoy带来两周的伤害。
+背景 具体情况是这样的，我这边有个服务大概结构是这样的。
+高峰时大概承接了150w的grpc长连接，以及小于1000的websocket长连接。 上个月底由于已发版的客户端有个bug，会在后台不停发websocket建立连接请求，导致在一个周日下午5点半线上服务频繁重启，还好k8s会自动拉起服务。在超市买菜做晚饭的我赶紧冲回去，这时候能咋办呢。
+扩容，把pod数增加一倍，然而并没有卵用，还是秒挂。由于前端envoy有5个实例，跟领导报备，先做服务降级，把其中4个envoy关闭websocket，先保证这100来万grpc连接能正常啊。 挺过一晚上，周一去到公司，讨论了一上午，最后的方案是隔离，把最前面的envoy分离，websocket的域名只走单独的两个envoy。慢慢的服务平稳了一周。服务变成这样子
+第二周，同样的周日下午5:30，k8s ingress 又出现大面积重启，还是老方法，扩容，周一ingress也隔离。于是服务又变成这样子
+同时调研envoy ratelimit，这又是一个悲伤的故事。由于我们用的还是envoy1.6或者1.7（别问为什么，问就是以前团队留下的坑），试了ratelimt发现，grpc和http都能有效限制remote_address的请求次数，就是websocket无效。又验证最新的envoy，发现没有问题。
+这时候升级envoy就完事了吧，领导觉得动作太大，因为从网关到服务，实际上有三个envoy（包括sidecar里面的envoy），都得升级，否则websocket请求全部是503 UR，还不保证服务里面的socket io相关代码不需要修改。
+最后祭出nginx大法。昨晚下班前5分钟在测试环境配置nginx，验证通过。 今天早上业务验证通过，上线，持续观察了几天，再也没有重启过，业务同学也再也没找过我了。
+总结 总结一下这次解决问题的过程 envoy提供ratelimit的api，可以接入一个全局的速率限制服务，lyft已经提供了一个ratelimt服务可以参考甚至直接用。关于限速配置，readme中有详细说明。
+关于envoy配置，官方文档中也有描述，不过各版本之间略有差异，需要针对各版本进行配置，最新版，网上有一个 envoy_ratelimit_example 可以参考，而低版本则可以通过官文文档进行配置。
+虽然这次折腾没有用上envoy ratelimit，不过也算是一次技术调研，在后面的服务中可能可以用上，特以此文作为笔记。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://zhiqli.github.io/1/01/envoy-ratelimit%E6%8A%80%E6%9C%AF%E9%AA%8C%E8%AF%81/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="envoy ratelimit技术验证"/>
+<meta name="twitter:description" content="nginx大法好啊，nginx5分钟解决了一个envoy带来两周的伤害。
+背景 具体情况是这样的，我这边有个服务大概结构是这样的。
+高峰时大概承接了150w的grpc长连接，以及小于1000的websocket长连接。 上个月底由于已发版的客户端有个bug，会在后台不停发websocket建立连接请求，导致在一个周日下午5点半线上服务频繁重启，还好k8s会自动拉起服务。在超市买菜做晚饭的我赶紧冲回去，这时候能咋办呢。
+扩容，把pod数增加一倍，然而并没有卵用，还是秒挂。由于前端envoy有5个实例，跟领导报备，先做服务降级，把其中4个envoy关闭websocket，先保证这100来万grpc连接能正常啊。 挺过一晚上，周一去到公司，讨论了一上午，最后的方案是隔离，把最前面的envoy分离，websocket的域名只走单独的两个envoy。慢慢的服务平稳了一周。服务变成这样子
+第二周，同样的周日下午5:30，k8s ingress 又出现大面积重启，还是老方法，扩容，周一ingress也隔离。于是服务又变成这样子
+同时调研envoy ratelimit，这又是一个悲伤的故事。由于我们用的还是envoy1.6或者1.7（别问为什么，问就是以前团队留下的坑），试了ratelimt发现，grpc和http都能有效限制remote_address的请求次数，就是websocket无效。又验证最新的envoy，发现没有问题。
+这时候升级envoy就完事了吧，领导觉得动作太大，因为从网关到服务，实际上有三个envoy（包括sidecar里面的envoy），都得升级，否则websocket请求全部是503 UR，还不保证服务里面的socket io相关代码不需要修改。
+最后祭出nginx大法。昨晚下班前5分钟在测试环境配置nginx，验证通过。 今天早上业务验证通过，上线，持续观察了几天，再也没有重启过，业务同学也再也没找过我了。
+总结 总结一下这次解决问题的过程 envoy提供ratelimit的api，可以接入一个全局的速率限制服务，lyft已经提供了一个ratelimt服务可以参考甚至直接用。关于限速配置，readme中有详细说明。
+关于envoy配置，官方文档中也有描述，不过各版本之间略有差异，需要针对各版本进行配置，最新版，网上有一个 envoy_ratelimit_example 可以参考，而低版本则可以通过官文文档进行配置。
+虽然这次折腾没有用上envoy ratelimit，不过也算是一次技术调研，在后面的服务中可能可以用上，特以此文作为笔记。"/>
+<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+
+	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	
+		<script src="https://zhiqli.github.io/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+		<div class="avatar">
+			<a href="https://zhiqli.github.io/">
+				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
+			</a>
+		</div>
+	
+	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/weekly">Weekly</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="matter">
+        <h1 class="title">envoy ratelimit技术验证</h1>
+    </div>
+</div>
+
+
+    
+    
+    <p>nginx大法好啊，nginx5分钟解决了一个envoy带来两周的伤害。</p>
+<h3 id="背景">背景</h3>
+<p>具体情况是这样的，我这边有个服务大概结构是这样的。</p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/63155615-7df51180-c045-11e9-90d5-072d7433da5b.png" alt="img">
+
+</p>
+<p>高峰时大概承接了150w的grpc长连接，以及小于1000的websocket长连接。
+上个月底由于已发版的客户端有个bug，会在后台不停发websocket建立连接请求，导致在一个周日下午5点半线上服务频繁重启，还好k8s会自动拉起服务。在超市买菜做晚饭的我赶紧冲回去，这时候能咋办呢。</p>
+<p><strong>扩容</strong>，把pod数增加一倍，然而并没有卵用，还是秒挂。由于前端envoy有5个实例，跟领导报备，先做服务降级，把其中4个envoy关闭websocket，先保证这100来万grpc连接能正常啊。
+挺过一晚上，周一去到公司，讨论了一上午，最后的方案是隔离，把最前面的envoy分离，websocket的域名只走单独的两个envoy。慢慢的服务平稳了一周。服务变成这样子</p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/63155616-7e8da800-c045-11e9-86a4-0fad0e15fbcc.png" alt="img">
+
+</p>
+<p>第二周，同样的周日下午5:30，k8s ingress 又出现大面积重启，还是老方法，扩容，周一ingress也隔离。于是服务又变成这样子</p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/63155617-7e8da800-c045-11e9-8ab0-8a3ed4e9b251.png" alt="img">
+
+</p>
+<p>同时调研envoy ratelimit，这又是一个悲伤的故事。由于我们用的还是envoy1.6或者1.7（别问为什么，问就是以前团队留下的坑），试了ratelimt发现，grpc和http都能有效限制remote_address的请求次数，就是websocket无效。又验证最新的envoy，发现没有问题。</p>
+<p>这时候升级envoy就完事了吧，领导觉得动作太大，因为从网关到服务，实际上有三个envoy（包括sidecar里面的envoy），都得升级，否则websocket请求全部是503 UR，还不保证服务里面的socket io相关代码不需要修改。</p>
+<p>最后祭出nginx大法。昨晚下班前5分钟在测试环境配置nginx，验证通过。
+今天早上业务验证通过，上线，持续观察了几天，再也没有重启过，业务同学也再也没找过我了。</p>
+<h2 id="总结">总结</h2>
+<p>总结一下这次解决问题的过程
+envoy提供ratelimit的api，可以接入一个全局的速率限制服务，lyft已经提供了一个<a href="https://github.com/lyft/ratelimit">ratelimt</a>服务可以参考甚至直接用。关于限速配置，readme中有详细说明。</p>
+<p>关于envoy配置，官方文档中也有描述，不过各版本之间略有差异，需要针对各版本进行配置，最新版，网上有一个 <a href="https://github.com/jbarratt/envoy_ratelimit_example">envoy_ratelimit_example</a>
+可以参考，而低版本则可以通过官文文档进行配置。</p>
+<p>虽然这次折腾没有用上envoy ratelimit，不过也算是一次技术调研，在后面的服务中可能可以用上，特以此文作为笔记。</p>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/envoy">envoy</a>
+        </li>
+        
+        
+        <li class="tag-li"><a href="/tags/%E7%AC%94%E8%AE%B0">笔记</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2019-08-16-envoy-rate-limit.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>1  © Copyright zhiqli </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

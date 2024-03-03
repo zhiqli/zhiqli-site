@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Grpc on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/tags/grpc/</link>
+    <description>Recent content in Grpc on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Mon, 30 Jul 2018 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/tags/grpc/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>grpc established问题</title>
+      <link>https://zhiqli.github.io/2018/07/grpc-established%E9%97%AE%E9%A2%98/</link>
+      <pubDate>Mon, 30 Jul 2018 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2018/07/grpc-established%E9%97%AE%E9%A2%98/</guid>
+      <description>问题起因 QA同事问我为什么服务建立连接以后，关闭防火墙过了一天netstat查看端口还是established状态。当时我也回答不出，但我觉得这是个好问题，于是花了点时间goole。&#xA;定位 首先找到一句话The default value for the “TCP Established timeout” on a Linux server is 5 days. 当时觉得不对啊，难道grpc没有heatch check的吗？ 于是查看grpc的代码&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 14 // ClientParameters is used to set keepalive parameters on the client-side. // These configure how the client will actively probe to notice when a connection is broken // and send pings so intermediaries will be aware of the liveness of the connection.</description>
+    </item>
+    <item>
+      <title>grpc转换为http对外服务</title>
+      <link>https://zhiqli.github.io/2018/07/grpc%E8%BD%AC%E6%8D%A2%E4%B8%BAhttp%E5%AF%B9%E5%A4%96%E6%9C%8D%E5%8A%A1/</link>
+      <pubDate>Mon, 30 Jul 2018 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2018/07/grpc%E8%BD%AC%E6%8D%A2%E4%B8%BAhttp%E5%AF%B9%E5%A4%96%E6%9C%8D%E5%8A%A1/</guid>
+      <description>grpc转换为http对外服务 grpc支持将协议转换成http对外服务，数据通过post json提交 相对于普通的grpc服务，只需要在定义pb时稍作修改即可&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 syntax = &amp;#34;proto3&amp;#34;; package helloworld; import &amp;#34;google/api/annotations.proto&amp;#34;; service srv { rpc Say(HelloReq) returns (HelloResp){ option (google.api.http) = { post: &amp;#34;/say/hello&amp;#34; body: &amp;#34;*&amp;#34; }; } } 调用:curl -X POST http://127.0.0.1:8080/say/hello -d {} 相对于普通pb多了 import &amp;quot;google/api/annotations.proto&amp;quot;;&#xA;1 2 3 4 option (google.api.http) = { post: &amp;#34;/say/hello&amp;#34; body: &amp;#34;*&amp;#34; }; </description>
+    </item>
+  </channel>
+</rss>

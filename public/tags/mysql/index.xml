@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mysql on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/tags/mysql/</link>
+    <description>Recent content in Mysql on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Fri, 15 Nov 2019 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/tags/mysql/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>一次mysql锁问题排查</title>
+      <link>https://zhiqli.github.io/2019/11/%E4%B8%80%E6%AC%A1mysql%E9%94%81%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/</link>
+      <pubDate>Fri, 15 Nov 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/11/%E4%B8%80%E6%AC%A1mysql%E9%94%81%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/</guid>
+      <description>查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误&#xA;背景 线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。&#xA;服务对表的操作流程如下 收到客户端请求，新建任务，insert数据到db。 内部多个服务处理完update state task where id = &amp;lsquo;xxx&amp;rsquo;，每个任务大概会有2-3次update。 表结构如下 1 2 3 4 5 6 7 8 CREATE TABLE IF NOT EXISTS `task` ( `auto_id` int(11) NOT NULL auto_increment, `id` varchar(60) NOT NULL, `state` int(11) NOT NULL, `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`auto_id`), ) ENGINE=InnoDB DEFAULT CHARSET=utf8; 数据迁移脚本如下 1 2 3 4 movesql=&amp;#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &amp;lt; &amp;#39;${monthago}&amp;#39;; &amp;#34; echo ${movesql} | $mysql deletesql=&amp;#34;delete from task where update_time &amp;lt; &amp;#39;${monthago}&amp;#39;;&amp;#34; echo ${deletesql} | $mysql 迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。</description>
+    </item>
+  </channel>
+</rss>

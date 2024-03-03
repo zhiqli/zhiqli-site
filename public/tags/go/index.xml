@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Go on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/tags/go/</link>
+    <description>Recent content in Go on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Thu, 29 Feb 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/tags/go/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>go 1.14.1 timer bug</title>
+      <link>https://zhiqli.github.io/2024/02/go-1.14.1-timer-bug/</link>
+      <pubDate>Thu, 29 Feb 2024 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2024/02/go-1.14.1-timer-bug/</guid>
+      <description>go 1.14.1 的timer 包存在bug，会导致服务hang死，问题发生在两年前，而go目前的版本也已经迭代到1.22，还是整理出来以记录当时定位问题的思路。&#xA;问题描述 有个服务在压测时发现多容器压测，每次必有一台容器出现CPU跑满的现象。&#xA;定位 尝试进入该容器使用 pprof 抓火焰图进行分析，但进入容器后却发现 pprof 监听的端口根本连不上，只能另想办法。使用 delve 来试试。 首先执行 top 找到 cpu 跑满的线程。&#xA;容器设置是4 core，这里看到也是前面4个线程占满了所有CPU。 接着执行 dlv attach &amp;lt;PID&amp;gt; 进入线程，看到以下信息&#xA;这里看到看起来与redis相关，刚好这次修改有一处redis连接处的变更，猜测与此有关于是回退这个变更再次压测，很遗憾，很快问题又出现了。 继续进入上图中的goroutine，看到下图&#xA;这里漏了一个关键的堆栈，因为总结时现场已经破坏，正是通过这个堆栈在github找到这个issue，堆栈内容与issue中描述相同，可以参考issue。&#xA;为了验证是否因为这个timer 的bug导致，将go升级为14.2，再次压测，问题没有重现，基本上可以确定解决。&#xA;原因分析 简单来说就是&#xA;go 1.14对timer重新设计，将timer挂在P上的一个小根堆上，每一次调度会去查看是否有到期的timer，即调用runtimer这个方法，如果有则执行。 另外timer中还有一个状态机，如果要修改timer的状态会先将状态置为modifying状态。在runtimer这个函数中如果状态为modifying会调用runtime.osyield() 自旋等待，直到timer的modifying状态解除。 而modifying状态正是这个线程自己设置的，所以永远都等不到了，进入死锁。 如何解决 对于我们服务来说，直接升级go版本即可，现在我们团队在选择go版本的时候有一个原则，Golang社区发布的倒数第二个大版本的最后一个小版本。 比如当前已发布go 1.22.x，那么应该选择1.21.7。&#xA;go 社区解决方案在这个issue中说得很清楚。从修复diff来看，在修改timer状态的时候加了一个锁。&#xA;附 golang 基于 netpoll 优化 timer 定时器实现原理 </description>
+    </item>
+    <item>
+      <title>100 Go Mistakes and How to Avoid Them</title>
+      <link>https://zhiqli.github.io/2024/02/100-go-mistakes-and-how-to-avoid-them/</link>
+      <pubDate>Sat, 24 Feb 2024 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2024/02/100-go-mistakes-and-how-to-avoid-them/</guid>
+      <description>罗列了100个go开发中容易犯的错误、如何避免这些错误并深入分析其背后的原理，包括一些常见的错误，比如rang loop、defer使用问题，也有一些优化建议，比如减少内存申请次数、理解内存对齐、理解CPU缓存 cache line原理等等，也有一些是凑数的诸如项目结构代码结构之类的。新手老司机都适宜，总体来说非常具有实践意义的一本小书。&#xA;第二章 Code and project organizatiion 1. Unintended variable shadowing 当函数返回多个变量时，语句块内通过:=赋值的变量容易把外部的全局同名变量shadow掉。比如 1 2 3 4 5 6 7 var client *http.Client if xxx {[]() client, err := foo() } else { client, err := bar() } // use client shadow的问题可以通过golangci-lint来发现规避。&#xA;2. Unnecessary nested code 没必要的嵌套主要是指我们在if else 分支的时候有时候可以提前返回，而不是一直深度嵌套下去，这样不好维护。如 1 2 3 4 5 6 7 8 9 10 11 12 13 func foo() { if xxx { if yyy { fxxx() } else { bbb return } } else { aaa return } } 上面的代码修改成下面的样子只有一层嵌套对于后续的维护会清晰很多，有时候也可以用continue来代替return。总之就是提前返回</description>
+    </item>
+    <item>
+      <title>cgo笔记</title>
+      <link>https://zhiqli.github.io/2019/03/cgo%E7%AC%94%E8%AE%B0/</link>
+      <pubDate>Sun, 24 Mar 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/03/cgo%E7%AC%94%E8%AE%B0/</guid>
+      <description>看了下上一次提交还是去年刚搭建这个博客的时候，之前在博客园维护过一个博客，三天打鱼半年晒网写过几篇，后面打算转战到此争取能多写几篇，没想到还是没做到。今天难得有时间，先总结一篇cgo相关的吧。&#xA;目前公司的技术栈已经全面转go，而一些业务还需要依赖到一些老的C\C++ so，或者一些项目必须调用C/C++的so，比如ffmpeg。所以工作中经常会使用到cgo来调用这些C\C++ so，把cgo调用方法和遇到的问题简单记录下来。&#xA;cgo简单调用 在go中如果要调用C接口，要采用cgo来实现。比如下面的代码。&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 package main /* #include &amp;lt;stdio.h&amp;gt; int add(int a, int b) { return a + b } #cgo CFLAGS: -g */ import &amp;#34;C&amp;#34; func main() { sum := C.add(C.int(1), C.int(1)) } 如果要使用cgo，在go源文件中必须加入import &amp;ldquo;C&amp;quot;来标识，用于导入C实现的代码，而C源码则在import “C”上面以注释的方式加入。导入以后C源码可以在go代码中直接调用只要在函数、类型以C.开头即可。这里需要注意的一点是C代码和import “C”之间不能有空行&#xA;调用so 在实际应用中，一般会把C实现封装成so提供cgo调用，通过LDFLAGS指定lib即可。&#xA;1 2 3 4 5 6 7 8 9 package main /* #cgo CFLAGS: -I .</description>
+    </item>
+    <item>
+      <title>grpc转换为http对外服务</title>
+      <link>https://zhiqli.github.io/2018/07/grpc%E8%BD%AC%E6%8D%A2%E4%B8%BAhttp%E5%AF%B9%E5%A4%96%E6%9C%8D%E5%8A%A1/</link>
+      <pubDate>Mon, 30 Jul 2018 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2018/07/grpc%E8%BD%AC%E6%8D%A2%E4%B8%BAhttp%E5%AF%B9%E5%A4%96%E6%9C%8D%E5%8A%A1/</guid>
+      <description>grpc转换为http对外服务 grpc支持将协议转换成http对外服务，数据通过post json提交 相对于普通的grpc服务，只需要在定义pb时稍作修改即可&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 syntax = &amp;#34;proto3&amp;#34;; package helloworld; import &amp;#34;google/api/annotations.proto&amp;#34;; service srv { rpc Say(HelloReq) returns (HelloResp){ option (google.api.http) = { post: &amp;#34;/say/hello&amp;#34; body: &amp;#34;*&amp;#34; }; } } 调用:curl -X POST http://127.0.0.1:8080/say/hello -d {} 相对于普通pb多了 import &amp;quot;google/api/annotations.proto&amp;quot;;&#xA;1 2 3 4 option (google.api.http) = { post: &amp;#34;/say/hello&amp;#34; body: &amp;#34;*&amp;#34; }; </description>
+    </item>
+  </channel>
+</rss>

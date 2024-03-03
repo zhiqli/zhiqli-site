@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>istio 抓取应用程序的metric - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="istio 抓取应用程序的metric">
+<meta itemprop="description" content="笔记 istio中会对网格内数据的metric数据收集，也可以自定义一些新的metric。通过这些数据有助于了解流量如何在集群中流动的。但这些数据不包括应用程序业务层的数据。 我们的应用中都有调用prometheus的go client api统计一些业务层的数据，由应用服务暴露一个端口。这些应用层的数据抓取当然可以起一个独立的prometheus服务，在istio1.1中，也可以使用istio的prometheus来收集。 本文主要记录采用istio prometheus抓取数据的配置。
+配置 在文档中没有提及抓取收集应用程序metrics，这个描述是在FAQ中，Istio / Metrics and Logs FAQ。在install/kubernetes/istio-demo.yaml或install/kubernetes/istio-demo-auth.yaml的prometheus ConfigMap配置中有两个job
+- job_name: &#39;kubernetes-pods&#39; kubernetes_sd_configs: - role: pod ..... - job_name: &#39;kubernetes-pods-istio-secure&#39; scheme: https 在没有启用mutual TLS 的环境中，job kubernetes-pods会从 Pod 中收集应用的metric。如果 Istio 启用了mutual TLS，就由job kubernetes-pods-istio-secure完成应用metric的收集工作。 这两个job都需要在pod yaml中添加annotations
+prometheus.io/scrape: &#34;true&#34; prometheus.io/path: &#34;&lt;metrics path&gt;&#34; prometheus.io/port: &#34;&lt;metrics port&gt;&#34; 应用 OK，查完文档，开始实践。我的环境没有开启mutual TLS 。 服务起来以后查看prometheus target，奇怪的事情发生了
+我的服务在kubernetes-pods-istio-secure job下，而在这个job下指定了scheme为https。由于没有配置https，访问不通。 经过一番google还是没有找到问题，后面看到kubernetes-pods的配置里面有一个source_labels: [__meta_kubernetes_pod_annotation_sidecar_istio_io_status, __meta_kubernetes_pod_annotation_prometheus_io_scheme]于是在pod yaml annotations增加Prometheus.io/scheme: &quot;http&quot; 再次刷新网页，我的3个应用出现在kubernetes-pods，状态也为UP。
+进入graph搜索，应用程序的metric可以搜到
+至于在annotations没添加scheme http时为什么给分配到job kubernetes-pods-istio-secure 也不明白。但问题总算解决了。
+结论 这个简单的问题花了很多时间，回头来看走了这么多弯路还是对prometheus、istio不够了解，基础知�">
+
+<meta itemprop="wordCount" content="70">
+<meta itemprop="keywords" content="istio,笔记," /><meta property="og:title" content="istio 抓取应用程序的metric" />
+<meta property="og:description" content="笔记 istio中会对网格内数据的metric数据收集，也可以自定义一些新的metric。通过这些数据有助于了解流量如何在集群中流动的。但这些数据不包括应用程序业务层的数据。 我们的应用中都有调用prometheus的go client api统计一些业务层的数据，由应用服务暴露一个端口。这些应用层的数据抓取当然可以起一个独立的prometheus服务，在istio1.1中，也可以使用istio的prometheus来收集。 本文主要记录采用istio prometheus抓取数据的配置。
+配置 在文档中没有提及抓取收集应用程序metrics，这个描述是在FAQ中，Istio / Metrics and Logs FAQ。在install/kubernetes/istio-demo.yaml或install/kubernetes/istio-demo-auth.yaml的prometheus ConfigMap配置中有两个job
+- job_name: &#39;kubernetes-pods&#39; kubernetes_sd_configs: - role: pod ..... - job_name: &#39;kubernetes-pods-istio-secure&#39; scheme: https 在没有启用mutual TLS 的环境中，job kubernetes-pods会从 Pod 中收集应用的metric。如果 Istio 启用了mutual TLS，就由job kubernetes-pods-istio-secure完成应用metric的收集工作。 这两个job都需要在pod yaml中添加annotations
+prometheus.io/scrape: &#34;true&#34; prometheus.io/path: &#34;&lt;metrics path&gt;&#34; prometheus.io/port: &#34;&lt;metrics port&gt;&#34; 应用 OK，查完文档，开始实践。我的环境没有开启mutual TLS 。 服务起来以后查看prometheus target，奇怪的事情发生了
+我的服务在kubernetes-pods-istio-secure job下，而在这个job下指定了scheme为https。由于没有配置https，访问不通。 经过一番google还是没有找到问题，后面看到kubernetes-pods的配置里面有一个source_labels: [__meta_kubernetes_pod_annotation_sidecar_istio_io_status, __meta_kubernetes_pod_annotation_prometheus_io_scheme]于是在pod yaml annotations增加Prometheus.io/scheme: &quot;http&quot; 再次刷新网页，我的3个应用出现在kubernetes-pods，状态也为UP。
+进入graph搜索，应用程序的metric可以搜到
+至于在annotations没添加scheme http时为什么给分配到job kubernetes-pods-istio-secure 也不明白。但问题总算解决了。
+结论 这个简单的问题花了很多时间，回头来看走了这么多弯路还是对prometheus、istio不够了解，基础知�" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/1/01/istio-%E6%8A%93%E5%8F%96%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E7%9A%84metric/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="istio 抓取应用程序的metric"/>
+<meta name="twitter:description" content="笔记 istio中会对网格内数据的metric数据收集，也可以自定义一些新的metric。通过这些数据有助于了解流量如何在集群中流动的。但这些数据不包括应用程序业务层的数据。 我们的应用中都有调用prometheus的go client api统计一些业务层的数据，由应用服务暴露一个端口。这些应用层的数据抓取当然可以起一个独立的prometheus服务，在istio1.1中，也可以使用istio的prometheus来收集。 本文主要记录采用istio prometheus抓取数据的配置。
+配置 在文档中没有提及抓取收集应用程序metrics，这个描述是在FAQ中，Istio / Metrics and Logs FAQ。在install/kubernetes/istio-demo.yaml或install/kubernetes/istio-demo-auth.yaml的prometheus ConfigMap配置中有两个job
+- job_name: &#39;kubernetes-pods&#39; kubernetes_sd_configs: - role: pod ..... - job_name: &#39;kubernetes-pods-istio-secure&#39; scheme: https 在没有启用mutual TLS 的环境中，job kubernetes-pods会从 Pod 中收集应用的metric。如果 Istio 启用了mutual TLS，就由job kubernetes-pods-istio-secure完成应用metric的收集工作。 这两个job都需要在pod yaml中添加annotations
+prometheus.io/scrape: &#34;true&#34; prometheus.io/path: &#34;&lt;metrics path&gt;&#34; prometheus.io/port: &#34;&lt;metrics port&gt;&#34; 应用 OK，查完文档，开始实践。我的环境没有开启mutual TLS 。 服务起来以后查看prometheus target，奇怪的事情发生了
+我的服务在kubernetes-pods-istio-secure job下，而在这个job下指定了scheme为https。由于没有配置https，访问不通。 经过一番google还是没有找到问题，后面看到kubernetes-pods的配置里面有一个source_labels: [__meta_kubernetes_pod_annotation_sidecar_istio_io_status, __meta_kubernetes_pod_annotation_prometheus_io_scheme]于是在pod yaml annotations增加Prometheus.io/scheme: &quot;http&quot; 再次刷新网页，我的3个应用出现在kubernetes-pods，状态也为UP。
+进入graph搜索，应用程序的metric可以搜到
+至于在annotations没添加scheme http时为什么给分配到job kubernetes-pods-istio-secure 也不明白。但问题总算解决了。
+结论 这个简单的问题花了很多时间，回头来看走了这么多弯路还是对prometheus、istio不够了解，基础知�"/>
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
+
+	<script src="http://localhost:1313/js/feather.min.js"></script>
+	
+		<script src="http://localhost:1313/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="matter">
+        <h1 class="title">istio 抓取应用程序的metric</h1>
+    </div>
+</div>
+
+
+    
+    
+    <ul>
+<li>笔记</li>
+</ul>
+<hr>
+<p>istio中会对网格内数据的metric数据收集，也可以自定义一些新的metric。通过这些数据有助于了解流量如何在集群中流动的。但这些数据不包括应用程序业务层的数据。
+我们的应用中都有调用prometheus的go client api统计一些业务层的数据，由应用服务暴露一个端口。这些应用层的数据抓取当然可以起一个独立的prometheus服务，在istio1.1中，也可以使用istio的prometheus来收集。
+本文主要记录采用istio prometheus抓取数据的配置。</p>
+<h3 id="配置">配置</h3>
+<p>在文档中没有提及抓取收集应用程序metrics，这个描述是在FAQ中，<a href="https://istio.io/help/faq/metrics-and-logs/#prometheus-application-metrics">Istio / Metrics and Logs FAQ</a>。在<code>install/kubernetes/istio-demo.yaml</code>或<code>install/kubernetes/istio-demo-auth.yaml</code>的prometheus ConfigMap配置中有两个job</p>
+<pre tabindex="0"><code>
+    - job_name: &#39;kubernetes-pods&#39;
+      kubernetes_sd_configs:
+      - role: pod
+      .....
+    - job_name: &#39;kubernetes-pods-istio-secure&#39;
+      scheme: https
+</code></pre><p>在没有启用mutual TLS 的环境中，job <code>kubernetes-pods</code>会从 Pod 中收集应用的metric。如果 Istio 启用了mutual TLS，就由job <code>kubernetes-pods-istio-secure</code>完成应用metric的收集工作。
+这两个job都需要在pod yaml中添加annotations</p>
+<pre tabindex="0"><code>prometheus.io/scrape: &#34;true&#34;
+prometheus.io/path: &#34;&lt;metrics path&gt;&#34;
+prometheus.io/port: &#34;&lt;metrics port&gt;&#34;
+</code></pre><h2 id="应用">应用</h2>
+<p>OK，查完文档，开始实践。我的环境没有开启mutual TLS 。
+服务起来以后查看prometheus target，奇怪的事情发生了</p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/64666329-7d0aa080-d488-11e9-95df-8d4f29c751d6.png" alt="image">
+
+</p>
+<p>我的服务在<code>kubernetes-pods-istio-secure</code> job下，而在这个job下指定了scheme为https。由于没有配置https，访问不通。
+经过一番google还是没有找到问题，后面看到<code>kubernetes-pods</code>的配置里面有一个<code>source_labels: [__meta_kubernetes_pod_annotation_sidecar_istio_io_status, __meta_kubernetes_pod_annotation_prometheus_io_scheme]</code>于是在pod yaml annotations增加<code>Prometheus.io/scheme: &quot;http&quot;</code>
+再次刷新网页，我的3个应用出现在<code>kubernetes-pods</code>，状态也为UP。</p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/64666368-a88d8b00-d488-11e9-85b7-66312dbafe78.png" alt="image">
+
+</p>
+<p>进入graph搜索，应用程序的metric可以搜到</p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/64666387-bb07c480-d488-11e9-8409-5e597a505645.png" alt="image">
+
+</p>
+<p>至于在annotations没添加scheme http时为什么给分配到job <code>kubernetes-pods-istio-secure</code> 也不明白。但问题总算解决了。</p>
+<h2 id="结论">结论</h2>
+<p>这个简单的问题花了很多时间，回头来看走了这么多弯路还是对prometheus、istio不够了解，基础知�</p>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/istio">istio</a>
+        </li>
+        
+        
+        <li class="tag-li"><a href="/tags/%E7%AC%94%E8%AE%B0">笔记</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2019-05-07-istio-prometheus-scrape-app-metric.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+    
+    Next time, we'll talk about <i>"10 Reasons why gcc SHOULD be re-written in JavaScript - You won&#39;t believe #8!"</i>
+    
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>1  © Copyright notice </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

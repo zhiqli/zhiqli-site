@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>一次mysql锁问题排查 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="一次mysql锁问题排查">
+<meta itemprop="description" content="笔记 查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误
+背景 线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。
+服务对表的操作流程如下 收到客户端请求，新建任务，insert数据到db。 内部多个服务处理完update state task where id = &lsquo;xxx&rsquo;，每个任务大概会有2-3次update。 表结构如下 CREATE TABLE IF NOT EXISTS `task` ( `auto_id` int(11) NOT NULL auto_increment, `id` varchar(60) NOT NULL, `state` int(11) NOT NULL, `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`auto_id`), ) ENGINE=InnoDB DEFAULT CHARSET=utf8; 数据迁移脚本如下 movesql=&#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &lt; &#39;${monthago}&#39;; &#34; echo ${movesql} | $mysql deletesql=&#34;delete from task where update_time &lt; &#39;${monthago}&#39;;&#34; echo ${deletesql} | $mysql 迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。">
+
+<meta itemprop="wordCount" content="175">
+<meta itemprop="keywords" content="mysql,笔记," /><meta property="og:title" content="一次mysql锁问题排查" />
+<meta property="og:description" content="笔记 查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误
+背景 线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。
+服务对表的操作流程如下 收到客户端请求，新建任务，insert数据到db。 内部多个服务处理完update state task where id = &lsquo;xxx&rsquo;，每个任务大概会有2-3次update。 表结构如下 CREATE TABLE IF NOT EXISTS `task` ( `auto_id` int(11) NOT NULL auto_increment, `id` varchar(60) NOT NULL, `state` int(11) NOT NULL, `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`auto_id`), ) ENGINE=InnoDB DEFAULT CHARSET=utf8; 数据迁移脚本如下 movesql=&#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &lt; &#39;${monthago}&#39;; &#34; echo ${movesql} | $mysql deletesql=&#34;delete from task where update_time &lt; &#39;${monthago}&#39;;&#34; echo ${deletesql} | $mysql 迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/1/01/%E4%B8%80%E6%AC%A1mysql%E9%94%81%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="一次mysql锁问题排查"/>
+<meta name="twitter:description" content="笔记 查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误
+背景 线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。
+服务对表的操作流程如下 收到客户端请求，新建任务，insert数据到db。 内部多个服务处理完update state task where id = &lsquo;xxx&rsquo;，每个任务大概会有2-3次update。 表结构如下 CREATE TABLE IF NOT EXISTS `task` ( `auto_id` int(11) NOT NULL auto_increment, `id` varchar(60) NOT NULL, `state` int(11) NOT NULL, `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`auto_id`), ) ENGINE=InnoDB DEFAULT CHARSET=utf8; 数据迁移脚本如下 movesql=&#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &lt; &#39;${monthago}&#39;; &#34; echo ${movesql} | $mysql deletesql=&#34;delete from task where update_time &lt; &#39;${monthago}&#39;;&#34; echo ${deletesql} | $mysql 迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。"/>
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
+
+	<script src="http://localhost:1313/js/feather.min.js"></script>
+	
+		<script src="http://localhost:1313/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="matter">
+        <h1 class="title">一次mysql锁问题排查</h1>
+    </div>
+</div>
+
+
+    
+    
+    <ul>
+<li>笔记</li>
+</ul>
+<hr>
+<p>查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误</p>
+<h2 id="背景">背景</h2>
+<p>线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。</p>
+<ul>
+<li>服务对表的操作流程如下</li>
+</ul>
+<ol>
+<li>收到客户端请求，新建任务，insert数据到db。</li>
+<li>内部多个服务处理完update state task where id = &lsquo;xxx&rsquo;，每个任务大概会有2-3次update。</li>
+</ol>
+<ul>
+<li>表结构如下</li>
+</ul>
+<pre tabindex="0"><code>CREATE TABLE IF NOT EXISTS `task` (
+  `auto_id` int(11) NOT NULL auto_increment,
+  `id` varchar(60) NOT NULL,
+  `state` int(11) NOT NULL,
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`auto_id`),
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</code></pre><ul>
+<li>数据迁移脚本如下</li>
+</ul>
+<pre tabindex="0"><code>movesql=&#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &lt; &#39;${monthago}&#39;; &#34;
+echo ${movesql} | $mysql
+deletesql=&#34;delete from task where update_time &lt; &#39;${monthago}&#39;;&#34;
+echo ${deletesql} | $mysql
+</code></pre><p>迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。</p>
+<h2 id="问题">问题</h2>
+<p>具体问题是客户端反馈调用失败率很高，于是在服务端查看问题</p>
+<ol>
+<li>查服务端日志发现很多insert，update失败；</li>
+<li>查task表中数据一个月前的数据还在，即数据迁移失败。</li>
+<li>手动运行数据迁移脚本，运行一段时间后输出日志<code>Lock wait timeout exceeded; try restarting transaction</code>。</li>
+<li>通过<code>show engine innodb status;</code>查看发现以下日志</li>
+</ol>
+<pre tabindex="0"><code>LOCK WAIT 3 lock struct(s), heap size 1136, 2 row lock(s)
+MySQL thread id 12377101, OS thread handle 139630459942656, query id 253584314 127.0.0.1 root updating
+UPDATE task SET state=1 WHERE id=&#39;2234234&#39; and state=0
+------- TRX HAS BEEN WAITING 6 SEC FOR THIS LOCK TO BE GRANTED:
+RECORD LOCKS space id 2 page no 206509 n bits 600 index idx_gcid of table ``.`task` trx id 536762947 lock_mode X waiting
+</code></pre><p>查看了一下上面那个id，发现这个id居然有十几万记录。于是问题一下子就水落石出。</p>
+<h2 id="真相">真相</h2>
+<p>从上面的建表语句可以看出auto_id是主键，业务id没有唯一索引。之前跑了这么久没有也确实没问题，因为之前客户端不会对同一个id重复请求。而上个月业务逻辑修改，同一个id会有重复请求。
+innodb中默认隔离级别是可重复读，在RR中，对非索引字段的delete和update都会加nextkey lock，由于delete和update数据量都不小，都是长事务，所以会进入锁等待，从而导致超时。</p>
+<p>解决也很简单，对id建个唯一索引，update_time建一个</p>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/mysql">mysql</a>
+        </li>
+        
+        
+        <li class="tag-li"><a href="/tags/%E7%AC%94%E8%AE%B0">笔记</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2019-11-15-mysql-deadlock.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+    
+    Next time, we'll talk about <i>"10 Reasons why gcc SHOULD be re-written in JavaScript - You won&#39;t believe #8!"</i>
+    
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>1  © Copyright notice </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

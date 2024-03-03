@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>一道C&#43;&#43;绑定面试题展开 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="一道C&#43;&#43;绑定面试题展开">
+<meta itemprop="description" content="面试 早上排队进地铁时候看到一个面试题，据说校招社招从来没人做对过。被肉贴肉的人流中看了一眼，不是选B吗。后面细思不对，既然没人做对，必有蹊跷，肯定是一个下意识中一定错的答案。 来到公司，运行一遍。果然选C。
+#include &lt;stdio.h&gt; class Test { public: Test(){} ~Test(){} void f(){ printf(&#34;hello world\n&#34;); } }; int main() { Test *p = NULL; printf(&#34;%d\n&#34;, p); p-&gt;f(); return 0; } 以上代码运行结果： A 编译不过 B coredump C hello world D 以上都不对 仔细分析一下这题目。 在C&#43;&#43;中，对于非虚成员函数，是静态绑定的，编译时期绑定函数地址。并且在函数中，没有对this解引用，所以this即使是NULL也不会有问题。 那么还有一个问题来了，既然对象指针都为NULL，那么函数存在哪里呢？ C&#43;&#43;里面成员函数，不依赖对象，存储在代码区。在编译期就确定了，调用者空不空都无所谓。
+这里涉及到C&#43;&#43;中的静态绑定和动态绑定。相关分析有很多文章分析得非常好比如[这篇](http://www.cnblogs.com/lizhenghn/p/">
+
+<meta itemprop="wordCount" content="45">
+<meta itemprop="keywords" content="cpp,面试," /><meta property="og:title" content="一道C&#43;&#43;绑定面试题展开" />
+<meta property="og:description" content="面试 早上排队进地铁时候看到一个面试题，据说校招社招从来没人做对过。被肉贴肉的人流中看了一眼，不是选B吗。后面细思不对，既然没人做对，必有蹊跷，肯定是一个下意识中一定错的答案。 来到公司，运行一遍。果然选C。
+#include &lt;stdio.h&gt; class Test { public: Test(){} ~Test(){} void f(){ printf(&#34;hello world\n&#34;); } }; int main() { Test *p = NULL; printf(&#34;%d\n&#34;, p); p-&gt;f(); return 0; } 以上代码运行结果： A 编译不过 B coredump C hello world D 以上都不对 仔细分析一下这题目。 在C&#43;&#43;中，对于非虚成员函数，是静态绑定的，编译时期绑定函数地址。并且在函数中，没有对this解引用，所以this即使是NULL也不会有问题。 那么还有一个问题来了，既然对象指针都为NULL，那么函数存在哪里呢？ C&#43;&#43;里面成员函数，不依赖对象，存储在代码区。在编译期就确定了，调用者空不空都无所谓。
+这里涉及到C&#43;&#43;中的静态绑定和动态绑定。相关分析有很多文章分析得非常好比如[这篇](http://www.cnblogs.com/lizhenghn/p/" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/1/01/%E4%B8%80%E9%81%93c-%E7%BB%91%E5%AE%9A%E9%9D%A2%E8%AF%95%E9%A2%98%E5%B1%95%E5%BC%80/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="一道C&#43;&#43;绑定面试题展开"/>
+<meta name="twitter:description" content="面试 早上排队进地铁时候看到一个面试题，据说校招社招从来没人做对过。被肉贴肉的人流中看了一眼，不是选B吗。后面细思不对，既然没人做对，必有蹊跷，肯定是一个下意识中一定错的答案。 来到公司，运行一遍。果然选C。
+#include &lt;stdio.h&gt; class Test { public: Test(){} ~Test(){} void f(){ printf(&#34;hello world\n&#34;); } }; int main() { Test *p = NULL; printf(&#34;%d\n&#34;, p); p-&gt;f(); return 0; } 以上代码运行结果： A 编译不过 B coredump C hello world D 以上都不对 仔细分析一下这题目。 在C&#43;&#43;中，对于非虚成员函数，是静态绑定的，编译时期绑定函数地址。并且在函数中，没有对this解引用，所以this即使是NULL也不会有问题。 那么还有一个问题来了，既然对象指针都为NULL，那么函数存在哪里呢？ C&#43;&#43;里面成员函数，不依赖对象，存储在代码区。在编译期就确定了，调用者空不空都无所谓。
+这里涉及到C&#43;&#43;中的静态绑定和动态绑定。相关分析有很多文章分析得非常好比如[这篇](http://www.cnblogs.com/lizhenghn/p/"/>
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
+
+	<script src="http://localhost:1313/js/feather.min.js"></script>
+	
+		<script src="http://localhost:1313/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="matter">
+        <h1 class="title">一道C&#43;&#43;绑定面试题展开</h1>
+    </div>
+</div>
+
+
+    
+    
+    <ul>
+<li>面试</li>
+</ul>
+<hr>
+<blockquote>
+<p>早上排队进地铁时候看到一个面试题，据说校招社招从来没人做对过。被肉贴肉的人流中看了一眼，不是选B吗。后面细思不对，既然没人做对，必有蹊跷，肯定是一个下意识中一定错的答案。
+来到公司，运行一遍。果然选C。</p>
+</blockquote>
+<pre tabindex="0"><code>#include &lt;stdio.h&gt;
+
+class Test {
+public:
+    Test(){}
+    ~Test(){}
+
+    void f(){
+        printf(&#34;hello world\n&#34;);
+    }
+};
+
+int main() {
+    Test *p = NULL;
+    printf(&#34;%d\n&#34;, p);
+    p-&gt;f();
+    return 0;
+}
+
+以上代码运行结果：
+A 编译不过
+B coredump
+C hello world
+D 以上都不对
+</code></pre><p>仔细分析一下这题目。
+在C++中，对于非虚成员函数，是静态绑定的，编译时期绑定函数地址。并且在函数中，没有对this解引用，所以this即使是NULL也不会有问题。
+那么还有一个问题来了，既然对象指针都为NULL，那么函数存在哪里呢？
+C++里面成员函数，不依赖对象，存储在代码区。在编译期就确定了，调用者空不空都无所谓。</p>
+<p>这里涉及到C++中的静态绑定和动态绑定。相关分析有很多文章分析得非常好比如[这篇](<a href="http://www.cnblogs.com/lizhenghn/p/">http://www.cnblogs.com/lizhenghn/p/</a></p>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/cpp">cpp</a>
+        </li>
+        
+        
+        <li class="tag-li"><a href="/tags/%E9%9D%A2%E8%AF%95">面试</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2018-07-30-cpp-binding.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+    
+    Next time, we'll talk about <i>"What Tiger King can teach us about x86 Assembly"</i>
+    
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>1  © Copyright notice </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

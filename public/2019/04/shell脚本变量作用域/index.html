@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>shell脚本变量作用域 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="shell脚本变量作用域">
+<meta itemprop="description" content="今天写一个shell脚本遇到一个问题，脚本为实现从文件中按行读取，拼接成一个字符串。大概代码如下
+1 2 3 4 5 6 7 content=&#34;&#34; cat ./file | while read line do content=$content&#34;-&#34;$line echo $content done echo $content 执行发现打印出来循环中打印了正确结果，而最后一个echo结果却是空。按道理content是全局变量，不会存在作用域的问题。在网上搜了一下发现其中奇妙之处。 关键在这句cat ./file | while read line这里用了管道符，管道符非linux内建命令，shell执行非内建命令时会重建子进程来运行，而shell中即使全局变量的作用域也是在本进程中。所以运行完while read line content的修改对于父进程无效。 解决这个问题可以采用另外一种循环读取文本内容的方法，即
+1 2 3 4 5 6 7 content=&#34;&#34; while read line do content=$content&#34;-&#34;$line echo $content done &lt; ./file echo $content 使用内置命令重定向符，完美解决问题。 以后对于其他非内建命令的使用也要注意，别踩坑。"><meta itemprop="datePublished" content="2019-04-26T00:00:00+00:00" />
+<meta itemprop="dateModified" content="2019-04-26T00:00:00+00:00" />
+<meta itemprop="wordCount" content="55">
+<meta itemprop="keywords" content="shell,笔记," /><meta property="og:title" content="shell脚本变量作用域" />
+<meta property="og:description" content="今天写一个shell脚本遇到一个问题，脚本为实现从文件中按行读取，拼接成一个字符串。大概代码如下
+1 2 3 4 5 6 7 content=&#34;&#34; cat ./file | while read line do content=$content&#34;-&#34;$line echo $content done echo $content 执行发现打印出来循环中打印了正确结果，而最后一个echo结果却是空。按道理content是全局变量，不会存在作用域的问题。在网上搜了一下发现其中奇妙之处。 关键在这句cat ./file | while read line这里用了管道符，管道符非linux内建命令，shell执行非内建命令时会重建子进程来运行，而shell中即使全局变量的作用域也是在本进程中。所以运行完while read line content的修改对于父进程无效。 解决这个问题可以采用另外一种循环读取文本内容的方法，即
+1 2 3 4 5 6 7 content=&#34;&#34; while read line do content=$content&#34;-&#34;$line echo $content done &lt; ./file echo $content 使用内置命令重定向符，完美解决问题。 以后对于其他非内建命令的使用也要注意，别踩坑。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://zhiqli.github.io/2019/04/shell%E8%84%9A%E6%9C%AC%E5%8F%98%E9%87%8F%E4%BD%9C%E7%94%A8%E5%9F%9F/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2019-04-26T00:00:00+00:00" />
+<meta property="article:modified_time" content="2019-04-26T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="shell脚本变量作用域"/>
+<meta name="twitter:description" content="今天写一个shell脚本遇到一个问题，脚本为实现从文件中按行读取，拼接成一个字符串。大概代码如下
+1 2 3 4 5 6 7 content=&#34;&#34; cat ./file | while read line do content=$content&#34;-&#34;$line echo $content done echo $content 执行发现打印出来循环中打印了正确结果，而最后一个echo结果却是空。按道理content是全局变量，不会存在作用域的问题。在网上搜了一下发现其中奇妙之处。 关键在这句cat ./file | while read line这里用了管道符，管道符非linux内建命令，shell执行非内建命令时会重建子进程来运行，而shell中即使全局变量的作用域也是在本进程中。所以运行完while read line content的修改对于父进程无效。 解决这个问题可以采用另外一种循环读取文本内容的方法，即
+1 2 3 4 5 6 7 content=&#34;&#34; while read line do content=$content&#34;-&#34;$line echo $content done &lt; ./file echo $content 使用内置命令重定向符，完美解决问题。 以后对于其他非内建命令的使用也要注意，别踩坑。"/>
+<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+
+	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	
+		<script src="https://zhiqli.github.io/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+		<div class="avatar">
+			<a href="https://zhiqli.github.io/">
+				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
+			</a>
+		</div>
+	
+	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/weekly">Weekly</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="meta">
+        <div class="date">
+            <span class="day">26</span>
+            <span class="rest">Apr 2019</span>
+        </div>
+    </div>
+    
+    <div class="matter">
+        <h1 class="title">shell脚本变量作用域</h1>
+    </div>
+</div>
+
+
+    
+    
+    <p>今天写一个shell脚本遇到一个问题，脚本为实现从文件中按行读取，拼接成一个字符串。大概代码如下</p>
+<div class="highlight"><div style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>content=&#34;&#34;
+</span></span><span style="display:flex;"><span>cat ./file | while read line
+</span></span><span style="display:flex;"><span>do
+</span></span><span style="display:flex;"><span>    content=$content&#34;-&#34;$line
+</span></span><span style="display:flex;"><span>    echo $content
+</span></span><span style="display:flex;"><span>done
+</span></span><span style="display:flex;"><span>echo $content
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>执行发现打印出来循环中打印了正确结果，而最后一个echo结果却是空。按道理content是全局变量，不会存在作用域的问题。在网上搜了一下发现其中奇妙之处。
+关键在这句<code>cat ./file | while read line</code>这里用了管道符，管道符非linux内建命令，shell执行非内建命令时会重建子进程来运行，而shell中即使全局变量的作用域也是在本进程中。所以运行完while read line content的修改对于父进程无效。
+解决这个问题可以采用另外一种循环读取文本内容的方法，即</p>
+<div class="highlight"><div style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="border-spacing:0;padding:0;margin:0;border:0;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>content=&#34;&#34;
+</span></span><span style="display:flex;"><span>while read line
+</span></span><span style="display:flex;"><span>do
+</span></span><span style="display:flex;"><span>    content=$content&#34;-&#34;$line
+</span></span><span style="display:flex;"><span>    echo $content
+</span></span><span style="display:flex;"><span>done &lt; ./file
+</span></span><span style="display:flex;"><span>echo $content
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>使用内置命令重定向符，完美解决问题。
+以后对于其他非内建命令的使用也要注意，别踩坑。</p>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/shell">shell</a>
+        </li>
+        
+        
+        <li class="tag-li"><a href="/tags/%E7%AC%94%E8%AE%B0">笔记</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2019-04-26-shell-variable.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>2019  © Copyright zhiqli </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

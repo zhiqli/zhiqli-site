@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Shell on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/tags/shell/</link>
+    <description>Recent content in Shell on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Fri, 26 Apr 2019 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/tags/shell/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>shell脚本变量作用域</title>
+      <link>https://zhiqli.github.io/2019/04/shell%E8%84%9A%E6%9C%AC%E5%8F%98%E9%87%8F%E4%BD%9C%E7%94%A8%E5%9F%9F/</link>
+      <pubDate>Fri, 26 Apr 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/04/shell%E8%84%9A%E6%9C%AC%E5%8F%98%E9%87%8F%E4%BD%9C%E7%94%A8%E5%9F%9F/</guid>
+      <description>今天写一个shell脚本遇到一个问题，脚本为实现从文件中按行读取，拼接成一个字符串。大概代码如下&#xA;1 2 3 4 5 6 7 content=&amp;#34;&amp;#34; cat ./file | while read line do content=$content&amp;#34;-&amp;#34;$line echo $content done echo $content 执行发现打印出来循环中打印了正确结果，而最后一个echo结果却是空。按道理content是全局变量，不会存在作用域的问题。在网上搜了一下发现其中奇妙之处。 关键在这句cat ./file | while read line这里用了管道符，管道符非linux内建命令，shell执行非内建命令时会重建子进程来运行，而shell中即使全局变量的作用域也是在本进程中。所以运行完while read line content的修改对于父进程无效。 解决这个问题可以采用另外一种循环读取文本内容的方法，即&#xA;1 2 3 4 5 6 7 content=&amp;#34;&amp;#34; while read line do content=$content&amp;#34;-&amp;#34;$line echo $content done &amp;lt; ./file echo $content 使用内置命令重定向符，完美解决问题。 以后对于其他非内建命令的使用也要注意，别踩坑。</description>
+    </item>
+  </channel>
+</rss>

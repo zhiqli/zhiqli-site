@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Envoy on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/tags/envoy/</link>
+    <description>Recent content in Envoy on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Tue, 10 Sep 2019 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/tags/envoy/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>envoy 代理http1.1</title>
+      <link>https://zhiqli.github.io/2019/09/envoy-%E4%BB%A3%E7%90%86http1.1/</link>
+      <pubDate>Tue, 10 Sep 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/09/envoy-%E4%BB%A3%E7%90%86http1.1/</guid>
+      <description>最近处理了一个envoy代理http1.1的问题，先简单介绍一下背景&#xA;背景 我们有一个长连接通道的项目，原来是通过http2.0连接。后来因为要做扫码登录的业务，所以使用 socket.io 支持了http1.1的连接，这是同事当时支持http1.1以后的博客。 代理当初用的envoy是1.6 v1 API ，现在由于其他问题想升级envoy到新版本，而新版本已经不支持v1 API，在升级的过程中遇到一些问题，也花了不少时间，搞定以后以此文作为笔记。&#xA;服务部署结构 front-envoy 这是一个网关。需要处理客户端http1.1的请求，在envoy API v1的时候非常简单，只需要在Route中加上use_websocket=true即可，参考文档。 但是在API v2，这个配置修改了，参考文档，在http_connection_mananger中加upgrade_configs配置。&#xA;envoy1 这实际上是k8s ingress，本来其实这个envoy就可以直接对外了，由于在阿里云slb的连接数有限制，所以才有在前面加了frontenvoy，有了frontenvoy连接会收敛，虽然front-envoy有一百多万连接，但到这里的连接数就很少了。&#xA;envoy2 看得出来这是sidecar envoy。只需要加上sio的upstream cluster即可。&#xA;问题 背景已经交代清楚了，这里再说下问题。&#xA;envoy升级以后，按照配置设置了upgrade_configs，请求发现front-envoy一直报错，503 UR，即upstream reset。 再跟踪envoy1的trace日志，发现有一行日志invalid frame: Invalid HTTP header field was received。&#xA;查了好久都没找到答案，上github提了一个issue，后来回复，由于envoy之间是http2连接，需要设置allow_connect=true才行，参考文档描述。 由于之前文档没有描述allow_connect，现在看到的是我提了issue才加上的描述。所以自己查了很久也没搞定。 设置上allow_connect以后，frontenvoy的日志从503 UR变成503了。 查看envoy1的日志，503 UR 以及invalid frame: Invalid HTTP header field was received。和刚才envoy1一样的。&#xA;而envoy2已经设置了allow_connect啊。后来查明原来我是在cluster里面的http2_protocol_options中设置了allow_connect=true，需要在http_connection_mananger中的http2_protocol_options中设置。&#xA;设置完成，envoy2又出现以下日志 1 2 [2019-09-10 07:14:56.094][000057][info][client] [source/common/http/codec_client.cc:118] [C3693] protocol error: The user callback function failed [2019-09-10T07:14:55.632Z] &amp;#34;GET /xlchannel.app2amlogic/sio/?EIO=3&amp;amp;transport=websocket HTTP/2&amp;#34; 503 UC 0 57 1 - &amp;#34;192.</description>
+    </item>
+    <item>
+      <title>envoy ratelimit技术验证</title>
+      <link>https://zhiqli.github.io/1/01/envoy-ratelimit%E6%8A%80%E6%9C%AF%E9%AA%8C%E8%AF%81/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/1/01/envoy-ratelimit%E6%8A%80%E6%9C%AF%E9%AA%8C%E8%AF%81/</guid>
+      <description>nginx大法好啊，nginx5分钟解决了一个envoy带来两周的伤害。&#xA;背景 具体情况是这样的，我这边有个服务大概结构是这样的。&#xA;高峰时大概承接了150w的grpc长连接，以及小于1000的websocket长连接。 上个月底由于已发版的客户端有个bug，会在后台不停发websocket建立连接请求，导致在一个周日下午5点半线上服务频繁重启，还好k8s会自动拉起服务。在超市买菜做晚饭的我赶紧冲回去，这时候能咋办呢。&#xA;扩容，把pod数增加一倍，然而并没有卵用，还是秒挂。由于前端envoy有5个实例，跟领导报备，先做服务降级，把其中4个envoy关闭websocket，先保证这100来万grpc连接能正常啊。 挺过一晚上，周一去到公司，讨论了一上午，最后的方案是隔离，把最前面的envoy分离，websocket的域名只走单独的两个envoy。慢慢的服务平稳了一周。服务变成这样子&#xA;第二周，同样的周日下午5:30，k8s ingress 又出现大面积重启，还是老方法，扩容，周一ingress也隔离。于是服务又变成这样子&#xA;同时调研envoy ratelimit，这又是一个悲伤的故事。由于我们用的还是envoy1.6或者1.7（别问为什么，问就是以前团队留下的坑），试了ratelimt发现，grpc和http都能有效限制remote_address的请求次数，就是websocket无效。又验证最新的envoy，发现没有问题。&#xA;这时候升级envoy就完事了吧，领导觉得动作太大，因为从网关到服务，实际上有三个envoy（包括sidecar里面的envoy），都得升级，否则websocket请求全部是503 UR，还不保证服务里面的socket io相关代码不需要修改。&#xA;最后祭出nginx大法。昨晚下班前5分钟在测试环境配置nginx，验证通过。 今天早上业务验证通过，上线，持续观察了几天，再也没有重启过，业务同学也再也没找过我了。&#xA;总结 总结一下这次解决问题的过程 envoy提供ratelimit的api，可以接入一个全局的速率限制服务，lyft已经提供了一个ratelimt服务可以参考甚至直接用。关于限速配置，readme中有详细说明。&#xA;关于envoy配置，官方文档中也有描述，不过各版本之间略有差异，需要针对各版本进行配置，最新版，网上有一个 envoy_ratelimit_example 可以参考，而低版本则可以通过官文文档进行配置。&#xA;虽然这次折腾没有用上envoy ratelimit，不过也算是一次技术调研，在后面的服务中可能可以用上，特以此文作为笔记。</description>
+    </item>
+  </channel>
+</rss>

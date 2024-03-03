@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Weeklies on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/weekly/</link>
+    <description>Recent content in Weeklies on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Sun, 03 Mar 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/weekly/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>2024-03-03 第九周：把手弄脏</title>
+      <link>https://zhiqli.github.io/weekly/2024-03-03-w9/</link>
+      <pubDate>Sun, 03 Mar 2024 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/weekly/2024-03-03-w9/</guid>
+      <description>生活流水账 自从不怎么管大娃学习，换成我带小娃，确实轻松了不少，和两个娃的亲子关系也变好了。 房市大幅度回暖，身边的人又开始讨论房子了？ 又降温了，好冷啊。但下周又回南天，还不如冷一点呢。 最近踢球状态很差，天气回暖，每次五六个队大家玩得认真压迫感很强，越是怕丢球就越丢球，唉，得好好调整。年纪大了护具也不能偷懒，也就一次没带护膝，膝盖已经开始疼了。 换新手机了，说来惭愧，第一次用当年最新款的iPhone，确实丝滑。 阅读 《股票大作手回忆录》 群里炒股的群友们多次聊过的书，因为不炒股，也不太懂书中写的那些做空手法。就觉得很厉害，毕竟赚了那么多钱，但也不知道厉害在哪。作为人物传记来看，确实很传奇。 《Web性能权威指南》 书有点老了，不过内容也不算太过时尤其是前面几章关于TCP/UDP/TLS的内容。作为一个不懂前端的后端，后面几张关于浏览器性能优化的内容收获比较多，当然前端技术变化更快，也许已经过时了，但对我来说也是扩展了视野。 一点想法 纸上得来终觉浅，绝知此事要躬行 ，这两天深得这句话的含义。又在折腾博客，打算采用hugo替换掉原来的jekyII，对比下来感觉hugo更简单，毕竟我完全不懂前端。而且对比评价，hugo因为是编译好的二进制，网页生成速度要快得多。&#xA;看了两篇文章和官方文档，觉得也太简单了。直接 hugo new site 生成，然后 hugo server 跑起来就可以了。&#xA;然而实际操作的时候，却花了我几个小时时间，首先是一个网络问题，虽然我已经开启了科学上网，但在执行的时候还是无法从twitter这个域名成功连接。看到错误的时候当然是考虑从网络方面去解决，来来回回折腾了好久也没解决。后来一想，这些报错页面都是theme中例子的文件，删掉不就好了。果然删掉无用的那些示例 markdown 就好了。&#xA;第二个问题则是部署以后 css 和 js 资源下载失败，导致页面无法正常显示。问题我倒一眼看出来了，虽然我不懂前端，但我也会 F12 进入debug模式查看。&#xA;后面发现是由于配置的baseURL，本应是https错写成http&#xA;所以说，想要学会一门技能，必须先把手弄脏，实践才能出真知。&#xA;好了，现在我的blog可以运行起来了，以后要多多写文章，先从每周周记开始。</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Devops on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/tags/devops/</link>
+    <description>Recent content in Devops on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Fri, 22 Nov 2019 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/tags/devops/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>基于argocd&#43;kustomize实现金丝雀上线</title>
+      <link>https://zhiqli.github.io/2019/11/%E5%9F%BA%E4%BA%8Eargocd-kustomize%E5%AE%9E%E7%8E%B0%E9%87%91%E4%B8%9D%E9%9B%80%E4%B8%8A%E7%BA%BF/</link>
+      <pubDate>Fri, 22 Nov 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/11/%E5%9F%BA%E4%BA%8Eargocd-kustomize%E5%AE%9E%E7%8E%B0%E9%87%91%E4%B8%9D%E9%9B%80%E4%B8%8A%E7%BA%BF/</guid>
+      <description>最近研究了一些CI/CD开源工具，目前项目CI依赖gitlab，但gitlab的CD功能太弱，所以调研其他一些工具看看能不能在生产应用。&#xA;spinnaker 可谓功能最全最为成熟支持多云，也相对复杂，是java栈，所以不予考虑。 gitlab 也有CD能力，但是太简单，本质上还是依赖.gitlab.yml，不方便控制。网上有很多如何配置gitlab cicd的文章。 tekton 云原生，版本还比较低，没部署使用。 argocd 和git仓库能紧密结合，即gitops。目前一定迭代到1.3版本，界面简洁清晰。 部署 argoCD部署非常简单，两行代码搞定。&#xA;1 2 kubectl create namespace argocd kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml 部署客户端，有些操作在UI无法实现，需要通过客户端命令行来操作，&#xA;为了方便外部访问，增加一个ingress来提供外部访问，参考文档&#xA;配置完成以后便可通过浏览器访问页面，argocd自身只提供一个admin用户，密码为第一次启动时argo-server的pod name。这里要注意，尽快通过argocd-cli account update-password 修改密码。否则pod重启以后就丢失了密码。&#xA;配置 部署成功登录以后，会发现页面非常简单，左侧有应用、设置和帮助三个选项。&#xA;首先进入设置页面，配置Repositories，也可以通过客户端命令行添加。具体步骤参考文档 添加项目，这一步比较简单，直接进去选择即可，至此可以回到应用页面去创建应用了。&#xA;添加clusters，在网页上目前只能查看cluster，不能添加，添加需要有两种方式，默认有当前argocd所在的k8s集群，即in-cluster。&#xA;一种是直接在后台试用argocd-cli cluster add 命令，这种方式需要依赖本地的kubeconfig文件，且有执行kube-system的权限，因为cluster add需要在kube-system中添加secret。 另外一种是通过添加一个argocd-cluster-cm config的方式，configmap中有一个baertoken不知为何物，所以没搞定。 回到应用页面，添加应用，这个非常简单，添加选择完成点击create即可 kustomize kustomize是sig-cli的一个子项目，它的设计目的是给kubernetes的用户提供一种可以重复使用同一套配置的声明式应用管理，从而在配置工作中用户只需要管理和维护kubernetes的API对象，而不需要学习或安装其它的配置管理工具，也不需要通过复制粘贴来得到新的环境的配置。&#xA;在目前常用的kubectl版本中，子命令已经包含kustomiz，更多参考官方文档。提供中文文档，且有详细列子，具体不写了。&#xA;灰度发布 argopro还有一个项目argo-rollouts是支持蓝绿、金丝雀发布的，是基于helm来实现的。不过目前该项目版本比较低，且需要安装kubectl子命令来后台控制，所以暂不考虑。 可以配合kustomize一起来实现一个简单的灰度发布系统，当然也可以配合helm一起，不过helm的学习成本要高一点，先通过kustomize，后续可以再考虑helm。&#xA;在代码仓库中提供如下结构的kustomize目录。&#xA;1 2 3 4 5 6 7 8 9 10 ├── kustomize │ ├── base │ │ ├── deployment.yaml │ │ ├── kustomization.</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Software Engineering on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/tags/software-engineering/</link>
+    <description>Recent content in Software Engineering on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Wed, 21 Sep 2022 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/tags/software-engineering/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Google Code review 指南</title>
+      <link>https://zhiqli.github.io/2022/09/google-code-review-%E6%8C%87%E5%8D%97/</link>
+      <pubDate>Wed, 21 Sep 2022 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2022/09/google-code-review-%E6%8C%87%E5%8D%97/</guid>
+      <description>Google 拥有许多覆盖所有语言和所有项目的通用工程实践。这些文档是Google长期以来形成的各种最佳做法的集体经验。&#xA;名词解释 Nit: nitpick 意思鸡蛋里挑骨头 CL: changelist LGTM: “Looks Good to Me”. 一般Code reviewer approve 一个CL的时候的回复。 1. Code Reviewer指南 1.1 Code Review的标准 Code review的目的是确保随着时间的推移，代码质量能够保持良好。为了实现这个目标，需要做一些权衡和取舍。&#xA;首先，开发人员必须能够在他们的任务上取得进展。如果您从未向代码库提交改进，那么代码库就永远不会改进。此外，如果reviewer使得任何更改都很难进行，那么开发人员就没有动力在将来进行改进。 另一方面，reviewer有责任确保每个 CL 的质量都没问题，以至于其代码库的总体代码质量不会随着时间的推移而下降。这可能很棘手，因为通常情况下，代码库会随着时间的推移而逐渐退化，特别是当团队受到严重的时间限制，并且他们觉得必须走捷径才能完成目标的时候。&#xA;此外，reviewer对他们正在review的代码拥有所有权和责任。他们希望确保代码库保持一致、可维护等等。&#xA;因此，我们得到以下规则作为我们在codereview中的标准:&#xA;一般来说，即使 CL 并不完美，reviewer也应该支持批准 CL，因为它处于肯定能够改善正在处理的系统的整体代码健康状况的状态。 这是所有代码审查指南中的高级原则。&#xA;当然，这也有局限性。 比如，如果 CL 添加了reviewer不希望在其系统中使用的特性，即使代码设计良好，也是可以拒绝批准的。 这里的一个关键点是，没有所谓的“完美”代码ーー只有更好的代码。reviewer应该要求作者在批准之前解决 CL 的每一个细小部分。相反，reviewer应该平衡取得进展的需要与他们所建议的变更的重要性之间的关系。与其追求完美，reviewer应该追求的是持续的改进。作为一个整体，改进系统的可维护性、可读性和可理解性的 CL 不应该因为它不“完美”而被推迟数天或数周 reviewer应该随时留下评论，表示有些东西可以做得更好，但如果不是很重要，可以加上“ Nit:”这样的前缀，让作者知道这只是一个他们可以选择忽略的润色点。&#xA;1.2 指导 code review对于教会开发人员一些关于语言、框架或通用软件设计原则的新知识具有重要作用。留下有助于开发人员学习新东西的评论总是可以的。随着时间的推移，共享知识是提高系统代码健康性的一部分。请记住，如果您的评论纯粹是教育性的，但对于满足本文档中描述的标准并不重要，请在评论前加上“ Nit:”，或者以其他方式表明作者并不必须在本 CL 中解决这个问题。&#xA;1.3 原则 技术事实和数据否定观点和个人偏好。 在风格问题上，风格指南是绝对的权威。任何不在样式指南中的纯样式点(空格等)都是个人偏好的问题。风格应该与现有的一致。如果没有以前的风格，接受作者的。 软件设计的各个方面几乎从来不是一个纯粹的风格问题或者只是个人偏好。它们是基于基本原则的，应该根据这些原则来衡量，而不仅仅是根据个人意见。有时候有一些有效的选择。如果作者能够(通过数据或基于可靠的工程原理)证明几种方法同样有效，那么评论者应该接受作者的偏好。否则，选择将由软件设计的标准原则决定。 如果没有其他规则适用，那么reviewer可能会要求作者与当前代码库中的代码保持一致，只要这不会恶化系统的整体代码质量。 1.4 解决冲突 如果在code review中出现任何冲突，第一步应该是开发人员和reviewer根据本文档的内容以及 CL 作者指南和评审人员指南中的其他文档，努力达成共识。 当达成共识变得特别困难时，reviewer和作者之间应该举行一次面对面的会议或视频会议来讨论，而不仅仅是试图通过注释来解决冲突。(但是，如果您这样做，请确保将讨论结果记录为 CL 上的评论，以便将来的读者使用。)&#xA;2. Code review应该看什么 2.</description>
+    </item>
+  </channel>
+</rss>

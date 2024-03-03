@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>openrestry body_bytes_sent = 0 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta itemprop="name" content="openrestry body_bytes_sent = 0">
+<meta itemprop="description" content="这是服务从IDC迁移上阿里云过程中遇到的一个问题，虽然定位完成以后发现其实很简单，但也算一个典型的案例。服务是一个openrestry。
+现象 服务在阿里云部署完以后内部测试通过，切域名。后来收到一个新接入客户端反馈，服务请求失败，也没说具体错误。在服务端这边查看lua中代码逻辑正常执行，但是在nginx access.log中发现很多请求状态返回200，但body_bytes_sent为0。
+很奇怪，因为这是一个跑了多年的老服务，且让用户请求回IDC机房的服务一切正常。因此感觉可以排除服务问题，猜测是阿里云的问题。
+抓包分析 首先从服务端抓包 223.xxx 是客户端 139.xxx 是服务端 可以看到三次握手以后，客户端发送一个post请求，客户端回复ACK。然后就连续收到RST包，由于前面分析了，服务本身没有问题，客户端请求到IDC也正常，所以这个RST是哪里发的呢？
+如果能结合客户端一起抓包也许就可以看出这个RST从哪里来的，但协调很麻烦。 还是自力更生先点开客户端POST的数据包看看
+等等，Host: www.iav98.xyz这是什么？正常请求的header都需要加密的，这肯定是客户端瞎填的。是否和这个奇怪的header有关呢？
+验证猜测 在本地验证，发包时header加上这个奇怪的host，并抓包
+可以看到三次握手后post请求，收到一个403，WTF？[黑人问号.jpg]，貌似和前面服务端看到的数据包不一样啊？连接也不是客户端断的啊。
+点开看个究竟
+里面有一个阿里云的域名http://batit.aliyun.com/alww.html
+至此，问题比较清楚了
+请求header的host是未备案的域名，连接被阿里云断了。 nginx在回包的时候，如果客户端把socket关闭了，就不需要返回包给客户端，body_bytes_sent自然就是0了。 其实这个问题也是客户端懒，如果客户端愿意去看看具体错误，一眼就能看出问题。">
+
+<meta itemprop="wordCount" content="25">
+<meta itemprop="keywords" content="network," /><meta property="og:title" content="openrestry body_bytes_sent = 0" />
+<meta property="og:description" content="这是服务从IDC迁移上阿里云过程中遇到的一个问题，虽然定位完成以后发现其实很简单，但也算一个典型的案例。服务是一个openrestry。
+现象 服务在阿里云部署完以后内部测试通过，切域名。后来收到一个新接入客户端反馈，服务请求失败，也没说具体错误。在服务端这边查看lua中代码逻辑正常执行，但是在nginx access.log中发现很多请求状态返回200，但body_bytes_sent为0。
+很奇怪，因为这是一个跑了多年的老服务，且让用户请求回IDC机房的服务一切正常。因此感觉可以排除服务问题，猜测是阿里云的问题。
+抓包分析 首先从服务端抓包 223.xxx 是客户端 139.xxx 是服务端 可以看到三次握手以后，客户端发送一个post请求，客户端回复ACK。然后就连续收到RST包，由于前面分析了，服务本身没有问题，客户端请求到IDC也正常，所以这个RST是哪里发的呢？
+如果能结合客户端一起抓包也许就可以看出这个RST从哪里来的，但协调很麻烦。 还是自力更生先点开客户端POST的数据包看看
+等等，Host: www.iav98.xyz这是什么？正常请求的header都需要加密的，这肯定是客户端瞎填的。是否和这个奇怪的header有关呢？
+验证猜测 在本地验证，发包时header加上这个奇怪的host，并抓包
+可以看到三次握手后post请求，收到一个403，WTF？[黑人问号.jpg]，貌似和前面服务端看到的数据包不一样啊？连接也不是客户端断的啊。
+点开看个究竟
+里面有一个阿里云的域名http://batit.aliyun.com/alww.html
+至此，问题比较清楚了
+请求header的host是未备案的域名，连接被阿里云断了。 nginx在回包的时候，如果客户端把socket关闭了，就不需要返回包给客户端，body_bytes_sent自然就是0了。 其实这个问题也是客户端懒，如果客户端愿意去看看具体错误，一眼就能看出问题。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/1/01/openrestry-body_bytes_sent-0/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="openrestry body_bytes_sent = 0"/>
+<meta name="twitter:description" content="这是服务从IDC迁移上阿里云过程中遇到的一个问题，虽然定位完成以后发现其实很简单，但也算一个典型的案例。服务是一个openrestry。
+现象 服务在阿里云部署完以后内部测试通过，切域名。后来收到一个新接入客户端反馈，服务请求失败，也没说具体错误。在服务端这边查看lua中代码逻辑正常执行，但是在nginx access.log中发现很多请求状态返回200，但body_bytes_sent为0。
+很奇怪，因为这是一个跑了多年的老服务，且让用户请求回IDC机房的服务一切正常。因此感觉可以排除服务问题，猜测是阿里云的问题。
+抓包分析 首先从服务端抓包 223.xxx 是客户端 139.xxx 是服务端 可以看到三次握手以后，客户端发送一个post请求，客户端回复ACK。然后就连续收到RST包，由于前面分析了，服务本身没有问题，客户端请求到IDC也正常，所以这个RST是哪里发的呢？
+如果能结合客户端一起抓包也许就可以看出这个RST从哪里来的，但协调很麻烦。 还是自力更生先点开客户端POST的数据包看看
+等等，Host: www.iav98.xyz这是什么？正常请求的header都需要加密的，这肯定是客户端瞎填的。是否和这个奇怪的header有关呢？
+验证猜测 在本地验证，发包时header加上这个奇怪的host，并抓包
+可以看到三次握手后post请求，收到一个403，WTF？[黑人问号.jpg]，貌似和前面服务端看到的数据包不一样啊？连接也不是客户端断的啊。
+点开看个究竟
+里面有一个阿里云的域名http://batit.aliyun.com/alww.html
+至此，问题比较清楚了
+请求header的host是未备案的域名，连接被阿里云断了。 nginx在回包的时候，如果客户端把socket关闭了，就不需要返回包给客户端，body_bytes_sent自然就是0了。 其实这个问题也是客户端懒，如果客户端愿意去看看具体错误，一眼就能看出问题。"/>
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
+
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
+
+	<script src="http://localhost:1313/js/feather.min.js"></script>
+	
+		<script src="http://localhost:1313/js/main.js"></script>
+</head>
+
+
+<body>
+
+
+	
+	<div class="container wrapper">
+		<div class="header">
+	
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
+	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+		</nav>
+	</div>
+
+	<nav class="nav">
+		<ul class="flat">
+			
+			<li>
+				<a href="/">Home</a>
+			</li>
+			
+			<li>
+				<a href="/posts">All posts</a>
+			</li>
+			
+			<li>
+				<a href="/about">About</a>
+			</li>
+			
+			<li>
+				<a href="/tags">Tags &amp; Stats</a>
+			</li>
+			
+		</ul>
+	</nav>
+</div>
+
+
+		<div class="post">
+    <div class="post-header">
+    
+    <div class="matter">
+        <h1 class="title">openrestry body_bytes_sent = 0</h1>
+    </div>
+</div>
+
+
+    
+    
+    <p>这是服务从IDC迁移上阿里云过程中遇到的一个问题，虽然定位完成以后发现其实很简单，但也算一个典型的案例。服务是一个openrestry。</p>
+<h2 id="现象">现象</h2>
+<p>服务在阿里云部署完以后内部测试通过，切域名。后来收到一个新接入客户端反馈，服务请求失败，也没说具体错误。在服务端这边查看lua中代码逻辑正常执行，但是在nginx access.log中发现很多请求状态返回200，但<code>body_bytes_sent</code>为0。</p>
+<p>很奇怪，因为这是一个跑了多年的老服务，且让用户请求回IDC机房的服务一切正常。因此感觉可以排除服务问题，猜测是阿里云的问题。</p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/70974883-cdc31280-20e3-11ea-98ae-67b418663682.png" alt="img">
+
+</p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/70974966-f2b78580-20e3-11ea-8445-d248ec31eebb.png" alt="img">
+
+</p>
+<h2 id="抓包分析">抓包分析</h2>
+<p>首先从服务端抓包
+
+  <img src="https://user-images.githubusercontent.com/3350002/70974996-06fb8280-20e4-11ea-9f1f-6dc96a3ed0d4.png" alt="img">
+
+</p>
+<ul>
+<li>223.xxx 是客户端</li>
+<li>139.xxx 是服务端</li>
+</ul>
+<p>可以看到三次握手以后，客户端发送一个post请求，客户端回复ACK。然后就连续收到RST包，由于前面分析了，服务本身没有问题，客户端请求到IDC也正常，所以这个RST是哪里发的呢？</p>
+<p>如果能结合客户端一起抓包也许就可以看出这个RST从哪里来的，但协调很麻烦。
+还是自力更生先点开客户端POST的数据包看看</p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/70975240-7cffe980-20e4-11ea-8008-887cbdb4a555.png" alt="img">
+
+</p>
+<p>等等，<code>Host: www.iav98.xyz</code>这是什么？正常请求的header都需要加密的，这肯定是客户端瞎填的。是否和这个奇怪的header有关呢？</p>
+<h2 id="验证猜测">验证猜测</h2>
+<p>在本地验证，发包时header加上这个奇怪的host，并抓包</p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/70975440-e849bb80-20e4-11ea-9868-44c0628070ce.png" alt="img">
+
+</p>
+<p>可以看到三次握手后post请求，收到一个403，WTF？[黑人问号.jpg]，貌似和前面服务端看到的数据包不一样啊？连接也不是客户端断的啊。</p>
+<p>点开看个究竟</p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/70975477-fd264f00-20e4-11ea-93a6-5103d43039f8.png" alt="img">
+
+</p>
+<p>里面有一个阿里云的域名<code>http://batit.aliyun.com/alww.html</code></p>
+<p>
+  <img src="https://user-images.githubusercontent.com/3350002/70975518-0dd6c500-20e5-11ea-9b46-8d5ebd95b0da.png" alt="img">
+
+</p>
+<p>至此，问题比较清楚了</p>
+<ol>
+<li><strong>请求header的host是未备案的域名，连接被阿里云断了。</strong></li>
+<li><strong>nginx在回包的时候，如果客户端把socket关闭了，就不需要返回包给客户端，<code>body_bytes_sent</code>自然就是0了。</strong></li>
+</ol>
+<p>其实这个问题也是客户端懒，如果客户端愿意去看看具体错误，一眼就能看出问题。</p>
+
+    <hr class="footer-separator" />
+<div class="tags">
+    
+    
+    <ul class="flat">
+        
+        
+        <li class="tag-li"><a href="/tags/network">network</a>
+        </li>
+        
+    </ul>
+    
+    
+</div>
+
+
+<div class="back">
+    <a href="https://github.com/zhiqli/blob/master/content/posts/2019-12-17-openrestry-body_bytes_sent.md" title="github"><i
+            data-feather="github"></i> Edit this on GitHub</a>
+</div>
+
+
+<div class="back">
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
+</div>
+
+
+<div class="back">
+    
+    
+    Next time, we'll talk about <i>"What Tiger King can teach us about x86 Assembly"</i>
+    
+    
+</div>
+
+</div>
+
+	</div>
+	
+
+	<div class="footer wrapper">
+	<nav class="nav">
+		<div>1  © Copyright notice </div>
+		
+	</nav>
+</div><script>feather.replace()</script>
+	
+</body>
+
+</html>

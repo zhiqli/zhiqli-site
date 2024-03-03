@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cgo on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/tags/cgo/</link>
+    <description>Recent content in Cgo on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Sun, 24 Mar 2019 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/tags/cgo/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>cgo笔记</title>
+      <link>https://zhiqli.github.io/2019/03/cgo%E7%AC%94%E8%AE%B0/</link>
+      <pubDate>Sun, 24 Mar 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/03/cgo%E7%AC%94%E8%AE%B0/</guid>
+      <description>看了下上一次提交还是去年刚搭建这个博客的时候，之前在博客园维护过一个博客，三天打鱼半年晒网写过几篇，后面打算转战到此争取能多写几篇，没想到还是没做到。今天难得有时间，先总结一篇cgo相关的吧。&#xA;目前公司的技术栈已经全面转go，而一些业务还需要依赖到一些老的C\C++ so，或者一些项目必须调用C/C++的so，比如ffmpeg。所以工作中经常会使用到cgo来调用这些C\C++ so，把cgo调用方法和遇到的问题简单记录下来。&#xA;cgo简单调用 在go中如果要调用C接口，要采用cgo来实现。比如下面的代码。&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 package main /* #include &amp;lt;stdio.h&amp;gt; int add(int a, int b) { return a + b } #cgo CFLAGS: -g */ import &amp;#34;C&amp;#34; func main() { sum := C.add(C.int(1), C.int(1)) } 如果要使用cgo，在go源文件中必须加入import &amp;ldquo;C&amp;quot;来标识，用于导入C实现的代码，而C源码则在import “C”上面以注释的方式加入。导入以后C源码可以在go代码中直接调用只要在函数、类型以C.开头即可。这里需要注意的一点是C代码和import “C”之间不能有空行&#xA;调用so 在实际应用中，一般会把C实现封装成so提供cgo调用，通过LDFLAGS指定lib即可。&#xA;1 2 3 4 5 6 7 8 9 package main /* #cgo CFLAGS: -I .</description>
+    </item>
+  </channel>
+</rss>

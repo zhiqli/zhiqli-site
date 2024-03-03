@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>笔记 on 广阔天地大有作为</title>
+    <link>https://zhiqli.github.io/tags/%E7%AC%94%E8%AE%B0/</link>
+    <description>Recent content in 笔记 on 广阔天地大有作为</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>© Copyright zhiqli</copyright>
+    <lastBuildDate>Fri, 15 Nov 2019 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zhiqli.github.io/tags/%E7%AC%94%E8%AE%B0/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>一次mysql锁问题排查</title>
+      <link>https://zhiqli.github.io/2019/11/%E4%B8%80%E6%AC%A1mysql%E9%94%81%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/</link>
+      <pubDate>Fri, 15 Nov 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/11/%E4%B8%80%E6%AC%A1mysql%E9%94%81%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/</guid>
+      <description>查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误&#xA;背景 线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。&#xA;服务对表的操作流程如下 收到客户端请求，新建任务，insert数据到db。 内部多个服务处理完update state task where id = &amp;lsquo;xxx&amp;rsquo;，每个任务大概会有2-3次update。 表结构如下 1 2 3 4 5 6 7 8 CREATE TABLE IF NOT EXISTS `task` ( `auto_id` int(11) NOT NULL auto_increment, `id` varchar(60) NOT NULL, `state` int(11) NOT NULL, `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`auto_id`), ) ENGINE=InnoDB DEFAULT CHARSET=utf8; 数据迁移脚本如下 1 2 3 4 movesql=&amp;#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &amp;lt; &amp;#39;${monthago}&amp;#39;; &amp;#34; echo ${movesql} | $mysql deletesql=&amp;#34;delete from task where update_time &amp;lt; &amp;#39;${monthago}&amp;#39;;&amp;#34; echo ${deletesql} | $mysql 迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。</description>
+    </item>
+    <item>
+      <title>envoy 代理http1.1</title>
+      <link>https://zhiqli.github.io/2019/09/envoy-%E4%BB%A3%E7%90%86http1.1/</link>
+      <pubDate>Tue, 10 Sep 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/09/envoy-%E4%BB%A3%E7%90%86http1.1/</guid>
+      <description>最近处理了一个envoy代理http1.1的问题，先简单介绍一下背景&#xA;背景 我们有一个长连接通道的项目，原来是通过http2.0连接。后来因为要做扫码登录的业务，所以使用 socket.io 支持了http1.1的连接，这是同事当时支持http1.1以后的博客。 代理当初用的envoy是1.6 v1 API ，现在由于其他问题想升级envoy到新版本，而新版本已经不支持v1 API，在升级的过程中遇到一些问题，也花了不少时间，搞定以后以此文作为笔记。&#xA;服务部署结构 front-envoy 这是一个网关。需要处理客户端http1.1的请求，在envoy API v1的时候非常简单，只需要在Route中加上use_websocket=true即可，参考文档。 但是在API v2，这个配置修改了，参考文档，在http_connection_mananger中加upgrade_configs配置。&#xA;envoy1 这实际上是k8s ingress，本来其实这个envoy就可以直接对外了，由于在阿里云slb的连接数有限制，所以才有在前面加了frontenvoy，有了frontenvoy连接会收敛，虽然front-envoy有一百多万连接，但到这里的连接数就很少了。&#xA;envoy2 看得出来这是sidecar envoy。只需要加上sio的upstream cluster即可。&#xA;问题 背景已经交代清楚了，这里再说下问题。&#xA;envoy升级以后，按照配置设置了upgrade_configs，请求发现front-envoy一直报错，503 UR，即upstream reset。 再跟踪envoy1的trace日志，发现有一行日志invalid frame: Invalid HTTP header field was received。&#xA;查了好久都没找到答案，上github提了一个issue，后来回复，由于envoy之间是http2连接，需要设置allow_connect=true才行，参考文档描述。 由于之前文档没有描述allow_connect，现在看到的是我提了issue才加上的描述。所以自己查了很久也没搞定。 设置上allow_connect以后，frontenvoy的日志从503 UR变成503了。 查看envoy1的日志，503 UR 以及invalid frame: Invalid HTTP header field was received。和刚才envoy1一样的。&#xA;而envoy2已经设置了allow_connect啊。后来查明原来我是在cluster里面的http2_protocol_options中设置了allow_connect=true，需要在http_connection_mananger中的http2_protocol_options中设置。&#xA;设置完成，envoy2又出现以下日志 1 2 [2019-09-10 07:14:56.094][000057][info][client] [source/common/http/codec_client.cc:118] [C3693] protocol error: The user callback function failed [2019-09-10T07:14:55.632Z] &amp;#34;GET /xlchannel.app2amlogic/sio/?EIO=3&amp;amp;transport=websocket HTTP/2&amp;#34; 503 UC 0 57 1 - &amp;#34;192.</description>
+    </item>
+    <item>
+      <title>istio/envoy流量控制问题</title>
+      <link>https://zhiqli.github.io/2019/05/istio/envoy%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6%E9%97%AE%E9%A2%98/</link>
+      <pubDate>Fri, 10 May 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/05/istio/envoy%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6%E9%97%AE%E9%A2%98/</guid>
+      <description>最近在调研istio，很重要的一点是想利用istio金丝雀发布时精细的流量控制。我们知道在k8s的金丝雀发布一般是通过label来控制，如果需要灰度1%的流量，那么总共需要100个pod。具体可以参考这篇文章。而istio则可以通过VirtualService来做流量控制，具体可以参考官方文档。&#xA;结论是暂时istio无法满足我们的需求，还是在这里记录一下调研过程。&#xA;背景 先说下我们的服务架构，api-gateway和服务之间是采用grpc长连接，想要控制api-gatewasy与服务之间的流量。 服务的架构如下&#xA;istio流量控制 流量拆分具体案例参考官方例子采用istio部署以后，部署VirutalService配置如下&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 apiVersion: networking.istio.io/v1alpha3 kind: VirtualService metadata: name: reporter-vs namespace: istio spec: hosts: - reporter http: - route: - destination: host: reporter subset: v1 weight: 90 - destination: host: reporter subset: v2 weight: 10 --- apiVersion: networking.</description>
+    </item>
+    <item>
+      <title>istio 抓取应用程序的metric</title>
+      <link>https://zhiqli.github.io/2019/05/istio-%E6%8A%93%E5%8F%96%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E7%9A%84metric/</link>
+      <pubDate>Tue, 07 May 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/05/istio-%E6%8A%93%E5%8F%96%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E7%9A%84metric/</guid>
+      <description>istio中会对网格内数据的metric数据收集，也可以自定义一些新的metric。通过这些数据有助于了解流量如何在集群中流动的。但这些数据不包括应用程序业务层的数据。 我们的应用中都有调用prometheus的go client api统计一些业务层的数据，由应用服务暴露一个端口。这些应用层的数据抓取当然可以起一个独立的prometheus服务，在istio1.1中，也可以使用istio的prometheus来收集。 本文主要记录采用istio prometheus抓取数据的配置。&#xA;配置 在文档中没有提及抓取收集应用程序metrics，这个描述是在FAQ中，Istio / Metrics and Logs FAQ。在install/kubernetes/istio-demo.yaml或install/kubernetes/istio-demo-auth.yaml的prometheus ConfigMap配置中有两个job&#xA;1 2 3 4 5 6 7 - job_name: &amp;#39;kubernetes-pods&amp;#39; kubernetes_sd_configs: - role: pod ..... - job_name: &amp;#39;kubernetes-pods-istio-secure&amp;#39; scheme: https 在没有启用mutual TLS 的环境中，job kubernetes-pods会从 Pod 中收集应用的metric。如果 Istio 启用了mutual TLS，就由job kubernetes-pods-istio-secure完成应用metric的收集工作。 这两个job都需要在pod yaml中添加annotations&#xA;1 2 3 prometheus.io/scrape: &amp;#34;true&amp;#34; prometheus.io/path: &amp;#34;&amp;lt;metrics path&amp;gt;&amp;#34; prometheus.io/port: &amp;#34;&amp;lt;metrics port&amp;gt;&amp;#34; 应用 OK，查完文档，开始实践。我的环境没有开启mutual TLS 。 服务起来以后查看prometheus target，奇怪的事情发生了&#xA;我的服务在kubernetes-pods-istio-secure job下，而在这个job下指定了scheme为https。由于没有配置https，访问不通。 经过一番google还是没有找到问题，后面看到kubernetes-pods的配置里面有一个source_labels: [__meta_kubernetes_pod_annotation_sidecar_istio_io_status, __meta_kubernetes_pod_annotation_prometheus_io_scheme]于是在pod yaml annotations增加Prometheus.io/scheme: &amp;quot;http&amp;quot; 再次刷新网页，我的3个应用出现在kubernetes-pods，状态也为UP。</description>
+    </item>
+    <item>
+      <title>shell脚本变量作用域</title>
+      <link>https://zhiqli.github.io/2019/04/shell%E8%84%9A%E6%9C%AC%E5%8F%98%E9%87%8F%E4%BD%9C%E7%94%A8%E5%9F%9F/</link>
+      <pubDate>Fri, 26 Apr 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/04/shell%E8%84%9A%E6%9C%AC%E5%8F%98%E9%87%8F%E4%BD%9C%E7%94%A8%E5%9F%9F/</guid>
+      <description>今天写一个shell脚本遇到一个问题，脚本为实现从文件中按行读取，拼接成一个字符串。大概代码如下&#xA;1 2 3 4 5 6 7 content=&amp;#34;&amp;#34; cat ./file | while read line do content=$content&amp;#34;-&amp;#34;$line echo $content done echo $content 执行发现打印出来循环中打印了正确结果，而最后一个echo结果却是空。按道理content是全局变量，不会存在作用域的问题。在网上搜了一下发现其中奇妙之处。 关键在这句cat ./file | while read line这里用了管道符，管道符非linux内建命令，shell执行非内建命令时会重建子进程来运行，而shell中即使全局变量的作用域也是在本进程中。所以运行完while read line content的修改对于父进程无效。 解决这个问题可以采用另外一种循环读取文本内容的方法，即&#xA;1 2 3 4 5 6 7 content=&amp;#34;&amp;#34; while read line do content=$content&amp;#34;-&amp;#34;$line echo $content done &amp;lt; ./file echo $content 使用内置命令重定向符，完美解决问题。 以后对于其他非内建命令的使用也要注意，别踩坑。</description>
+    </item>
+    <item>
+      <title>cgo笔记</title>
+      <link>https://zhiqli.github.io/2019/03/cgo%E7%AC%94%E8%AE%B0/</link>
+      <pubDate>Sun, 24 Mar 2019 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2019/03/cgo%E7%AC%94%E8%AE%B0/</guid>
+      <description>看了下上一次提交还是去年刚搭建这个博客的时候，之前在博客园维护过一个博客，三天打鱼半年晒网写过几篇，后面打算转战到此争取能多写几篇，没想到还是没做到。今天难得有时间，先总结一篇cgo相关的吧。&#xA;目前公司的技术栈已经全面转go，而一些业务还需要依赖到一些老的C\C++ so，或者一些项目必须调用C/C++的so，比如ffmpeg。所以工作中经常会使用到cgo来调用这些C\C++ so，把cgo调用方法和遇到的问题简单记录下来。&#xA;cgo简单调用 在go中如果要调用C接口，要采用cgo来实现。比如下面的代码。&#xA;1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 package main /* #include &amp;lt;stdio.h&amp;gt; int add(int a, int b) { return a + b } #cgo CFLAGS: -g */ import &amp;#34;C&amp;#34; func main() { sum := C.add(C.int(1), C.int(1)) } 如果要使用cgo，在go源文件中必须加入import &amp;ldquo;C&amp;quot;来标识，用于导入C实现的代码，而C源码则在import “C”上面以注释的方式加入。导入以后C源码可以在go代码中直接调用只要在函数、类型以C.开头即可。这里需要注意的一点是C代码和import “C”之间不能有空行&#xA;调用so 在实际应用中，一般会把C实现封装成so提供cgo调用，通过LDFLAGS指定lib即可。&#xA;1 2 3 4 5 6 7 8 9 package main /* #cgo CFLAGS: -I .</description>
+    </item>
+    <item>
+      <title>一些TCP基础笔记</title>
+      <link>https://zhiqli.github.io/2018/03/%E4%B8%80%E4%BA%9Btcp%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/</link>
+      <pubDate>Sat, 24 Mar 2018 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/2018/03/%E4%B8%80%E4%BA%9Btcp%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/</guid>
+      <description>本文主要是看书看文章时做的笔记，记录一些TCP相关的基本概念。引用文章来自补充阅读，点击可到原文链接。&#xA;概念 MTU：maximum transmission unit最大传输单元 每种网络都不一样，以太网是1500。最小46字节。当数据块大于MTU时，将在发送端IP层进行分片，接收端IP层进行重组。IP分组在网络中传输中出现丢包时，由于IP层没有重传机制，TCP将重传整个报文段而不是丢失的IP分组&#xA;PS: 以太网最小数据帧长度为，最小64字节，其中6字节目的地址 、字节6源地址、2字节类型、46字节数据、4字节校验和.&#xA;MSS：maximum segment size最大分段大小 MSS是TCP数据包每次能够传输的最大数据分段。为了达到最佳的传输效能TCP协议在建立连接的时候通常要协商双方的MSS值，这个值TCP协议在实现的时候往往用MTU值代替（需要减去IP数据包包头的大小20Bytes和TCP数据段的包头20Bytes）所以往往MSS为1460。通讯双方会根据双方提供的MSS值得最小值确定为这次连接的最大MSS值。&#xA;MSL：Maximum Segment Lifetime报文最大生存时间 报文在网络上存在的最长时间，超过这个时间报文将被丢弃。在RFC793指出MSL为2分钟，实际应用中常用的是30秒（linux），1分钟和2分钟等。&#xA;TTL：Time To Live生存时间 生存时间是由源主机设置初始值但不是存的具体时间，而是存储了一个ip数据报可以经过的最大路由数，每经过一个处理他的路由器此值就减1，当此值为0则数据报将被丢弃，同时发送ICMP报文通知源主机。&#xA;RTT：round-trip time客户到服务器往返所花时间 RTT由三部分组成：链路的传播时间（propagation delay）、末端系统的处理时间、 路由器缓存中的排队和处理时间（queuing delay）。 其中，前两个部分的值对于一个TCP连接相对固定，路由器缓存中的排队和处理时间会随着整个网络拥塞程度 的变化而变化。所以RTT的变化在一定程度上反应了网络的拥塞程度。&#xA;RTO：Retransmission TimeOut重传超时时间 重传机制依赖于RTT（Round Trip Time）的测量，从而计算RTO（Retransmission Timeout）。&#xA;TSO：TCP Segment Offload 是一种利用网卡的处理能力，降低CPU发送数据包负载的技术。对于支持TSO的网卡，TCP协议栈在封包的时候会逐渐尝试增大MSS，网卡接收到TCP向下递交的数据后，按照MTU进行分片、复制TCP头且重新计算校验和，这样在网卡上完成了对大块数据的TCP分段，缓解了CPU的计算压力。&#xA;查看是否开启TSO&#xA;sudo ethtool -k eth0 关闭和打开TSO&#xA;$ sudo ethtool -K eth0 tso off // 关闭tso&#xA;$ sudo ethtool -K eth0 tso on // 开启tso&#xA;TCP协议结构 source port destination port:源端口和目标端口，注意不包括IP是因为这是上一层IP层的事情，这一层（传输层）只负责找到对应的端口，即应用程序。 sequence number：用来标记包的顺序。一个TCP包最多能传1460字节，对于超出的包，需要分片，为了保证对端收到的包是顺序完整的，需要通过seq num来重新组装数据包。值是本报文段所发送的数据的第一个字节的序号。 acknowledgment number：由于tcp是可靠的传输，发送端需要确认对端是否收到包，所以需要ack num来确认，如果没有收到，则会启动重传机制。ack num是期望收到对方的下一个报文段的数据的第一个字节的序号 header：由于tcp header有可选字段，所以长度不定。所以需要这个值作为offset来表示tcp头有多大。 reserved：保留字段，应填为0.</description>
+    </item>
+    <item>
+      <title>envoy ratelimit技术验证</title>
+      <link>https://zhiqli.github.io/1/01/envoy-ratelimit%E6%8A%80%E6%9C%AF%E9%AA%8C%E8%AF%81/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://zhiqli.github.io/1/01/envoy-ratelimit%E6%8A%80%E6%9C%AF%E9%AA%8C%E8%AF%81/</guid>
+      <description>nginx大法好啊，nginx5分钟解决了一个envoy带来两周的伤害。&#xA;背景 具体情况是这样的，我这边有个服务大概结构是这样的。&#xA;高峰时大概承接了150w的grpc长连接，以及小于1000的websocket长连接。 上个月底由于已发版的客户端有个bug，会在后台不停发websocket建立连接请求，导致在一个周日下午5点半线上服务频繁重启，还好k8s会自动拉起服务。在超市买菜做晚饭的我赶紧冲回去，这时候能咋办呢。&#xA;扩容，把pod数增加一倍，然而并没有卵用，还是秒挂。由于前端envoy有5个实例，跟领导报备，先做服务降级，把其中4个envoy关闭websocket，先保证这100来万grpc连接能正常啊。 挺过一晚上，周一去到公司，讨论了一上午，最后的方案是隔离，把最前面的envoy分离，websocket的域名只走单独的两个envoy。慢慢的服务平稳了一周。服务变成这样子&#xA;第二周，同样的周日下午5:30，k8s ingress 又出现大面积重启，还是老方法，扩容，周一ingress也隔离。于是服务又变成这样子&#xA;同时调研envoy ratelimit，这又是一个悲伤的故事。由于我们用的还是envoy1.6或者1.7（别问为什么，问就是以前团队留下的坑），试了ratelimt发现，grpc和http都能有效限制remote_address的请求次数，就是websocket无效。又验证最新的envoy，发现没有问题。&#xA;这时候升级envoy就完事了吧，领导觉得动作太大，因为从网关到服务，实际上有三个envoy（包括sidecar里面的envoy），都得升级，否则websocket请求全部是503 UR，还不保证服务里面的socket io相关代码不需要修改。&#xA;最后祭出nginx大法。昨晚下班前5分钟在测试环境配置nginx，验证通过。 今天早上业务验证通过，上线，持续观察了几天，再也没有重启过，业务同学也再也没找过我了。&#xA;总结 总结一下这次解决问题的过程 envoy提供ratelimit的api，可以接入一个全局的速率限制服务，lyft已经提供了一个ratelimt服务可以参考甚至直接用。关于限速配置，readme中有详细说明。&#xA;关于envoy配置，官方文档中也有描述，不过各版本之间略有差异，需要针对各版本进行配置，最新版，网上有一个 envoy_ratelimit_example 可以参考，而低版本则可以通过官文文档进行配置。&#xA;虽然这次折腾没有用上envoy ratelimit，不过也算是一次技术调研，在后面的服务中可能可以用上，特以此文作为笔记。</description>
+    </item>
+  </channel>
+</rss>
