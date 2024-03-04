@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>一次mysql锁问题排查 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta itemprop="name" content="一次mysql锁问题排查">
@@ -14,7 +14,7 @@
 背景 线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。
 服务对表的操作流程如下 收到客户端请求，新建任务，insert数据到db。 内部多个服务处理完update state task where id = &lsquo;xxx&rsquo;，每个任务大概会有2-3次update。 表结构如下 1 2 3 4 5 6 7 8 CREATE TABLE IF NOT EXISTS `task` ( `auto_id` int(11) NOT NULL auto_increment, `id` varchar(60) NOT NULL, `state` int(11) NOT NULL, `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`auto_id`), ) ENGINE=InnoDB DEFAULT CHARSET=utf8; 数据迁移脚本如下 1 2 3 4 movesql=&#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &lt; &#39;${monthago}&#39;; &#34; echo ${movesql} | $mysql deletesql=&#34;delete from task where update_time &lt; &#39;${monthago}&#39;;&#34; echo ${deletesql} | $mysql 迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://zhiqli.github.io/2019/11/%E4%B8%80%E6%AC%A1mysql%E9%94%81%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" /><meta property="article:section" content="posts" />
+<meta property="og:url" content="http://localhost:1313/2019/11/%E4%B8%80%E6%AC%A1mysql%E9%94%81%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2019-11-15T00:00:00+00:00" />
 <meta property="article:modified_time" content="2019-11-15T00:00:00+00:00" />
 
@@ -22,14 +22,14 @@
 <meta name="twitter:description" content="查了一个线上mysql 锁等待的问题，记录一下以后别犯这么低级的错误
 背景 线上一个老业务有一个任务状态表，最早的设计是单库单表比较low。由于数据没有迁移，对完成任务也没有删除操作，日积月累导致数据越来越多影响正常业务。用了一个简单的定时脚本每天把一个月前的数据迁移到一个月分历史表中。
 服务对表的操作流程如下 收到客户端请求，新建任务，insert数据到db。 内部多个服务处理完update state task where id = &lsquo;xxx&rsquo;，每个任务大概会有2-3次update。 表结构如下 1 2 3 4 5 6 7 8 CREATE TABLE IF NOT EXISTS `task` ( `auto_id` int(11) NOT NULL auto_increment, `id` varchar(60) NOT NULL, `state` int(11) NOT NULL, `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`auto_id`), ) ENGINE=InnoDB DEFAULT CHARSET=utf8; 数据迁移脚本如下 1 2 3 4 movesql=&#34;insert into task_history_${month} select auto_id,id,state,create_time,update_time from task where update_time &lt; &#39;${monthago}&#39;; &#34; echo ${movesql} | $mysql deletesql=&#34;delete from task where update_time &lt; &#39;${monthago}&#39;;&#34; echo ${deletesql} | $mysql 迁移方法确实比较low，不过也跑了很长一段时间。但是这两天出问题了。"/>
-<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
-	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
 
-        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
 
-	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	<script src="http://localhost:1313/js/feather.min.js"></script>
 	
-		<script src="https://zhiqli.github.io/js/main.js"></script>
+		<script src="http://localhost:1313/js/main.js"></script>
 </head>
 
 
@@ -41,14 +41,14 @@
 		<div class="header">
 	
 		<div class="avatar">
-			<a href="https://zhiqli.github.io/">
+			<a href="http://localhost:1313/">
 				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
 			</a>
 		</div>
 	
-	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
 	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
-			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><li><a href="zhiqli@126.com" title="email"><i data-feather="email"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
 		</nav>
 	</div>
 
@@ -208,7 +208,7 @@ innodb中默认隔离级别是可重复读，在RR中，对非索引字段的del
 
 
 <div class="back">
-    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
 </div>
 
 

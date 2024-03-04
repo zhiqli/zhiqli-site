@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>cgo笔记 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta itemprop="name" content="cgo笔记">
@@ -20,7 +20,7 @@ cgo简单调用 在go中如果要调用C接口，要采用cgo来实现。比如�
 调用so 在实际应用中，一般会把C实现封装成so提供cgo调用，通过LDFLAGS指定lib即可。
 1 2 3 4 5 6 7 8 9 package main /* #cgo CFLAGS: -I ." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://zhiqli.github.io/2019/03/cgo%E7%AC%94%E8%AE%B0/" /><meta property="article:section" content="posts" />
+<meta property="og:url" content="http://localhost:1313/2019/03/cgo%E7%AC%94%E8%AE%B0/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2019-03-24T00:00:00+00:00" />
 <meta property="article:modified_time" content="2019-03-24T00:00:00+00:00" />
 
@@ -31,14 +31,14 @@ cgo简单调用 在go中如果要调用C接口，要采用cgo来实现。比如�
 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 package main /* #include &lt;stdio.h&gt; int add(int a, int b) { return a &#43; b } #cgo CFLAGS: -g */ import &#34;C&#34; func main() { sum := C.add(C.int(1), C.int(1)) } 如果要使用cgo，在go源文件中必须加入import &ldquo;C&quot;来标识，用于导入C实现的代码，而C源码则在import “C”上面以注释的方式加入。导入以后C源码可以在go代码中直接调用只要在函数、类型以C.开头即可。这里需要注意的一点是C代码和import “C”之间不能有空行
 调用so 在实际应用中，一般会把C实现封装成so提供cgo调用，通过LDFLAGS指定lib即可。
 1 2 3 4 5 6 7 8 9 package main /* #cgo CFLAGS: -I ."/>
-<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
-	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
 
-        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
 
-	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	<script src="http://localhost:1313/js/feather.min.js"></script>
 	
-		<script src="https://zhiqli.github.io/js/main.js"></script>
+		<script src="http://localhost:1313/js/main.js"></script>
 </head>
 
 
@@ -50,14 +50,14 @@ cgo简单调用 在go中如果要调用C接口，要采用cgo来实现。比如�
 		<div class="header">
 	
 		<div class="avatar">
-			<a href="https://zhiqli.github.io/">
+			<a href="http://localhost:1313/">
 				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
 			</a>
 		</div>
 	
-	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
 	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
-			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><li><a href="zhiqli@126.com" title="email"><i data-feather="email"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
 		</nav>
 	</div>
 
@@ -374,7 +374,7 @@ cgo简单调用 在go中如果要调用C接口，要采用cgo来实现。比如�
 
 
 <div class="back">
-    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
 </div>
 
 

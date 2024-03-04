@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>一道C语言面试题 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta itemprop="name" content="一道C语言面试题">
@@ -14,7 +14,7 @@
 题目，写出下面代码打印结果 1 2 3 4 5 6 7 8 9 10 char str1[] = &#34;hello&#34;; char str2[5] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;}; char str3[6] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;,&#39;\0&#39;}; printf(&#34;sizeof(str1) %d\n&#34;, (int)sizeof(str1)); printf(&#34;strlen(str1) %d\n&#34;, (int)strlen(str1)); printf(&#34;sizeof(str2) %d\n&#34;, (int)sizeof(str2)); printf(&#34;strlen(str2) %d\n&#34;, (int)strlen(str2)); printf(&#34;sizeof(str3) %d\n&#34;, (int)sizeof(str3)); printf(&#34;strlen(str3) %d\n&#34;, (int)strlen(str3)); 第一眼看，不就是考察sizeof和strlen吗？简单，答案应该是6，5，5，？，6，5。strlen(str2)，what the fuck？ 赶紧打开电脑验证一下，结果输出是6，5，5，10，6，5，呐尼？怎么会是10呢？ 好吧，既然长度是10，那我就加上一行代码，看看到底是10个什么鬼。
 1 2 for(int i = 0; i &lt; 10; i&#43;&#43;) printf(&#34; %c&#34;, str2[i]); 这回打印的结果是h e l l o h e l l o，于是猜想是不是越界到其它变量去了，于是将str1改成&quot;abcde&quot;，再次运行结果是h e l l o a b c d e。 再把str1 str2 str3的内存地址打印出来，依次是504f28a5 504f28a0 504f289a 这回明白了，因为c语言的压栈顺序先定义的变量存在高地址，后定义的在低地址。所以strlen(str2)的时候，实际上是从504f28a0－504f28aa，所以长度为10。 你因为这个问题到这里就结束了吗？其实并没有。刚才是在mac上验证的，gcc的版本是4." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://zhiqli.github.io/2018/07/%E4%B8%80%E9%81%93c%E8%AF%AD%E8%A8%80%E9%9D%A2%E8%AF%95%E9%A2%98/" /><meta property="article:section" content="posts" />
+<meta property="og:url" content="http://localhost:1313/2018/07/%E4%B8%80%E9%81%93c%E8%AF%AD%E8%A8%80%E9%9D%A2%E8%AF%95%E9%A2%98/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2018-07-30T00:00:00+00:00" />
 <meta property="article:modified_time" content="2018-07-30T00:00:00+00:00" />
 
@@ -22,14 +22,14 @@
 <meta name="twitter:description" content="今天在群里的兄弟分享了一道考察sizeof和strlen的面试题，看似很简单，其实却不然，分析过后，还是有一些不解之处。
 题目，写出下面代码打印结果 1 2 3 4 5 6 7 8 9 10 char str1[] = &#34;hello&#34;; char str2[5] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;}; char str3[6] = {&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;,&#39;\0&#39;}; printf(&#34;sizeof(str1) %d\n&#34;, (int)sizeof(str1)); printf(&#34;strlen(str1) %d\n&#34;, (int)strlen(str1)); printf(&#34;sizeof(str2) %d\n&#34;, (int)sizeof(str2)); printf(&#34;strlen(str2) %d\n&#34;, (int)strlen(str2)); printf(&#34;sizeof(str3) %d\n&#34;, (int)sizeof(str3)); printf(&#34;strlen(str3) %d\n&#34;, (int)strlen(str3)); 第一眼看，不就是考察sizeof和strlen吗？简单，答案应该是6，5，5，？，6，5。strlen(str2)，what the fuck？ 赶紧打开电脑验证一下，结果输出是6，5，5，10，6，5，呐尼？怎么会是10呢？ 好吧，既然长度是10，那我就加上一行代码，看看到底是10个什么鬼。
 1 2 for(int i = 0; i &lt; 10; i&#43;&#43;) printf(&#34; %c&#34;, str2[i]); 这回打印的结果是h e l l o h e l l o，于是猜想是不是越界到其它变量去了，于是将str1改成&quot;abcde&quot;，再次运行结果是h e l l o a b c d e。 再把str1 str2 str3的内存地址打印出来，依次是504f28a5 504f28a0 504f289a 这回明白了，因为c语言的压栈顺序先定义的变量存在高地址，后定义的在低地址。所以strlen(str2)的时候，实际上是从504f28a0－504f28aa，所以长度为10。 你因为这个问题到这里就结束了吗？其实并没有。刚才是在mac上验证的，gcc的版本是4."/>
-<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
-	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
 
-        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
 
-	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	<script src="http://localhost:1313/js/feather.min.js"></script>
 	
-		<script src="https://zhiqli.github.io/js/main.js"></script>
+		<script src="http://localhost:1313/js/main.js"></script>
 </head>
 
 
@@ -41,14 +41,14 @@
 		<div class="header">
 	
 		<div class="avatar">
-			<a href="https://zhiqli.github.io/">
+			<a href="http://localhost:1313/">
 				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
 			</a>
 		</div>
 	
-	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
 	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
-			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><li><a href="zhiqli@126.com" title="email"><i data-feather="email"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
 		</nav>
 	</div>
 
@@ -174,7 +174,7 @@
 
 
 <div class="back">
-    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
 </div>
 
 

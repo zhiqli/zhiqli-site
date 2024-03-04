@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>100 Go Mistakes and How to Avoid Them - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta itemprop="name" content="100 Go Mistakes and How to Avoid Them">
@@ -14,7 +14,7 @@
 第二章 Code and project organizatiion 1. Unintended variable shadowing 当函数返回多个变量时，语句块内通过:=赋值的变量容易把外部的全局同名变量shadow掉。比如 1 2 3 4 5 6 7 var client *http.Client if xxx {[]() client, err := foo() } else { client, err := bar() } // use client shadow的问题可以通过golangci-lint来发现规避。
 2. Unnecessary nested code 没必要的嵌套主要是指我们在if else 分支的时候有时候可以提前返回，而不是一直深度嵌套下去，这样不好维护。如 1 2 3 4 5 6 7 8 9 10 11 12 13 func foo() { if xxx { if yyy { fxxx() } else { bbb return } } else { aaa return } } 上面的代码修改成下面的样子只有一层嵌套对于后续的维护会清晰很多，有时候也可以用continue来代替return。总之就是提前返回" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://zhiqli.github.io/2024/02/100-go-mistakes-and-how-to-avoid-them/" /><meta property="article:section" content="posts" />
+<meta property="og:url" content="http://localhost:1313/2024/02/100-go-mistakes-and-how-to-avoid-them/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2024-02-24T00:00:00+00:00" />
 <meta property="article:modified_time" content="2024-02-24T00:00:00+00:00" />
 
@@ -22,14 +22,14 @@
 <meta name="twitter:description" content="罗列了100个go开发中容易犯的错误、如何避免这些错误并深入分析其背后的原理，包括一些常见的错误，比如rang loop、defer使用问题，也有一些优化建议，比如减少内存申请次数、理解内存对齐、理解CPU缓存 cache line原理等等，也有一些是凑数的诸如项目结构代码结构之类的。新手老司机都适宜，总体来说非常具有实践意义的一本小书。
 第二章 Code and project organizatiion 1. Unintended variable shadowing 当函数返回多个变量时，语句块内通过:=赋值的变量容易把外部的全局同名变量shadow掉。比如 1 2 3 4 5 6 7 var client *http.Client if xxx {[]() client, err := foo() } else { client, err := bar() } // use client shadow的问题可以通过golangci-lint来发现规避。
 2. Unnecessary nested code 没必要的嵌套主要是指我们在if else 分支的时候有时候可以提前返回，而不是一直深度嵌套下去，这样不好维护。如 1 2 3 4 5 6 7 8 9 10 11 12 13 func foo() { if xxx { if yyy { fxxx() } else { bbb return } } else { aaa return } } 上面的代码修改成下面的样子只有一层嵌套对于后续的维护会清晰很多，有时候也可以用continue来代替return。总之就是提前返回"/>
-<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
-	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
 
-        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
 
-	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	<script src="http://localhost:1313/js/feather.min.js"></script>
 	
-		<script src="https://zhiqli.github.io/js/main.js"></script>
+		<script src="http://localhost:1313/js/main.js"></script>
 </head>
 
 
@@ -41,14 +41,14 @@
 		<div class="header">
 	
 		<div class="avatar">
-			<a href="https://zhiqli.github.io/">
+			<a href="http://localhost:1313/">
 				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
 			</a>
 		</div>
 	
-	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
 	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
-			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><li><a href="zhiqli@126.com" title="email"><i data-feather="email"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
 		</nav>
 	</div>
 
@@ -3588,7 +3588,7 @@ interface 在开发中给我们带了极大的便利，比如io.Reader和io.Writ
 
 
 <div class="back">
-    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
 </div>
 
 

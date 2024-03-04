@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>一些TCP基础笔记 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta itemprop="name" content="一些TCP基础笔记">
@@ -36,7 +36,7 @@ $ sudo ethtool -K eth0 tso off // 关闭tso
 $ sudo ethtool -K eth0 tso on // 开启tso
 TCP协议结构 source port destination port:源端口和目标端口，注意不包括IP是因为这是上一层IP层的事情，这一层（传输层）只负责找到对应的端口，即应用程序。 sequence number：用来标记包的顺序。一个TCP包最多能传1460字节，对于超出的包，需要分片，为了保证对端收到的包是顺序完整的，需要通过seq num来重新组装数据包。值是本报文段所发送的数据的第一个字节的序号。 acknowledgment number：由于tcp是可靠的传输，发送端需要确认对端是否收到包，所以需要ack num来确认，如果没有收到，则会启动重传机制。ack num是期望收到对方的下一个报文段的数据的第一个字节的序号 header：由于tcp header有可选字段，所以长度不定。所以需要这个值作为offset来表示tcp头有多大。 reserved：保留字段，应填为0." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://zhiqli.github.io/2018/03/%E4%B8%80%E4%BA%9Btcp%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/" /><meta property="article:section" content="posts" />
+<meta property="og:url" content="http://localhost:1313/2018/03/%E4%B8%80%E4%BA%9Btcp%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2018-03-24T00:00:00+00:00" />
 <meta property="article:modified_time" content="2018-03-24T00:00:00+00:00" />
 
@@ -55,14 +55,14 @@ sudo ethtool -k eth0 关闭和打开TSO
 $ sudo ethtool -K eth0 tso off // 关闭tso
 $ sudo ethtool -K eth0 tso on // 开启tso
 TCP协议结构 source port destination port:源端口和目标端口，注意不包括IP是因为这是上一层IP层的事情，这一层（传输层）只负责找到对应的端口，即应用程序。 sequence number：用来标记包的顺序。一个TCP包最多能传1460字节，对于超出的包，需要分片，为了保证对端收到的包是顺序完整的，需要通过seq num来重新组装数据包。值是本报文段所发送的数据的第一个字节的序号。 acknowledgment number：由于tcp是可靠的传输，发送端需要确认对端是否收到包，所以需要ack num来确认，如果没有收到，则会启动重传机制。ack num是期望收到对方的下一个报文段的数据的第一个字节的序号 header：由于tcp header有可选字段，所以长度不定。所以需要这个值作为offset来表示tcp头有多大。 reserved：保留字段，应填为0."/>
-<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
-	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
 
-        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
 
-	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	<script src="http://localhost:1313/js/feather.min.js"></script>
 	
-		<script src="https://zhiqli.github.io/js/main.js"></script>
+		<script src="http://localhost:1313/js/main.js"></script>
 </head>
 
 
@@ -74,14 +74,14 @@ TCP协议结构 source port destination port:源端口和目标端口，注意�
 		<div class="header">
 	
 		<div class="avatar">
-			<a href="https://zhiqli.github.io/">
+			<a href="http://localhost:1313/">
 				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
 			</a>
 		</div>
 	
-	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
 	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
-			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><li><a href="zhiqli@126.com" title="email"><i data-feather="email"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
 		</nav>
 	</div>
 
@@ -397,7 +397,7 @@ TCP头中的window字段，是接收端告诉发送端自己还有多少缓冲�
 
 
 <div class="back">
-    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
 </div>
 
 

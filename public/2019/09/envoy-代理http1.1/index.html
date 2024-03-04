@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>envoy 代理http1.1 - 广阔天地大有作为</title><meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta itemprop="name" content="envoy 代理http1.1">
@@ -28,7 +28,7 @@ envoy升级以后，按照配置设置了upgrade_configs，请求发现front-env
 而envoy2已经设置了allow_connect啊。后来查明原来我是在cluster里面的http2_protocol_options中设置了allow_connect=true，需要在http_connection_mananger中的http2_protocol_options中设置。
 设置完成，envoy2又出现以下日志 1 2 [2019-09-10 07:14:56.094][000057][info][client] [source/common/http/codec_client.cc:118] [C3693] protocol error: The user callback function failed [2019-09-10T07:14:55.632Z] &#34;GET /xlchannel.app2amlogic/sio/?EIO=3&amp;transport=websocket HTTP/2&#34; 503 UC 0 57 1 - &#34;192." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://zhiqli.github.io/2019/09/envoy-%E4%BB%A3%E7%90%86http1.1/" /><meta property="article:section" content="posts" />
+<meta property="og:url" content="http://localhost:1313/2019/09/envoy-%E4%BB%A3%E7%90%86http1.1/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2019-09-10T00:00:00+00:00" />
 <meta property="article:modified_time" content="2019-09-10T00:00:00+00:00" />
 
@@ -43,14 +43,14 @@ envoy升级以后，按照配置设置了upgrade_configs，请求发现front-env
 查了好久都没找到答案，上github提了一个issue，后来回复，由于envoy之间是http2连接，需要设置allow_connect=true才行，参考文档描述。 由于之前文档没有描述allow_connect，现在看到的是我提了issue才加上的描述。所以自己查了很久也没搞定。 设置上allow_connect以后，frontenvoy的日志从503 UR变成503了。 查看envoy1的日志，503 UR 以及invalid frame: Invalid HTTP header field was received。和刚才envoy1一样的。
 而envoy2已经设置了allow_connect啊。后来查明原来我是在cluster里面的http2_protocol_options中设置了allow_connect=true，需要在http_connection_mananger中的http2_protocol_options中设置。
 设置完成，envoy2又出现以下日志 1 2 [2019-09-10 07:14:56.094][000057][info][client] [source/common/http/codec_client.cc:118] [C3693] protocol error: The user callback function failed [2019-09-10T07:14:55.632Z] &#34;GET /xlchannel.app2amlogic/sio/?EIO=3&amp;transport=websocket HTTP/2&#34; 503 UC 0 57 1 - &#34;192."/>
-<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/normalize.css" />
-	<link rel="stylesheet" type="text/css" media="screen" href="https://zhiqli.github.io/css/main.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.css" />
 
-        <link id="dark-scheme" rel="stylesheet" type="text/css" href="https://zhiqli.github.io/css/dark.css" />
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.css" />
 
-	<script src="https://zhiqli.github.io/js/feather.min.js"></script>
+	<script src="http://localhost:1313/js/feather.min.js"></script>
 	
-		<script src="https://zhiqli.github.io/js/main.js"></script>
+		<script src="http://localhost:1313/js/main.js"></script>
 </head>
 
 
@@ -62,14 +62,14 @@ envoy升级以后，按照配置设置了upgrade_configs，请求发现front-env
 		<div class="header">
 	
 		<div class="avatar">
-			<a href="https://zhiqli.github.io/">
+			<a href="http://localhost:1313/">
 				<img src="https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png" alt="广阔天地大有作为" />
 			</a>
 		</div>
 	
-	<h1 class="site-title"><a href="https://zhiqli.github.io/">广阔天地大有作为</a></h1>
+	<h1 class="site-title"><a href="http://localhost:1313/">广阔天地大有作为</a></h1>
 	<div class="site-description"><p>你想拥有什么，就去追求什么</p><nav class="nav social">
-			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
+			<ul class="flat"><li><a href="https://github.com/zhiqli/" title="Github"><i data-feather="github"></i></a></li><li><a href="/index.xml" title="RSS"><i data-feather="rss"></i></a></li><li><a href="zhiqli@126.com" title="email"><i data-feather="email"></i></a></li><span class="scheme-toggle"><a href="#" id="scheme-toggle"></a></ul>
 		</nav>
 	</div>
 
@@ -231,7 +231,7 @@ envoy升级以后，按照配置设置了upgrade_configs，请求发现front-env
 
 
 <div class="back">
-    <a href="https://zhiqli.github.io/"><span aria-hidden="true">← Back</span></a>
+    <a href="http://localhost:1313/"><span aria-hidden="true">← Back</span></a>
 </div>
 
 
