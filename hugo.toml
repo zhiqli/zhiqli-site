@@ -2,7 +2,7 @@ baseURL = "https://zhiqli.github.io/"
 languageCode = "zh"
 title = "广阔天地大有作为"
 theme = "ink-free"
-paginate = 5
+pagination.pagerSize = 5
 
 copyright = "© Copyright zhiqli"
 # Demo only
