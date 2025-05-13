@@ -7,7 +7,7 @@ countwords }}
 {{ $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections }}
 
 <h1>Statistics</h1>
-<p><b>{{ $scratch.Get "wordcount" | lang.NumFmt 0 }}</b> words published over {{len $pages }} articles since
+<p><b>{{ $scratch.Get "wordcount" | humanize }}</b> words published over {{len $pages }} articles since
     {{ range last 1 $pages }}
     {{ .Date.Month }} {{ .Date.Year }}.
     {{ end }}
