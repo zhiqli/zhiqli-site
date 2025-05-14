@@ -15,7 +15,7 @@ countwords }}
 {{ $readingMins := div ($scratch.Get "wordcount") .Site.Params.wpm }}
 <p>Reading all that should take you about {{ $readingMins }} minutes
     {{ if gt $readingMins 60 }}
-    (or ~{{div $readingMins 60.0 | lang.NumFmt 1 }} hrs).
+    (or ~{{div $readingMins 60.0 | humanize }} hrs).
     {{else}}
     .
     {{end}}
@@ -23,7 +23,7 @@ countwords }}
 <p>
     For reference, that's about {{div ($scratch.Get "wordcount") (.Site.Params.referenceBookWords | default
     95356.0 ) |
-    lang.NumFmt 1 }}x "{{
+    humanize }}x "{{
     .Site.Params.referenceBook |
     default "The Hobbit"}}" by {{ .Site.Params.referenceAuthor | default "J. R. R. Tolkien"}}.
 </p>
