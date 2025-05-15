@@ -20,7 +20,7 @@ copyright = "© Copyright zhiqli"
 	featherIconsCDN = false
 
 	# Site color - dark/light/auto
-	mode = "auto"
+	mode = "light"
 
 	# Enable a table of contents:
 	# Either "static"/true, "floating", "both", or "none" (default: static)
@@ -72,6 +72,11 @@ weight = 4
 name = "Tags & Stats"
 url = "/tags"
 weight = 5
+
+[[menu.main]]
+name = "Running"
+url = "/running"
+weight = 6
 
 [[params.social]]
 name = "Github"
