@@ -75,7 +75,7 @@ weight = 5
 
 [[menu.main]]
 name = "Running"
-url = "/running"
+url = "https://zhiqli.github.io/running_page/"
 weight = 6
 
 [[params.social]]
