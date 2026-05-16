@@ -21,24 +21,24 @@
 	{{- template "_internal/schema.html" . -}}
 	{{- template "_internal/opengraph.html" . -}}
 	{{- template "_internal/twitter_cards.html" . -}}
-	<link rel="stylesheet" type="text/css" media="screen" href="{{ .Site.BaseURL }}css/normalize.css" />
-	<link rel="stylesheet" type="text/css" media="screen" href="{{ .Site.BaseURL }}css/main.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="{{ "css/normalize.css" | relURL }}" />
+	<link rel="stylesheet" type="text/css" media="screen" href="{{ "css/main.css" | relURL }}" />
 	{{- if isset .Site.Params "customcss" }}
-		<link rel="stylesheet" type="text/css" href="{{ .Site.BaseURL }}{{ .Site.Params.customCSS }}" />
+		<link rel="stylesheet" type="text/css" href="{{ .Site.Params.customCSS | relURL }}" />
 	{{ end }}
 
-        <link id="dark-scheme" rel="stylesheet" type="text/css" href="{{ .Site.BaseURL }}css/dark.css" />
+        <link id="dark-scheme" rel="stylesheet" type="text/css" href="{{ "css/dark.css" | relURL }}" />
         {{- if isset .Site.Params "customdarkcss" }}
-                <link id="dark-scheme" rel="stylesheet" type="text/css" href="{{ .Site.BaseURL }}{{ .Site.Params.customDarkCSS }}" />
+                <link id="dark-scheme" rel="stylesheet" type="text/css" href="{{ .Site.Params.customDarkCSS | relURL }}" />
         {{- end }}
 
 	{{ if and (isset .Site.Params "social") (isset .Site.Params "feathericonscdn") (eq .Site.Params.featherIconsCDN true) -}}
 		<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
 	{{- else if (isset .Site.Params "social") -}}
-		<script src="{{ .Site.BaseURL }}js/feather.min.js"></script>
+		<script src="{{ "js/feather.min.js" | relURL }}"></script>
 	{{ end }}
-		<script src="{{ .Site.BaseURL }}js/main.js"></script>
+		<script src="{{ "js/main.js" | relURL }}"></script>
 	{{- if isset .Site.Params "customjs" -}}
-		{{- range .Site.Params.customJS }}<script src="{{ $.Site.BaseURL }}{{ . }}"></script>{{- end }}
+		{{- range .Site.Params.customJS }}<script src="{{ . | relURL }}"></script>{{- end }}
 	{{- end }}
 </head>

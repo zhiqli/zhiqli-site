@@ -1,0 +1,58 @@
+{{ $runningPage := .Site.GetPage "running" }}
+{{ $running := dict }}
+{{ with $runningPage }}{{ $running = .Params.running | default dict }}{{ end }}
+{{ with .Site.Data.running }}{{ $running = . }}{{ end }}
+{{ $dataUrl := index $running "dataUrl" | default "https://raw.githubusercontent.com/zhiqli/running_page/master/src/static/activities.json" }}
+{{ $sourcePage := index $running "sourcePage" | default "https://zhiqli.github.io/running_page/" }}
+
+<section class="running-embed running-redesign section" aria-label="跑步统计">
+	<div class="running-card running-dashboard" data-running-dashboard data-source-url="{{ $dataUrl }}" data-source-page="{{ $sourcePage }}">
+		<section class="running-metrics" aria-label="跑步指标">
+			<div>
+				<span>总里程</span>
+				<strong data-running-total>-- km</strong>
+			</div>
+			<div>
+				<span>今年里程</span>
+				<strong data-running-year>-- km</strong>
+			</div>
+			<div>
+				<span>本月里程</span>
+				<strong data-running-month>-- km</strong>
+			</div>
+			<div>
+				<span>平均配速</span>
+				<strong data-running-pace>--</strong>
+			</div>
+		</section>
+
+		<section class="running-detail-grid">
+			<div class="running-calendar-panel">
+				<div class="running-calendars" data-running-calendar aria-label="按年份展示跑步日历"></div>
+			</div>
+		</section>
+
+		<section class="running-table-wrap">
+			<div class="running-visual-head">
+				<strong data-running-recent-count>--</strong>
+			</div>
+			<table class="running-table">
+				<thead>
+					<tr>
+						<th>日期</th>
+						<th>名称</th>
+						<th>距离</th>
+						<th>时长</th>
+						<th>配速</th>
+					</tr>
+				</thead>
+				<tbody data-running-table>
+					<tr><td colspan="5">加载中...</td></tr>
+				</tbody>
+			</table>
+			<button class="running-load-more" type="button" data-running-load-more hidden>加载更多</button>
+		</section>
+	</div>
+</section>
+
+<script src="{{ "js/running-dashboard.js" | relURL }}?v={{ now.Unix }}" defer></script>

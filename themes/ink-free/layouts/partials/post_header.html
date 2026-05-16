@@ -1,4 +1,5 @@
 <div class="post-header">
+    {{ if not .Params.hideTitle }}
     {{ if ne .Date.Year 1 }}
     <div class="meta">
         <div class="date">
@@ -11,4 +12,5 @@
     <div class="matter">
         <h1 class="title">{{ .Title }}</h1>
     </div>
+    {{ end }}
 </div>

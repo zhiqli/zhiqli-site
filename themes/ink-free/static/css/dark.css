@@ -1,26 +1,15 @@
 html.dark body {
-  color: #ddd;
-  background-color: #000;
+    color: #dfe8df;
+    background:
+        linear-gradient(rgba(223, 232, 223, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(223, 232, 223, 0.04) 1px, transparent 1px),
+        #0e130f;
+    background-size: 28px 28px;
 }
 
-html.dark ::-moz-selection {
-  background: #9375fd;
-  color: #fff;
-  text-shadow: none
-}
-
-html.dark ::selection {
-  background: #9375fd;
-  color: #fff;
-  text-shadow: none
-}
-
-html.dark hr {
-  border-color: #333;
-}
-
-html.dark blockquote {
-  border-color: #ddd;
+html.dark a,
+html.dark a:hover {
+    color: #8bd77f;
 }
 
 html.dark h1,
@@ -28,63 +17,318 @@ html.dark h2,
 html.dark h3,
 html.dark h4,
 html.dark h5,
-html.dark h6 {
-  color: #ddd;
-}
-
-html.dark a, html.dark a:hover {
-  color: #9375fd;
-  text-decoration: none;
-}
-
-html.dark table tbody tr:nth-of-type(even) {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-html.dark .site-description a,
-html.dark .site-description a:hover {
-  color: #ddd;
-  text-decoration: underline;
-}
-
-html.dark a:hover {
-  opacity: 0.8;
-}
-
-html.dark .post-tags .tags a {
-  border: 1px solid #ddd;
-  color: #ddd;
-}
-
+html.dark h6,
 html.dark .site-title a {
-  color: #ddd;
-  text-decoration: none !important;
+    color: #f2f7f1;
 }
 
-html.dark .header nav,
-html.dark .footer {
-  border-color: #333;
+html.dark .header,
+html.dark .post,
+html.dark .toc,
+html.dark .running-card {
+    color: #dfe8df;
+    background: #151c17;
+    border-color: #2b362d;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
+}
+
+html.dark .primary-nav,
+html.dark .footer,
+html.dark table th,
+html.dark table td,
+html.dark hr {
+    border-color: #2b362d;
+}
+
+html.dark .site-subtitle,
+html.dark .description,
+html.dark .post-header .meta .date .rest,
+html.dark .section-heading,
+html.dark .running-metrics span,
+html.dark .running-insights span,
+html.dark .running-visual-head,
+html.dark figcaption,
+html.dark .footer,
+html.dark .toc a,
+html.dark .section-nav a {
+    color: #9caa9e;
+}
+
+html.dark .social a,
+html.dark .primary-nav a,
+html.dark .section-heading a,
+html.dark .pagination a,
+html.dark .back a,
+html.dark .post-header .meta .date,
+html.dark .running-data-panel,
+html.dark .running-visual,
+html.dark .running-table-wrap,
+html.dark .running-year-grid,
+html.dark .running-metrics div,
+html.dark .running-insights div {
+    color: #dfe8df;
+    background: #1d271f;
+    border-color: #2b362d;
+}
+
+html.dark .running-metrics div,
+html.dark .running-insights div {
+    background: #151c17;
+}
+
+html.dark .running-status {
+    color: #bcefb6;
+    background: #172319;
+    border-color: #2d5530;
+}
+
+html.dark .year-row div {
+    background: #2b362d;
+}
+
+html.dark .running-table th,
+html.dark .running-table td {
+    border-color: #2b362d;
+}
+
+html.dark .social a:hover,
+html.dark .primary-nav a:hover,
+html.dark .primary-nav a.active,
+html.dark .section-heading a:hover,
+html.dark .pagination a:hover,
+html.dark .back a:hover {
+    color: #101510;
+    background: #8bd77f;
+    border-color: #8bd77f;
+}
+
+html.dark .post .title.small a {
+    color: #f2f7f1;
+}
+
+html.dark .post .tags a,
+html.dark .tag-cloud a {
+    color: #8bd77f;
+    background: #172319;
+    border-color: #2d5530;
+}
+
+html.dark blockquote {
+    color: #dfe8df;
+    background: #172319;
+    border-color: #8bd77f;
+}
+
+html.dark code:not(pre *) {
+    color: #dfe8df;
+    background: #202a22;
 }
 
 html.dark .highlight {
-  background-color: #333;
+    background: #0f1511;
+    border-color: #2b362d;
 }
 
-html.dark .header .site-description .scheme-toggle a svg {
-    fill: #f8e04f !important;
-    color: #f8e04f !important;
+html.dark .section-nav {
+    border-left-color: #2b362d;
 }
 
-html.dark td pre code {
-  color: #333;
+html.dark .section-nav li.active > a,
+html.dark .toc a:hover {
+    color: #8bd77f;
 }
 
-html.dark code:not(pre *)  {
-  color: #ddd;
-  background-color: #333;
+html.dark .running-redesign .running-card,
+html.dark .running-redesign .running-metrics div,
+html.dark .running-redesign .running-insights div,
+html.dark .running-redesign .running-visual,
+html.dark .running-redesign .running-calendar-panel,
+html.dark .running-redesign .running-year-grid,
+html.dark .running-redesign .running-table-wrap,
+html.dark .running-side-panel {
+    color: #dfe8df;
+    background: #151c17;
+    border-color: #2b362d;
 }
 
-html.dark .section-nav li.active > a {
-  font-weight: 600;
-  color: #ddd;
+html.dark .running-redesign .running-card {
+    background: #101510;
+}
+
+html.dark .running-side-panel {
+    background: #121a14;
+}
+
+html.dark .calendar-cell {
+    background: #202a22;
+}
+
+html.dark .calendar-cell.level-1 {
+    background: #214b25;
+}
+
+html.dark .calendar-cell.level-2 {
+    background: #317139;
+}
+
+html.dark .calendar-cell.level-3 {
+    background: #46984e;
+}
+
+html.dark .calendar-cell.level-4 {
+    background: #7bd36f;
+}
+
+html.dark .running-calendar-weekdays,
+html.dark .running-calendar-legend {
+    color: #9caa9e;
+}
+
+html.dark .running-calendar-year-label {
+    color: #dfe8df;
+}
+
+html.dark .running-calendar-legend .level-0 {
+    background: #202a22;
+}
+
+html.dark .running-calendar-legend .level-1 {
+    background: #214b25;
+}
+
+html.dark .running-calendar-legend .level-2 {
+    background: #317139;
+}
+
+html.dark .running-calendar-legend .level-3 {
+    background: #46984e;
+}
+
+html.dark .running-calendar-legend .level-4 {
+    background: #7bd36f;
+}
+
+html.dark body {
+    color: #e5ebe3;
+    background:
+        linear-gradient(rgba(229, 235, 227, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(229, 235, 227, 0.04) 1px, transparent 1px),
+        radial-gradient(circle at top left, rgba(123, 211, 111, 0.08), transparent 28rem),
+        #10140f;
+    background-size: 28px 28px, 28px 28px, auto, auto;
+}
+
+html.dark .header,
+html.dark .workbench-panel,
+html.dark .workbench-note,
+html.dark .post,
+html.dark .running-redesign .running-metrics,
+html.dark .running-detail-grid,
+html.dark .running-table-wrap,
+html.dark .running-calendar-panel,
+html.dark .running-side-panel {
+    background: #161d17;
+    border-color: #2c352c;
+}
+
+html.dark .primary-nav,
+html.dark .workbench-stats a,
+html.dark .post-header .meta .date,
+html.dark .running-redesign .running-metrics div,
+html.dark .running-redesign .running-insights div {
+    background: #1d251e;
+    border-color: #2c352c;
+}
+
+html.dark .workbench-note p,
+html.dark .description {
+    color: #aab5aa;
+}
+
+html.dark .section-heading,
+html.dark .footer {
+    border-color: #2c352c;
+}
+
+html.dark .primary-nav a:hover,
+html.dark .primary-nav a.active,
+html.dark .social a:hover,
+html.dark .section-heading a:hover,
+html.dark .pagination a:hover,
+html.dark .back a:hover {
+    color: #111610;
+    background: #8ccf7d;
+    border-color: #8ccf7d;
+}
+
+/* Dark adjustments for Site UI v4 */
+html.dark body {
+    color: #e6ece4;
+    background:
+        radial-gradient(circle at 18% 0%, rgba(140, 207, 125, 0.08), transparent 28rem),
+        linear-gradient(#111610, #0d120d);
+}
+
+html.dark .header,
+html.dark .primary-nav,
+html.dark .section-heading,
+html.dark .post,
+html.dark .footer {
+    background: transparent;
+    border-color: #2c342c;
+    box-shadow: none;
+}
+
+html.dark .social a,
+html.dark .section-heading a {
+    background: transparent;
+    border-color: #2c342c;
+    color: #a8b3a6;
+}
+
+html.dark .primary-nav a {
+    color: #a8b3a6;
+}
+
+html.dark .primary-nav a:hover,
+html.dark .primary-nav a.active {
+    color: #e6ece4;
+    background: #192119;
+    border-color: #2c342c;
+}
+
+html.dark .post-header .meta .date {
+    background: transparent;
+    border: 0;
+}
+
+html.dark .description {
+    color: #a8b3a6;
+}
+
+html.dark .running-redesign .running-metrics,
+html.dark .running-detail-grid,
+html.dark .running-table-wrap {
+    background: #151c15;
+    border-color: #2c342c;
+}
+
+html.dark .running-redesign .running-metrics div,
+html.dark .running-redesign .running-insights div {
+    background: #101710;
+    border-color: #2c342c;
+}
+
+html.dark .running-redesign .running-metrics strong,
+html.dark .running-redesign .running-insights strong {
+    color: #e6ece4;
+}
+
+html.dark .about-lines p {
+    border-color: #2c342c;
+    color: #e6ece4;
+}
+
+html.dark .about-lines span:nth-child(2) {
+    color: #a8b3a6;
 }

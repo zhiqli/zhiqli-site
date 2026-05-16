@@ -1,0 +1,24 @@
+# Replace these values with exported running data. The Running page reads this
+# file first, then falls back to content/running.md front matter.
+intro: "跑步数据来自 zhiqli/running_page 仓库，当前页面负责拉取原始 activities.json 并用博客自己的 UI 渲染。"
+sourceRepo: "zhiqli/running_page"
+sourcePage: "https://zhiqli.github.io/running_page/"
+dataUrl: "https://raw.githubusercontent.com/zhiqli/running_page/master/src/static/activities.json"
+
+monthLabel: "This month"
+monthDistance: "-- km"
+yearLabel: "This year"
+yearDistance: "-- km"
+streakLabel: "Streak"
+streak: "-- days"
+
+recentRuns:
+  - title: "Morning loop"
+    distance: "待记录"
+    meta: "配速 / 心率 / 路线"
+  - title: "Easy run"
+    distance: "待记录"
+    meta: "恢复跑"
+  - title: "Long run"
+    distance: "待记录"
+    meta: "周末长距离"

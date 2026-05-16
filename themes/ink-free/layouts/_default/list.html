@@ -1,22 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html {{- if (eq .Site.Params.mode "dark" ) -}}class="dark" {{ end }}>
 {{ partial "header.html" . }}
 
 <body>
-	<div class="container wrapper list">
+	<div class="site-shell wrapper list">
 		{{ partial "head.html" . }}
 
 		{{ if isset .Data "Term" }}
-			<h2>{{ .Data.Term }}</h2>
+			<h2 class="page-title">{{ .Data.Term }}</h2>
 		{{ else }}
 		<h2 class="page-title">{{ .Name }}</h2>
 		{{ end }}
 
-		<ul class="posts flat">
+		<div class="posts">
 			{{- range .Data.Pages -}}
 			{{- if (in (.Site.Params.excludedTypes | default (slice "page")) .Type) -}}
 			{{- else -}}
-			<li class="post">
+			<article class="post">
 				<div class="post-header">
 					<div class="meta">
 						<div class="date">
@@ -27,6 +27,20 @@
 					<div class="matter">
 						<h4 class="title small">
 							<a href="{{ .RelPermalink }}">{{.Title}}{{ if .Draft }}<sup class="draft-label">DRAFT</sup>{{ end }}</a>
+						</h4>
+						{{ $wordCountNoCode := replaceRE `(?s)<div class="highlight">.*?</div>` "" .Content | countwords }}
+						<h4 class="title small smaller">
+							{{ $wordCountNoCode | lang.FormatNumberCustom 0 }} words, ~{{ div $wordCountNoCode .Site.Params.wpm }} min read
+						</h4>
+						<h4 class="title small smaller">
+							{{ if gt .Params.tags 0 }}
+							<ul class="tags flat">
+								{{ $tagUrl := "/tags/"}}
+								{{ range first .Site.Params.maxTags .Params.tags }}
+								<li class="tag-li"><a href="{{ $tagUrl | relLangURL }}{{ . | urlize }}">{{ . }}</a></li>
+								{{ end }}
+							</ul>
+							{{ end }}
 						</h4>
 						<span class="description">
 							{{ if isset .Params "description" }}
@@ -39,10 +53,10 @@
 						</span>
 					</div>
 				</div>
-			</li>
+			</article>
 			{{- end -}}
 			{{- end -}}
-		</ul>
+		</div>
 	</div>
 
 	{{ partial "footer.html" . }}
