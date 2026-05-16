@@ -1968,8 +1968,8 @@ body {
     border-bottom: 1px solid var(--line);
     color: var(--ink);
     font-family: var(--mono);
-    font-size: clamp(1rem, 2vw, 1.16rem);
-    font-weight: 650;
+    font-size: clamp(0.92rem, 1.6vw, 1.02rem);
+    font-weight: 560;
     line-height: 1.45;
 }
 
@@ -1978,7 +1978,7 @@ body {
 }
 
 .about-lines span:nth-child(2) {
-    color: var(--muted);
+    color: var(--ink);
 }
 
 @media (max-width: 620px) {
@@ -2168,6 +2168,68 @@ body {
     .list .post-header .meta .date .day {
         margin: 0 !important;
     }
+}
+
+/* Weekly archive grouping */
+.weekly-groups {
+    gap: 18px !important;
+}
+
+.weekly-year {
+    border-bottom: 1px solid var(--line) !important;
+}
+
+.weekly-year summary {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 1rem !important;
+    padding: 14px 0 !important;
+    color: var(--ink) !important;
+    cursor: pointer !important;
+    list-style: none !important;
+    font-family: var(--mono) !important;
+}
+
+.weekly-year summary::-webkit-details-marker {
+    display: none !important;
+}
+
+.weekly-year summary span {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.65rem !important;
+    font-size: 1.25rem !important;
+    font-weight: 850 !important;
+}
+
+.weekly-year summary span::before {
+    width: 0.55rem !important;
+    height: 0.55rem !important;
+    content: "" !important;
+    border-right: 2px solid var(--accent-2) !important;
+    border-bottom: 2px solid var(--accent-2) !important;
+    transform: rotate(-45deg) !important;
+    transition: transform 140ms ease !important;
+}
+
+.weekly-year[open] summary span::before {
+    transform: rotate(45deg) !important;
+}
+
+.weekly-year summary strong {
+    color: var(--muted) !important;
+    font-size: 0.72rem !important;
+    font-weight: 750 !important;
+}
+
+.weekly-year-posts {
+    display: grid !important;
+    gap: 10px !important;
+}
+
+.weekly-year[open] .weekly-year-posts {
+    padding-bottom: 12px !important;
 }
 
 /* Page width alignment */

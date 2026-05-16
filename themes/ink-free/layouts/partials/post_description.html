@@ -1,0 +1,11 @@
+{{- if isset .Params "description" -}}
+{{- .Description | plainify -}}
+{{- else -}}
+{{- $contentNoCode := replaceRE `(?s)<div class="highlight">.*?</div>` "" .Content -}}
+{{- $plain := trim (replaceRE `\s+` " " (htmlUnescape (plainify $contentNoCode))) " \n\r\t" -}}
+{{- if gt (len $plain) 120 -}}
+{{- printf "%s..." (slicestr $plain 0 120) -}}
+{{- else -}}
+{{- $plain -}}
+{{- end -}}
+{{- end -}}

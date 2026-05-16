@@ -24,13 +24,7 @@
 							<a href="{{ .RelPermalink }}">{{.Title}}{{ if .Draft }}<sup class="draft-label">DRAFT</sup>{{ end }}</a>
 						</h4>
 						<span class="description">
-							{{ if isset .Params "description" }}
-								{{ .Description }}
-							{{ else if gt (len .RawContent) 120 }}
-								{{ slicestr .RawContent 0 120 }}...
-							{{ else }}
-								{{ .RawContent }}
-							{{ end }}
+							{{ partial "post_description.html" . }}
 						</span>
 					</div>
 				</div>

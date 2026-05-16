@@ -12,6 +12,59 @@
 		<h2 class="page-title">{{ .Name }}</h2>
 		{{ end }}
 
+		{{ if eq .Section "weekly" }}
+		<div class="posts weekly-groups">
+			{{ $currentYear := now.Format "2006" }}
+			{{ range (.Data.Pages.GroupByDate "2006") }}
+			{{ $isCurrentYear := eq .Key $currentYear }}
+			<details class="weekly-year" {{ if $isCurrentYear }}open{{ end }}>
+				<summary>
+					<span>{{ .Key }}</span>
+					<strong>{{ len .Pages }} 篇</strong>
+				</summary>
+				<div class="weekly-year-posts">
+					{{- range .Pages -}}
+					{{- if (in (.Site.Params.excludedTypes | default (slice "page")) .Type) -}}
+					{{- else -}}
+					<article class="post">
+						<div class="post-header">
+							<div class="meta">
+								<div class="date">
+									<span class="day">{{ dateFormat "02" .Date }}</span>
+									<span class="rest">{{ if $.Site.Data.month }}{{ index $.Site.Data.month (printf "%d" .Date.Month) }} {{ .Date.Year }}{{ else }}{{ dateFormat "Jan 2006" .Date }}{{ end }}</span>
+								</div>
+							</div>
+							<div class="matter">
+								<h4 class="title small">
+									<a href="{{ .RelPermalink }}">{{.Title}}{{ if .Draft }}<sup class="draft-label">DRAFT</sup>{{ end }}</a>
+								</h4>
+								{{ $wordCountNoCode := replaceRE `(?s)<div class="highlight">.*?</div>` "" .Content | countwords }}
+								<h4 class="title small smaller">
+									{{ $wordCountNoCode | lang.FormatNumberCustom 0 }} words, ~{{ div $wordCountNoCode .Site.Params.wpm }} min read
+								</h4>
+								<h4 class="title small smaller">
+									{{ if gt .Params.tags 0 }}
+									<ul class="tags flat">
+										{{ $tagUrl := "/tags/"}}
+										{{ range first .Site.Params.maxTags .Params.tags }}
+										<li class="tag-li"><a href="{{ $tagUrl | relLangURL }}{{ . | urlize }}">{{ . }}</a></li>
+										{{ end }}
+									</ul>
+									{{ end }}
+								</h4>
+								<span class="description">
+									{{ partial "post_description.html" . }}
+								</span>
+							</div>
+						</div>
+					</article>
+					{{- end -}}
+					{{- end -}}
+				</div>
+			</details>
+			{{ end }}
+		</div>
+		{{ else }}
 		<div class="posts">
 			{{- range .Data.Pages -}}
 			{{- if (in (.Site.Params.excludedTypes | default (slice "page")) .Type) -}}
@@ -43,13 +96,7 @@
 							{{ end }}
 						</h4>
 						<span class="description">
-							{{ if isset .Params "description" }}
-								{{ .Description }}
-							{{ else if gt (len .RawContent) 120 }}
-								{{ slicestr .RawContent 0 120 }}...
-							{{ else }}
-								{{ .RawContent }}
-							{{ end }}
+							{{ partial "post_description.html" . }}
 						</span>
 					</div>
 				</div>
@@ -57,6 +104,7 @@
 			{{- end -}}
 			{{- end -}}
 		</div>
+		{{ end }}
 	</div>
 
 	{{ partial "footer.html" . }}
