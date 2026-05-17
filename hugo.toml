@@ -15,7 +15,7 @@ copyright = "© Copyright zhiqli"
 	subtitle = "你想拥有什么，就去追求什么"
 
 	# Optional 64x64 avatar image.
-	avatar = "https://raw.githubusercontent.com/zhiqli/imgs/main/avatar.png"
+	avatar = "/images/avatar-anime.png"
 
 	featherIconsCDN = false
 
@@ -72,6 +72,11 @@ weight = 4
 name = "跑步"
 url = "/running"
 weight = 6
+
+[[menu.main]]
+name = "读书"
+url = "/reading"
+weight = 7
 
 [[params.social]]
 name = "Github"

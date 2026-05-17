@@ -332,3 +332,15 @@ html.dark .about-lines p {
 html.dark .about-lines span:nth-child(2) {
     color: #a8b3a6;
 }
+
+html.dark .about-card {
+    background:
+        linear-gradient(90deg, rgba(21, 28, 21, 0.96) 0%, rgba(21, 28, 21, 0.88) 58%, rgba(57, 43, 32, 0.38) 100%),
+        repeating-linear-gradient(108deg, transparent 0 112px, rgba(140, 207, 125, 0.1) 113px 116px, transparent 117px 178px),
+        linear-gradient(135deg, #151c15, #191d15);
+}
+
+html.dark .about-card::before {
+    background:
+        repeating-linear-gradient(108deg, transparent 0 84px, rgba(230, 236, 228, 0.08) 85px 87px, transparent 88px 152px);
+}

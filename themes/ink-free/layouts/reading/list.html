@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html {{- if (eq .Site.Params.mode "dark" ) -}}class="dark" {{ end }}>
+{{ partial "header.html" . }}
+
+<body class="reading-page">
+	<div class="site-shell wrapper">
+		{{ partial "head.html" . }}
+		<main class="reading-layout" data-reading-page data-batch-size="12">
+			{{ $readingPages := where .Site.RegularPages "Section" "reading" }}
+			{{ $readingPages = where $readingPages "Params.hidden" "ne" true }}
+			{{ $books := .Site.Data.douban_books | default (slice) }}
+			<section class="reading-columns">
+				<section class="reading-articles" aria-label="阅读笔记文章">
+					<div class="reading-section-head">
+						<h3>阅读笔记</h3>
+						<span>{{ len $readingPages }} 篇</span>
+					</div>
+					{{ if gt (len $readingPages) 0 }}
+					<div class="posts">
+						{{ range $readingPages.ByDate.Reverse }}
+						<article class="post">
+							<div class="post-header">
+								<div class="meta">
+									<div class="date">
+										<span class="day">{{ dateFormat "02" .Date }}</span>
+										<span class="rest">{{ if $.Site.Data.month }}{{ index $.Site.Data.month (printf "%d" .Date.Month) }} {{ .Date.Year }}{{ else }}{{ dateFormat "Jan 2006" .Date }}{{ end }}</span>
+									</div>
+								</div>
+								<div class="matter">
+									<h4 class="title small">
+										<a href="{{ .RelPermalink }}">{{ .Title }}{{ if .Draft }}<sup class="draft-label">DRAFT</sup>{{ end }}</a>
+									</h4>
+									{{ $wordCountNoCode := replaceRE `(?s)<div class="highlight">.*?</div>` "" .Content | countwords }}
+									<h4 class="title small smaller">
+										{{ $wordCountNoCode | lang.FormatNumberCustom 0 }} words, ~{{ div $wordCountNoCode .Site.Params.wpm }} min read
+									</h4>
+									<span class="description">{{ partial "post_description.html" . }}</span>
+								</div>
+							</div>
+						</article>
+						{{ end }}
+					</div>
+					{{ else }}
+					{{ end }}
+				</section>
+
+				<section class="douban-books" aria-label="豆瓣已读列表">
+					<div class="reading-section-head">
+						<h3>读过</h3>
+						<span>共 {{ len $books }} 本</span>
+					</div>
+					{{ if gt (len $books) 0 }}
+					<div class="douban-book-grid">
+						{{ range $books }}
+						<article class="douban-book" data-reading-book>
+							<a class="douban-cover" href="{{ .url }}" target="_blank" rel="noreferrer">
+								{{ $cover := .cover }}
+								{{ if $cover }}
+								<img src="{{ $cover }}" alt="{{ .title }}" referrerpolicy="no-referrer" loading="lazy" />
+								{{ else }}
+								<span>{{ substr .title 0 1 }}</span>
+								{{ end }}
+							</a>
+							<div class="douban-book-body">
+								<h4><a href="{{ .url }}" target="_blank" rel="noreferrer">{{ .title }}</a></h4>
+								{{ with .author }}<p>{{ . }}</p>{{ end }}
+								<div class="douban-book-meta">
+									{{ with .readDate }}<span>{{ . }}</span>{{ end }}
+									{{ with .rating }}
+									{{ $rating := int . }}
+									<span class="douban-stars" aria-label="{{ $rating }} / 5 星">
+										{{ range seq 1 5 }}<span class="douban-star {{ if le . $rating }}is-filled{{ else }}is-empty{{ end }}">★</span>{{ end }}
+									</span>
+									{{ end }}
+								</div>
+								{{ with .comment }}<p class="douban-comment">{{ . }}</p>{{ end }}
+							</div>
+						</article>
+						{{ end }}
+					</div>
+					<button class="reading-load-more" type="button" data-reading-load-more hidden>加载更多</button>
+					{{ else }}
+					<p class="reading-empty">还没有同步豆瓣已读。运行 <code>node scripts/sync_douban_books.js</code> 后会生成书目。</p>
+					{{ end }}
+				</section>
+			</section>
+		</main>
+	</div>
+	{{ partial "footer.html" . }}
+	<script src="{{ "js/reading-page.js" | relURL }}?v={{ now.Unix }}" defer></script>
+</body>
+
+</html>

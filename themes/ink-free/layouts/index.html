@@ -2,63 +2,56 @@
 <html {{- if (eq .Site.Params.mode "dark" ) -}}class="dark" {{ end }}>
 {{ partial "header.html" . }}
 
-<body class="home">
+<body class="home home-portal">
 	<div class="site-shell wrapper">
 		{{ partial "head.html" . }}
 
-		<main>
-			<section class="recent-posts section" id="posts">
-				<div class="section-heading">
-					<p>Latest notes</p>
-					<a href="/posts">查看全部</a>
+		{{ $weekly := where .Site.RegularPages "Section" "weekly" }}
+		{{ $posts := where .Site.RegularPages "Section" "posts" }}
+		{{ $readingPages := where .Site.RegularPages "Section" "reading" }}
+		{{ $books := .Site.Data.douban_books | default (slice) }}
+		{{ $visiblePosts := where $posts "Params.hidden" "ne" true }}
+		{{ $visibleWeekly := where $weekly "Params.hidden" "ne" true }}
+		{{ $visibleReading := where $readingPages "Params.hidden" "ne" true }}
+
+		<main class="home-board" aria-label="站点入口">
+			<section class="home-stage">
+				<div class="home-stage-copy">
+					<h1>
+						<span>强风吹拂</span>
+						<span>代码春秋</span>
+					</h1>
 				</div>
-				<div class="posts">
-					{{ $mainSections := .Site.Params.mainSections | default (slice "posts" "weekly") }}
-					{{ $pages := where .Site.RegularPages "Type" "in" $mainSections }}
-					{{ $paginator := .Paginate (where $pages "Params.hidden" "ne" true) }}
-					{{ range $paginator.Pages }}
-					<article class="post">
-						<div class="post-header">
-							<div class="meta">
-								<div class="date">
-									<span class="day">{{ dateFormat "02" .Date }}</span>
-									<span class="rest">{{ if $.Site.Data.month }}{{ index $.Site.Data.month (printf "%d"
-										.Date.Month) }} {{ .Date.Year }}{{ else }}{{ dateFormat "Jan 2006" .Date }}{{ end
-										}}</span>
-								</div>
-							</div>
-							<div class="matter">
-								<h4 class="title small">
-									<a href="{{ .RelPermalink }}">{{.Title}}{{ if .Draft }}<sup
-											class="draft-label">DRAFT</sup>{{ end }}</a>
-								</h4>
-								{{ $wordCountNoCode := replaceRE `(?s)<div class="highlight">.*?</div>` "" .Content |
-								countwords }}
-								<h4 class="title small smaller">
-									{{ $wordCountNoCode | lang.FormatNumberCustom 0 }} words, ~{{ div $wordCountNoCode
-									.Site.Params.wpm
-									}} min read
-								</h4>
-								<h4 class="title small smaller">
-									{{ if gt .Params.tags 0 }}
-									<ul class="tags flat">
-										{{ $tagUrl := "/tags/"}}
-										{{ range first .Site.Params.maxTags .Params.tags }}
-										<li class="tag-li"><a href="{{ $tagUrl | relLangURL }}{{ . | urlize }}">{{ .
-												}}</a></li>
-										{{ end }}
-									</ul>
-									{{ end }}
-								</h4>
-								<span class="description">
-									{{ partial "post_description.html" . }}
-								</span>
-							</div>
-						</div>
-					</article>
-					{{ end }}
-					{{ template "partials/paginator.html" . }}
+
+				<div class="home-object" aria-hidden="true">
+					<span class="home-laptop"></span>
+					<span class="home-book one"></span>
+					<span class="home-book two"></span>
+					<span class="home-book three"></span>
 				</div>
+
+				<nav class="home-route-list" aria-label="主要页面">
+					<a class="home-route is-notes" href="/posts">
+						<span>01</span>
+						<strong>Notes</strong>
+						<em>{{ len $visiblePosts }} notes</em>
+					</a>
+					<a class="home-route is-weekly" href="/weekly">
+						<span>02</span>
+						<strong>Weekly</strong>
+						<em>{{ len $visibleWeekly }} logs</em>
+					</a>
+					<a class="home-route is-reading" href="/reading">
+						<span>03</span>
+						<strong>Reading</strong>
+						<em>{{ len $visibleReading }} notes · {{ len $books }} books</em>
+					</a>
+					<a class="home-route is-running" href="/running">
+						<span>04</span>
+						<strong>Running</strong>
+						<em>training data</em>
+					</a>
+				</nav>
 			</section>
 		</main>
 	</div>
