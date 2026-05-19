@@ -21,7 +21,7 @@ const COVER_RETRIES = Number(process.env.DOUBAN_COVER_RETRIES || 1);
 const COVER_TIMEOUT_MS = Number(process.env.DOUBAN_COVER_TIMEOUT_MS || 12000);
 const START = Number(process.env.DOUBAN_START || 0);
 const FULL_SYNC = process.argv.includes("--full") || process.env.DOUBAN_FULL === "1";
-const PAGE_LIMIT = FULL_SYNC ? Infinity : Number(process.env.DOUBAN_PAGE_LIMIT || 1);
+const PAGE_LIMIT = FULL_SYNC ? Infinity : Number(process.env.DOUBAN_PAGE_LIMIT || Infinity);
 const SAVE_HTML = process.env.DOUBAN_SAVE_HTML === "1";
 const DEBUG_DIR = process.env.DOUBAN_DEBUG_DIR || ".cache/douban";
 const COVER_DIR = process.env.DOUBAN_COVER_DIR || "static/images/douban";
@@ -263,6 +263,14 @@ function parseBook(item) {
 async function writeBooks(books) {
     await fs.mkdir(path.dirname(OUTPUT), { recursive: true });
     await fs.writeFile(OUTPUT, `${JSON.stringify(books, null, 2)}\n`);
+}
+
+function appendExistingTail(syncedBooks, existingBooks) {
+    if (FULL_SYNC || FORCE_REFRESH || !existingBooks.size) return syncedBooks.slice(0, MAX_BOOKS);
+
+    const syncedUrls = new Set(syncedBooks.map((book) => book.url).filter(Boolean));
+    const existingTail = [...existingBooks.values()].filter((book) => book && book.url && !syncedUrls.has(book.url));
+    return [...syncedBooks, ...existingTail].slice(0, MAX_BOOKS);
 }
 
 async function loadExistingBooks() {
@@ -582,8 +590,15 @@ async function main() {
     let expectedTotal = null;
     let start = START;
     let reused = 0;
+    let reachedExistingBoundary = false;
 
-    console.log(FULL_SYNC ? "Running full sync." : `Running preview sync: ${PAGE_LIMIT} page(s). Use --full or DOUBAN_FULL=1 for all pages.`);
+    if (FULL_SYNC) {
+        console.log("Running full sync.");
+    } else if (Number.isFinite(PAGE_LIMIT)) {
+        console.log(`Running incremental sync with page limit ${PAGE_LIMIT}. Use --full or DOUBAN_FULL=1 for all pages.`);
+    } else {
+        console.log("Running incremental sync until the first complete existing book is found. Use --full or DOUBAN_FULL=1 for all pages.");
+    }
     if (existingBooks.size && !FORCE_REFRESH) {
         console.log(`Loaded ${existingBooks.size} existing books. Complete entries will be reused.`);
     }
@@ -611,6 +626,12 @@ async function main() {
             const pageComment = book.comment || commentMap.get(id) || "";
             const existing = existingBooks.get(book.url);
             if (!FORCE_REFRESH && existing && await isBookComplete(existing)) {
+                if (!FULL_SYNC) {
+                    console.log(`Stop incremental sync at existing book: ${existing.title || book.title}`);
+                    reachedExistingBoundary = true;
+                    break;
+                }
+
                 const reusedBook = mergeBook(existing, book, pageComment);
                 books.push(reusedBook);
                 pageResults.push(reusedBook);
@@ -638,10 +659,12 @@ async function main() {
         pagesFetched += 1;
         printPageSummary(start, pageResults);
         books.length = Math.min(books.length, MAX_BOOKS);
-        await writeBooks(books);
-        console.log(`Wrote ${books.length}${expectedTotal ? `/${expectedTotal}` : ""} books to ${OUTPUT}${reused ? ` (${reused} reused)` : ""}`);
+        const mergedBooks = appendExistingTail(books, existingBooks);
+        await writeBooks(mergedBooks);
+        console.log(`Wrote ${mergedBooks.length}${expectedTotal ? `/${expectedTotal}` : ""} books to ${OUTPUT}${reused ? ` (${reused} reused)` : ""}`);
 
         const nextStart = extractNextStart(html);
+        if (reachedExistingBoundary) break;
         if (books.length >= MAX_BOOKS) break;
         if (nextStart === null) break;
         if (nextStart <= start) {
@@ -658,8 +681,9 @@ async function main() {
     }
 
     books.length = Math.min(books.length, MAX_BOOKS);
-    await writeBooks(books);
-    console.log(`Done. Wrote ${books.length} books to ${OUTPUT}${reused ? ` (${reused} reused)` : ""}`);
+    const mergedBooks = appendExistingTail(books, existingBooks);
+    await writeBooks(mergedBooks);
+    console.log(`Done. Wrote ${mergedBooks.length} books to ${OUTPUT}${reused ? ` (${reused} reused)` : ""}`);
 }
 
 main().catch((error) => {
