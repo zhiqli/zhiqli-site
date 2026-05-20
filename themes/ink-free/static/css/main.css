@@ -2958,12 +2958,12 @@ body {
 .home-laptop {
     position: absolute;
     right: 0;
-    top: clamp(-26px, -2.2vw, -14px);
+    top: clamp(-24px, -2vw, -14px);
     display: grid;
-    align-content: center;
-    width: 96%;
-    height: 68%;
-    padding: clamp(4px, 0.8vw, 8px);
+    align-content: start;
+    width: 82%;
+    height: 58%;
+    padding: clamp(7px, 1vw, 10px);
     overflow: visible;
     border: 5px solid rgba(251, 250, 244, 0.82);
     border-radius: 8px 8px 4px 4px;
@@ -2977,12 +2977,28 @@ body {
     margin: 0;
     color: rgba(251, 250, 244, 0.82);
     font-family: var(--mono);
-    font-size: clamp(0.18rem, 0.3vw, 0.29rem);
-    font-weight: 560;
-    line-height: 1.46;
+    font-size: clamp(4.8px, 0.46vw, 5.8px) !important;
+    font-weight: 520;
+    line-height: 1.5 !important;
     overflow: hidden;
     text-align: left;
     white-space: pre;
+}
+
+.home-code code {
+    display: block;
+    padding: 0 !important;
+    color: inherit !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    font: inherit !important;
+    line-height: inherit !important;
+    white-space: inherit !important;
+}
+
+.home-code span {
+    font: inherit !important;
+    line-height: inherit !important;
 }
 
 .home-code span:nth-child(2) {
