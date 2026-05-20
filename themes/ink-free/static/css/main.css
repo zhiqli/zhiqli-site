@@ -2958,13 +2958,39 @@ body {
 .home-laptop {
     position: absolute;
     right: 0;
-    top: 0;
-    width: 72%;
-    height: 48%;
+    top: clamp(-26px, -2.2vw, -14px);
+    display: grid;
+    align-content: center;
+    width: 96%;
+    height: 68%;
+    padding: clamp(4px, 0.8vw, 8px);
+    overflow: visible;
     border: 5px solid rgba(251, 250, 244, 0.82);
     border-radius: 8px 8px 4px 4px;
-    background: rgba(32, 35, 31, 0.18);
+    background:
+        linear-gradient(135deg, rgba(32, 35, 31, 0.74), rgba(32, 35, 31, 0.28)),
+        rgba(32, 35, 31, 0.18);
     box-shadow: inset 0 0 0 1px rgba(32, 35, 31, 0.22);
+}
+
+.home-code {
+    margin: 0;
+    color: rgba(251, 250, 244, 0.82);
+    font-family: var(--mono);
+    font-size: clamp(0.18rem, 0.3vw, 0.29rem);
+    font-weight: 560;
+    line-height: 1.46;
+    overflow: hidden;
+    text-align: left;
+    white-space: pre;
+}
+
+.home-code span:nth-child(2) {
+    color: rgba(217, 154, 88, 0.92);
+}
+
+.home-code span:nth-child(4) {
+    color: rgba(188, 213, 183, 0.94);
 }
 
 .home-laptop::after {
