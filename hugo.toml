@@ -16,6 +16,7 @@ copyright = "© Copyright zhiqli"
 
 	# Optional 64x64 avatar image.
 	avatar = "/images/avatar-anime.png"
+	favicon = "/images/avatar-anime.png"
 
 	featherIconsCDN = false
 
