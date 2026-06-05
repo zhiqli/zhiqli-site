@@ -1,5 +1,38 @@
 [
   {
+    "title": "读库 2602",
+    "url": "https://book.douban.com/subject/38427435/",
+    "cover": "/images/douban/38427435.jpg",
+    "author": "李清晨",
+    "meta": "新星出版社 / 2026-5 / 66元",
+    "rating": 4,
+    "readDate": "2026-06-04",
+    "comment": "质量回归的一期，每一篇都在我的兴趣点上。",
+    "remoteCover": "https://img9.doubanio.com/view/subject/l/public/s35514354.jpg"
+  },
+  {
+    "title": "与希罗多德一起旅行",
+    "url": "https://book.douban.com/subject/36966387/",
+    "cover": "/images/douban/36966387.jpg",
+    "author": "[波] 雷沙德·卡普希钦斯基",
+    "meta": "马睿 / 云南人民出版社 / 2025-1 / 68.00元",
+    "rating": 3,
+    "readDate": "2026-06-01",
+    "comment": "历史思考与旅行见闻来回切换，不喜欢这种表达方式。",
+    "remoteCover": "https://img1.doubanio.com/view/subject/l/public/s35027499.jpg"
+  },
+  {
+    "title": "要有光",
+    "url": "https://book.douban.com/subject/37407380/",
+    "cover": "/images/douban/37407380.jpg",
+    "author": "梁鸿",
+    "meta": "中信出版集团 / 2025-9 / 69.00元",
+    "rating": null,
+    "readDate": "2026-05-31",
+    "comment": "",
+    "remoteCover": "https://img3.doubanio.com/view/subject/l/public/s35251042.jpg"
+  },
+  {
     "title": "战争与和平",
     "url": "https://book.douban.com/subject/33439314/",
     "cover": "/images/douban/33439314.jpg",
