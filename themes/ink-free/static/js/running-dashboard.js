@@ -138,7 +138,10 @@
             const key = dayKey(date);
             const distance = daily.get(key) || 0;
             const level = distance === 0 ? 0 : Math.max(1, Math.ceil((distance / Math.max(maxDay, 1)) * 4));
-            cells.push(`<span class="calendar-cell level-${level}" title="${key}: ${distance ? formatKm(distance) : "0 km"}"></span>`);
+            const details = distance ? `${key} · ${formatKm(distance)}` : "";
+            cells.push(distance
+                ? `<span class="calendar-cell level-${level} has-run" data-details="${details}" aria-label="${details}"></span>`
+                : `<span class="calendar-cell level-0"></span>`);
         }
 
         const yearWidth = Math.max(4, (yearTotal / Math.max(maxYearTotal, 1)) * 100).toFixed(2);

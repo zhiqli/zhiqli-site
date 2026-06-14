@@ -2578,6 +2578,55 @@ body {
     overflow: visible !important;
 }
 
+@media (hover: hover) and (pointer: fine) {
+    .running-calendar .calendar-cell.has-run {
+        position: relative;
+        z-index: 0;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+        transform-origin: center;
+    }
+
+    .running-calendar .calendar-cell.has-run:hover {
+        z-index: 3;
+        transform: scale(1.65);
+        box-shadow: 0 2px 7px rgba(74, 45, 34, 0.28);
+    }
+
+    .running-calendar .calendar-cell.has-run::after {
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        z-index: 4;
+        padding: 4px 6px;
+        color: #fffefa;
+        background: #46352f;
+        border-radius: 3px;
+        box-shadow: 0 2px 8px rgba(42, 30, 25, 0.22);
+        content: attr(data-details);
+        font-family: var(--mono);
+        font-size: 0.48rem;
+        font-weight: 700;
+        line-height: 1;
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-50%, 2px);
+        transition: opacity 120ms ease, transform 120ms ease;
+        white-space: nowrap;
+    }
+
+    .running-calendar .calendar-cell.has-run:hover::after {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .running-calendar .calendar-cell.has-run,
+    .running-calendar .calendar-cell.has-run::after {
+        transition: none;
+    }
+}
+
 /* Running metric panel polish */
 .running-redesign .running-metrics {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
