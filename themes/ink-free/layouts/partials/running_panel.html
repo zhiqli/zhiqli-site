@@ -7,6 +7,9 @@
 
 <section class="running-embed running-redesign section" aria-label="跑步统计">
 	<div class="running-card running-dashboard" data-running-dashboard data-source-url="{{ $dataUrl }}" data-source-page="{{ $sourcePage }}">
+		<header class="running-block-head">
+			<h2>Overview</h2>
+		</header>
 		<section class="running-metrics" aria-label="跑步指标">
 			<div>
 				<span>总里程</span>
@@ -28,12 +31,16 @@
 
 		<section class="running-detail-grid">
 			<div class="running-calendar-panel">
+				<header class="running-block-head">
+					<h2>Training Calendar</h2>
+				</header>
 				<div class="running-calendars" data-running-calendar aria-label="按年份展示跑步日历"></div>
 			</div>
 		</section>
 
 		<section class="running-table-wrap">
 			<div class="running-visual-head">
+				<h2>Recent Runs</h2>
 				<strong data-running-recent-count>--</strong>
 			</div>
 			<table class="running-table">

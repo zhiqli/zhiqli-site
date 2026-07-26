@@ -6,8 +6,6 @@
 	<div class="container wrapper tags">
 		{{ partial "head.html" . }}
 
-		<h1 class="page-title">Tag: {{ .Title }}</h1>
-
 		{{ with (.Site.GetPage .Title) }}
 		<ul class="posts flat">
 			{{ range .Pages }}

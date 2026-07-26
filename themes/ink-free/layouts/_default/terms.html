@@ -1,18 +1,14 @@
 <!DOCTYPE html>
-<html>
-
+<html {{- if (eq .Site.Params.mode "dark" ) -}}class="dark" {{ end }}>
+{{ partial "header.html" . }}
 
 <body>
 	<div class="container wrapper tags">
 		{{ partial "head.html" . }}
 
-		{{ partial "header.html" . }}
-
 		{{ if .Site.Params.statisticsEnabled }}
 		{{ partial "statistics.html" . }}
 		{{ end }}
-
-		<h1 class="page-title">{{ .Name }}</h1>
 
 		{{ $biggest := 1 }}
 		{{ $smallest := 1 }}

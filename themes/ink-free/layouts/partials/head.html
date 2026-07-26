@@ -28,8 +28,22 @@
 		<ul class="flat">
 			{{ $current := . }}
 			{{ range .Site.Menus.main }}
+			{{ $isSectionActive := or
+				(and (eq .Name "文章") (eq $current.Section "posts"))
+				(and (eq .Name "周记") (eq $current.Section "weekly"))
+				(and (eq .Name "读书") (eq $current.Section "reading"))
+			}}
+			{{ $isPathActive := eq (strings.TrimSuffix "/" $current.RelPermalink) (strings.TrimSuffix "/" .URL) }}
+			{{ $isHomeActive := and (eq .Name "首页") $current.IsHome }}
+			{{ $isActive := or
+				($current.IsMenuCurrent "main" .)
+				($current.HasMenuCurrent "main" .)
+				$isSectionActive
+				$isPathActive
+				$isHomeActive
+			}}
 			<li>
-				<a href="{{ .URL }}" {{ if or ($current.IsMenuCurrent "main" .) ($current.HasMenuCurrent "main" .) }}class="active"{{ end }}>{{ .Name }}</a>
+				<a href="{{ .URL }}" {{ if $isActive }}class="active" aria-current="page"{{ end }}>{{ .Name }}</a>
 			</li>
 			{{ end }}
 		</ul>

@@ -2,7 +2,7 @@
 <html>
 {{ partial "header.html" . }}
 
-<body>
+<body class="article-page">
 
 
 	{{ if and (gt .WordCount 400 ) (or (eq .Site.Params.toc "floating") (eq .Site.Params.toc "both") )}}

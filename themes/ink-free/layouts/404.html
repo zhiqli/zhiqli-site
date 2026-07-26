@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html {{- if (eq .Site.Params.mode "dark" ) -}}class="dark" {{ end }}>
+{{ partial "header.html" . }}
+
+<body class="not-found-page">
+	<div class="site-shell wrapper">
+		{{ partial "head.html" . }}
+		<main class="not-found-card">
+			<p>404</p>
+			<h1>页面没有找到</h1>
+			<a href="{{ .Site.BaseURL }}">返回首页</a>
+		</main>
+	</div>
+	{{ partial "footer.html" . }}
+</body>
+
+</html>
