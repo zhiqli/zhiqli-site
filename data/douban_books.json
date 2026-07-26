@@ -1,5 +1,60 @@
 [
   {
+    "title": "权力与荣耀",
+    "url": "https://book.douban.com/subject/38407006/",
+    "cover": "/images/douban/38407006.jpg",
+    "author": "[英] 乔纳森·威尔逊 (Jonathan Wilson)",
+    "meta": "董风云 / 社会科学文献出版社 / 2026-5 / 129.00元",
+    "rating": null,
+    "readDate": "2026-07-21",
+    "comment": "",
+    "remoteCover": "https://img1.doubanio.com/view/subject/l/public/s35526469.jpg"
+  },
+  {
+    "title": "饭圈纪实",
+    "url": "https://book.douban.com/subject/38239072/",
+    "cover": "/images/douban/38239072.jpg",
+    "author": "马中红",
+    "meta": "华龄出版社 / 2026-3 / 58.00",
+    "rating": 3,
+    "readDate": "2026-07-18",
+    "comment": "从这本书可能里学到东西比我读过的所有书都多，大为震撼。",
+    "remoteCover": "https://img1.doubanio.com/view/subject/l/public/s35419598.jpg"
+  },
+  {
+    "title": "静静的顿河",
+    "url": "https://book.douban.com/subject/36170353/",
+    "cover": "/images/douban/36170353.jpg",
+    "author": "[苏] 米哈伊尔·肖洛霍夫",
+    "meta": "力冈 / 天津人民出版社 / 2023-1 / 148.00元",
+    "rating": 5,
+    "readDate": "2026-06-29",
+    "comment": "一入长篇深似海，可以说不分昼夜把几周的所有业余时间都用上了。合上书那一刻，整个身心都长吁一口气松懈下来。 个体在时代的裹挟中只能像浮萍一样随波逐流。你永远不知道哪一次选择是对的，你以为的一个深思熟虑的决定，其实不过是时代大浪推着你走。葛利高里来回反复，从红军到白军再到红军，每一次都有他的理由，每一次都把他推向更深的地方。到头来，战争、爱情、革命、动乱，一切都被支离破碎。只有那顿河，还在静静地流淌。 (1 有用)",
+    "remoteCover": "https://img3.doubanio.com/view/subject/l/public/s34363577.jpg"
+  },
+  {
+    "title": "其中一个是谎言",
+    "url": "https://book.douban.com/subject/38219662/",
+    "cover": "/images/douban/38219662.jpg",
+    "author": "[韩] 金爱烂",
+    "meta": "薛舟 / 国文出版社 / 2026-6-15 / 52.00元",
+    "rating": 4,
+    "readDate": "2026-06-29",
+    "comment": "还是更喜欢她的短篇。这本读下来就感觉是把短篇硬撑成了长篇。",
+    "remoteCover": "https://img9.doubanio.com/view/subject/l/public/s35485966.jpg"
+  },
+  {
+    "title": "帝国",
+    "url": "https://book.douban.com/subject/30156802/",
+    "cover": "/images/douban/30156802.jpg",
+    "author": "[波]雷沙德·卡普钦斯基",
+    "meta": "乌兰 / 生活·读书·新知三联书店 / 2018-10 / 48.00元",
+    "rating": 5,
+    "readDate": "2026-06-18",
+    "comment": "苦难的国家苦难的人民",
+    "remoteCover": "https://img9.doubanio.com/view/subject/l/public/s29916566.jpg"
+  },
+  {
     "title": "读库 2602",
     "url": "https://book.douban.com/subject/38427435/",
     "cover": "/images/douban/38427435.jpg",
