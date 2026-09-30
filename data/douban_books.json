@@ -1,5 +1,71 @@
 [
   {
+    "title": "迷人的温度",
+    "url": "https://book.douban.com/subject/27016304/",
+    "cover": "/images/douban/27016304.jpg",
+    "author": "[美] 吉诺•塞格雷",
+    "meta": "高天羽 / 上海译文出版社 / 2017-4 / 59",
+    "rating": 4,
+    "readDate": "2026-09-30",
+    "comment": "从熟悉如人体、宏大如宇宙、微小如质子不同视角来讲温度。有意思，就是有一定阅读难度。",
+    "remoteCover": "https://img3.doubanio.com/view/subject/l/public/s34350177.jpg"
+  },
+  {
+    "title": "金钱博弈",
+    "url": "https://book.douban.com/subject/38395958/",
+    "cover": "/images/douban/38395958.jpg",
+    "author": "单伟建",
+    "meta": "中信出版社 / 2026-6",
+    "rating": 4,
+    "readDate": "2026-09-30",
+    "comment": "精彩，做大生意也如烹小鲜，讨价还价你来我往。",
+    "remoteCover": "https://img3.doubanio.com/view/subject/l/public/s35527807.jpg"
+  },
+  {
+    "title": "读库 2603",
+    "url": "https://book.douban.com/subject/38531179/",
+    "cover": "/images/douban/38531179.jpg",
+    "author": "新星出版社",
+    "meta": "2026-7-16 / 66.00元",
+    "rating": 3,
+    "readDate": "2026-09-30",
+    "comment": "东方快车这篇把水准往上拉了拉，但摆摊这篇又拉低了这期的下限。",
+    "remoteCover": "https://img3.doubanio.com/view/subject/l/public/s35574123.jpg"
+  },
+  {
+    "title": "油炸绿番茄2：重返汽笛镇",
+    "url": "https://book.douban.com/subject/38040549/",
+    "cover": "/images/douban/38040549.jpg",
+    "author": "[美] 范妮·弗拉格",
+    "meta": "梁卿 / 北京时代华文书局 / 2026-4 / 59",
+    "rating": 3,
+    "readDate": "2026-09-30",
+    "comment": "太理想太乌托邦了，反而没什么意思。",
+    "remoteCover": "https://img3.doubanio.com/view/subject/l/public/s35441052.jpg"
+  },
+  {
+    "title": "杂食者的两难",
+    "url": "https://book.douban.com/subject/27046024/",
+    "cover": "/images/douban/27046024.jpg",
+    "author": "[美] 迈克尔·波伦",
+    "meta": "邓子衿 / 中信出版社 / 2017-7 / 69.00元",
+    "rating": 5,
+    "readDate": "2026-09-19",
+    "comment": "从“今天吃什么”这样一顿饭追溯到农场、饲养场、加工厂和森林，从日常饮食讨论到工业、自然、动物伦理，以及人与食物之间越来越遥远的关系。 最令我印象深刻的是玉米。它凭借高效的C4光合作用，在人类的帮助下成为现代农业中最成功的植物。在超市里买到的牛肉、鸡肉、汽水、糖浆、淀粉甚至燃料，背后都可能是同一株玉米。为了消耗过剩的玉米，人类让原本吃草的牛改吃玉米，再靠药物和抗生素维持健康；玉米也被拆解成各种看不懂的配料，悄悄进入我们的身体。到底是人类驯化了玉米，还是玉米借助人类占领了世界，实在很难说。 相对于工业食物链，书中的牧草农场、狩猎和采集看起来效率不高，却重新把太阳、土壤、植物、动物和人连接起来。",
+    "remoteCover": "https://img3.doubanio.com/view/subject/l/public/s29458492.jpg"
+  },
+  {
+    "title": "寂静的春天",
+    "url": "https://book.douban.com/subject/27614954/",
+    "cover": "/images/douban/27614954.jpg",
+    "author": "[美]蕾切尔·卡森（Rachel Carson）",
+    "meta": "马绍博 / 天津人民出版社 / 2017-12 / 42.00元",
+    "rating": 5,
+    "readDate": "2026-09-19",
+    "comment": "没想到这是一本60多年前的书，但书中的事情好像一直在发生，即使不是DDT，也是更新的药，其他化学物质。对自然生态的破坏依然如故。",
+    "remoteCover": "https://img3.doubanio.com/view/subject/l/public/s33622857.jpg"
+  },
+  {
     "title": "消失的蜜蜂",
     "url": "https://book.douban.com/subject/37897342/",
     "cover": "/images/douban/37897342.jpg",
